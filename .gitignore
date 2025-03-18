@@ -1,0 +1,13 @@
+**/__pycache__/
+**.swp
+
+dataset_db.*
+flake.lock
+last_rid.pyon
+results/
+
+extension/out
+extension/dist
+extension/node_modules
+extension/.vscode-test/
+extension/*.vsix
