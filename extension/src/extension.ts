@@ -8,9 +8,29 @@ import { WebSocket } from 'ws';
 export function activate(context: vscode.ExtensionContext) {
 
 	const provider = new ArtiqViewProvider(context.extensionUri);
+	const terminal = vscode.window.createTerminal("ARTIQ");
+
+	// TODO: Where does flake.nix live?
+	terminal.sendText("nix shell ../flake.nix");
+
+	const disposable = vscode.commands.registerCommand('extension.artiqRunExperiment', () => {
+		let filepath = vscode.window.activeTextEditor?.document.uri.fsPath;
+		if (!filepath) {
+			vscode.window.showErrorMessage("No experiment file selected.");
+			return;
+		}
+
+		// TODO test for errors in stderr;
+		// TODO use own terminal? test if terminal exists
+		// see: https://github.com/microsoft/vscode-extension-samples/blob/main/terminal-sample
+		terminal.sendText(`artiq_client submit ${filepath}`);
+		vscode.window.showInformationMessage(`Running experiment: ${filepath}`);
+	});
 
 	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(ArtiqViewProvider.viewType, provider));
+		vscode.window.registerWebviewViewProvider(ArtiqViewProvider.viewType, provider),
+		disposable,
+	);
 }
 
 class ArtiqViewProvider implements vscode.WebviewViewProvider {

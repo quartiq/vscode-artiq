@@ -12,6 +12,12 @@
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "extension.artiqRunExperiment",
+        "title": "ARTIQ: Run Experiment"
+      }
+    ],
     "viewsContainers": {
       "panel": [
         {
