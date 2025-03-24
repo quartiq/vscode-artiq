@@ -1,7 +1,7 @@
 {
-  "name": "artiq-log",
-  "displayName": "artiq_log",
-  "description": "",
+  "name": "artiq-dashboard",
+  "displayName": "ARTIQ Dashboard",
+  "description": "A proof of concept recreating the ARTIQ dashboard in VS Code through their Extension API",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.98.0"
@@ -24,21 +24,21 @@
     "views": {
       "artiq": [
         {
-					"type": "webview",
-					"id": "log",
-					"name": "Log",
-					"initialSize": 4,
+          "type": "webview",
+          "id": "log",
+          "name": "Log",
+          "initialSize": 4,
           "icon": "log.png",
-					"visibility": "visible"
-				},
-				{
-					"type": "webview",
-					"id": "schedule",
-					"name": "Schedule",
-					"initialSize": 1,
+          "visibility": "visible"
+        },
+        {
+          "type": "webview",
+          "id": "schedule",
+          "name": "Schedule",
+          "initialSize": 1,
           "icon": "schedule.png",
-					"visibility": "visible"
-				}
+          "visibility": "visible"
+        }
       ]
     }
   },
