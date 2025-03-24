@@ -9,5 +9,6 @@ results/
 extension/out
 extension/dist
 extension/node_modules
+extension/package-lock.json
 extension/.vscode-test/
 extension/*.vsix
