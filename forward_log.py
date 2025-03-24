@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 from websockets.sync.client import connect
 
@@ -28,15 +29,12 @@ def run_subscriber(host, port, subscriber):
     finally:
         loop.close()
 
-def print_log_record(record):
-    level, source, t, message = record
-    t = time.strftime("%m/%d %H:%M:%S", time.localtime(t))
-    print(level, source, t, message)
+websocket = connect("ws://localhost:8001")
 
-    websocket.send(message)
+def forward(record):
+    websocket.send(json.dumps(record))
 
-websocket = connect("ws://localhost:8001/conn")
-subscriber = Receiver("log", [print_log_record])
+subscriber = Receiver("log", [forward])
 server = "::1"
 port = 1067
 run_subscriber(server, port, subscriber)
