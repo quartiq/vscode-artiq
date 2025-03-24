@@ -1,49 +1,42 @@
 package main
 
 import (
-    "net"
+	"log"
+	"net"
 	"net/http"
-    "log"
 
 	"github.com/gobwas/ws"
-    "github.com/gobwas/ws/wsutil"
+	"github.com/gobwas/ws/wsutil"
 )
 
-func kill(c net.Conn, conns map[net.Conn]bool) {
-    delete(conns, c)
-    c.Close()
+var subs = make(map[net.Conn]bool)
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	conn, _, _, _ := ws.UpgradeHTTP(r, w)
+	go func() {
+		defer func() {
+			conn.Close()
+			delete(subs, conn)
+		}()
+
+		subs[conn] = true
+
+		for {
+			msg, err := wsutil.ReadClientText(conn)
+			if err != nil {
+				break
+			}
+
+			for c, _ := range subs {
+				wsutil.WriteServerText(c, msg)
+			}
+		}
+	}()
 }
 
 func main() {
-    conns := make(map[net.Conn]bool)
+	http.HandleFunc("/", handler)
 
-    log.Println("Listening at :8001")
-	http.ListenAndServe(":8001", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		conn, _, _, err := ws.UpgradeHTTP(r, w)
-        conns[conn] = true
-		if err != nil {
-			// handle error
-            log.Println(err)
-		}
-		go func() {
-			defer kill(conn, conns)
-
-			for {
-				msg, op, err := wsutil.ReadClientData(conn)
-                log.Println("Got msg: " + string(msg))
-				if err != nil {
-					// handle error
-                    log.Println(err)
-				}
-
-                for c, _ := range conns {
-				    err = wsutil.WriteServerMessage(c, op, msg)
-				    if err != nil {
-					    // handle error
-                        log.Println(err)
-				    }
-                }
-			}
-		}()
-	}))
+	log.Println("Listening at localhost:8001")
+	log.Fatal(http.ListenAndServe("localhost:8001", nil))
 }
