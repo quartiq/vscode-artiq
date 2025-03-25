@@ -4,6 +4,8 @@ A proof of concept recreating the ARTIQ dashboard in VS Code through their Exten
 
 ## Run
 
+- edit `repository/.vscode/settings.json` to your desire
+
 - obtain artiq environment: `nix shell`
 - start artiq: `artiq_master &`
 

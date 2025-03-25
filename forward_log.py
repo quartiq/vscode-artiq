@@ -29,7 +29,11 @@ def run_subscriber(host, port, subscriber):
     finally:
         loop.close()
 
-websocket = connect("ws://localhost:8001")
+cfgpath = "repository/.vscode/settings.json"
+with open(cfgpath) as f:
+    cfg = json.load(f)
+    websocket = connect("ws://" + cfg["forwarding.host"])
+    print("Serving at ws://" + cfg["forwarding.host"])
 
 def forward(record):
     websocket.send(json.dumps(record))

@@ -12,6 +12,16 @@
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "properties": {
+        "forwarding.host": {
+          "type": "string",
+          "format": "uri",
+          "default": "localhost:8001",
+          "description": "URI host and port of WebSocket server talking to ARTIQ"
+        }
+      }
+    },
     "commands": [
       {
         "command": "extension.artiqRunExperiment",

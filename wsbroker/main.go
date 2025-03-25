@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -34,9 +36,24 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}()
 }
 
+var Cfg map[string]any
+
 func main() {
+	cfgpath := "../repository/.vscode/settings.json"
+
+	j, err := ioutil.ReadFile(cfgpath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = json.Unmarshal(j, &Cfg)
+	if err != nil {
+		log.Fatalf("%s: %s", cfgpath, err)
+	}
+
 	http.HandleFunc("/", handler)
 
-	log.Println("Listening at localhost:8001")
-	log.Fatal(http.ListenAndServe("localhost:8001", nil))
+	host := Cfg["forwarding.host"].(string)
+	log.Printf("Listening at %s", host)
+	log.Fatal(http.ListenAndServe(host, nil))
 }

@@ -62,7 +62,8 @@ class ArtiqViewProvider implements vscode.WebviewViewProvider {
 		let html = "[level, source, time, message]<br>";
 		webviewView.webview.html = html;
 
-		const ws = new WebSocket("ws://localhost:8001");
+		const host = vscode.workspace.getConfiguration("forwarding").get("host");
+		const ws = new WebSocket("ws://" + host);
 		ws.addEventListener("message", ev => {
 			html += `${ev.data}<br>`;
 			webviewView.webview.html = html;
