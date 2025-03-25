@@ -1,7 +1,7 @@
-// The module 'vscode' contains the VS Code extensibility API
+// The module "vscode" contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
-import { WebSocket } from 'ws';
+import * as vscode from "vscode";
+import { WebSocket } from "ws";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -13,7 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// TODO: Where does flake.nix live?
 	terminal.sendText("nix shell ../flake.nix");
 
-	const disposable = vscode.commands.registerCommand('extension.artiqRunExperiment', () => {
+	const disposable = vscode.commands.registerCommand("extension.artiqRunExperiment", () => {
 		let filepath = vscode.window.activeTextEditor?.document.uri.fsPath;
 		if (!filepath) {
 			vscode.window.showErrorMessage("No experiment file selected.");
@@ -35,7 +35,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 class ArtiqViewProvider implements vscode.WebviewViewProvider {
 
-	public static readonly viewType = 'log';
+	public static readonly viewType = "log";
 
 	private _view?: vscode.WebviewView;
 
