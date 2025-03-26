@@ -28,6 +28,14 @@
         "title": "ARTIQ: Run Experiment"
       }
     ],
+    "keybindings": [
+      {
+        "command": "extension.artiqRunExperiment",
+        "key": "ctrl+shift+x",
+        "mac": "cmd+shift+x",
+        "when": "editorTextFocus"
+      }
+    ],
     "viewsContainers": {
       "panel": [
         {

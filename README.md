@@ -17,6 +17,6 @@ A proof of concept recreating the ARTIQ dashboard in VS Code through their Exten
     - edit `extension/src/extension.ts`
     - press `F5`
 
-- in VS Code, run artiq experiment:
-    - open "Command Palette": `Ctrl+Shift+P`
+- in VS Code, run artiq experiment: `Ctrl+Shift+X`
+    - alternatively, open "Command Palette": `Ctrl+Shift+P`
     - run "Artiq: Run Experiment"
