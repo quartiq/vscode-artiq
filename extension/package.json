@@ -24,13 +24,13 @@
     },
     "commands": [
       {
-        "command": "extension.artiqRunExperiment",
+        "command": "artiq.runExperiment",
         "title": "ARTIQ: Run Experiment"
       }
     ],
     "keybindings": [
       {
-        "command": "extension.artiqRunExperiment",
+        "command": "artiq.runExperiment",
         "key": "ctrl+shift+x",
         "mac": "cmd+shift+x",
         "when": "editorTextFocus"

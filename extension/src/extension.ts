@@ -13,7 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// TODO: Where does flake.nix live?
 	terminal.sendText("nix shell ../flake.nix");
 
-	const disposable = vscode.commands.registerCommand("extension.artiqRunExperiment", () => {
+	const disposable = vscode.commands.registerCommand("artiq.runExperiment", () => {
 		let filepath = vscode.window.activeTextEditor?.document.uri.fsPath;
 		if (!filepath) {
 			vscode.window.showErrorMessage("No experiment file selected.");
