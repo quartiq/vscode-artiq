@@ -1,7 +1,6 @@
 // The module "vscode" contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
-import { WebSocket } from "ws";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -10,7 +9,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const provider = new ArtiqViewProvider(context.extensionUri);
 	const terminal = vscode.window.createTerminal("ARTIQ");
 
-	// TODO: Where does flake.nix live?
+	// TODO: Run via sipyco TCP interface
 	terminal.sendText("nix shell ../flake.nix");
 
 	const disposable = vscode.commands.registerCommand("artiq.runExperiment", () => {
@@ -62,10 +61,18 @@ class ArtiqViewProvider implements vscode.WebviewViewProvider {
 		let html = "[level, source, time, message]<br>";
 		webviewView.webview.html = html;
 
-		const host = vscode.workspace.getConfiguration("forwarding").get("host");
-		const ws = new WebSocket("ws://" + host);
-		ws.addEventListener("message", ev => {
-			html += `${ev.data}<br>`;
+		let net = require("net");
+		let client = new net.Socket();
+		let host = vscode.workspace.getConfiguration("artiq").get("host");
+
+		// see: https://github.com/m-labs/artiq/blob/master/artiq/frontend/artiq_client.py#L347-L348
+		client.connect(1067, host, () => {
+			client.write("ARTIQ broadcast\n");
+			client.write("log\n");
+		});
+
+		client.on("data", (line: string) => {
+			html += `${line}<br>`;
 			webviewView.webview.html = html;
 		});
 	}

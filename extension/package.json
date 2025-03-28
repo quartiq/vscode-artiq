@@ -14,11 +14,11 @@
   "contributes": {
     "configuration": {
       "properties": {
-        "forwarding.host": {
+        "artiq.host": {
           "type": "string",
           "format": "uri",
-          "default": "localhost:8001",
-          "description": "URI host and port of WebSocket server talking to ARTIQ"
+          "default": "::1",
+          "description": "URI host of ARTIQ server"
         }
       }
     },

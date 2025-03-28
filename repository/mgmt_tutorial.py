@@ -6,4 +6,4 @@ class MgmtTutorial(EnvExperiment):
         pass  # no devices used
 
     def run(self):
-        print("This is a msg straight from an artiq experiment")
+        print("This is a msg straight from an ARTIQ experiment")
