@@ -1,0 +1,1 @@
+- create sipyco drop-in protocol file, schema.json or something
