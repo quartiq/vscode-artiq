@@ -1,1 +1,2 @@
-- create sipyco drop-in protocol file, schema.json or something
+- try to re-establish failed socket connection
+- parameter form ui for experiment values
