@@ -8,10 +8,6 @@ import * as net from "./net";
 export function activate(context: vscode.ExtensionContext) {
 
 	const provider = new ArtiqViewProvider(context.extensionUri);
-	const terminal = vscode.window.createTerminal("ARTIQ");
-
-	// TODO: Run via sipyco TCP interface
-	terminal.sendText("nix shell ../flake.nix");
 
 	const disposable = vscode.commands.registerCommand("artiq.runExperiment", () => {
 		let filepath = vscode.window.activeTextEditor?.document.uri.fsPath;
@@ -20,11 +16,7 @@ export function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
-		// TODO test for errors in stderr;
-		// TODO use own terminal? test if terminal exists
-		// see: https://github.com/microsoft/vscode-extension-samples/blob/main/terminal-sample
-		terminal.sendText(`artiq_client submit ${filepath}`);
-		vscode.window.showInformationMessage(`Running experiment: ${filepath}`);
+		net.run(filepath);
 	});
 
 	context.subscriptions.push(
