@@ -11,7 +11,7 @@ A proof of concept recreating the ARTIQ dashboard in VS Code through their Exten
 
 - in VS Code, obtain an "Extension Development Host" window:
     - open the folder `extension`
-    - edit `extension/src/extension.ts`
+    - edit `src/extension.ts`
     - press `F5`
 
 - in the "Extension Development Host" window:
