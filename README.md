@@ -4,10 +4,9 @@ A proof of concept recreating the ARTIQ dashboard in VS Code through their Exten
 
 ## Run
 
-- edit `repository/.vscode/settings.json` to your desire
-
-- obtain ARTIQ environment: `nix shell`
-- start ARTIQ server: `artiq_master`
+- clone ARTIQ: `git clone https://github.com/m-labs/artiq`
+- obtain ARTIQ environment: `cd artiq; nix develop`
+- start ARTIQ server: `cd vscode-artiq; artiq_master`
 
 - in VS Code, obtain an "Extension Development Host" window:
     - open the folder `extension`
@@ -15,8 +14,8 @@ A proof of concept recreating the ARTIQ dashboard in VS Code through their Exten
     - press `F5`
 
 - in the "Extension Development Host" window:
-    - open experiment folder, e. g. `repository`
-    - edit experiment file
+    - edit File -> Preferences -> Settings -> Extensions -> ARTIQ Dashboard
+    - open experiment file, e. g. `example_experiment.py`
     - run experiment: `Ctrl+Shift+X`
 
     - alternatively, open "Command Palette": `Ctrl+Shift+P`
