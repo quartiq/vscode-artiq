@@ -1,14 +1,15 @@
 import * as vscode from "vscode";
 let net = require("net");
+let { once } = require("events");
 
 const host = vscode.workspace.getConfiguration("artiq").get("host");
 
-let dial = (port: Number, banner: string, target: string) => {
+let receiver = (port: Number, banner: string, target: string) => {
     let client = new net.Socket();
 
     client.connect(port, host, () => {
-        client.write(banner);
-        client.write(target);
+        client.write("ARTIQ " + banner + "\n");
+        client.write(target + "\n");
     });
 
     client.on("connectionAttemptFailed", () => vscode.window.showErrorMessage("Connection error. Is ARTIQ server running?"));
@@ -16,34 +17,50 @@ let dial = (port: Number, banner: string, target: string) => {
 };
 
 // see: https://github.com/m-labs/artiq/blob/master/artiq/frontend/artiq_client.py#L347-L348
-export let r_log = () => dial(1067, "ARTIQ broadcast\n", "log\n");
+export let receiverLog = () => receiver(1067, "broadcast", "log");
 
 // see: https://github.com/m-labs/artiq/blob/master/artiq/frontend/artiq_client.py#L336
-export let r_schedule = () => dial(3250, "ARTIQ sync_struct\n", "schedule\n");
+export let receiverSchedule = () => receiver(3250, "sync_struct", "schedule");
 
-// see: https://github.com/m-labs/artiq/blob/master/artiq/frontend/artiq_client.py#L381
-export let w_schedule = () => dial(3251, "ARTIQ pc_rpc\n", "schedule\n");
+export let rpc = async (target: string, method: string, args: any[], debug?: string) => {
+    let client = new net.Socket();
+    client.connect(3251, host);
 
-export let run = (filepath: string, writer: any) => {
+    await once(client, "connect");
+
+    client.write("ARTIQ pc_rpc\n");
+    let targets = await once(client, "data");
+    if (debug === "targets") { return targets; }
+
+    client.write(target + "\n");
+    let methods = await once(client, "data");
+    if (debug === "methods") { return methods; }
+
+    client.write(JSON.stringify({
+        action: "call",
+        name: method,
+        args: args,
+        kwargs: {},
+    }) + "\n");
+
+    let response = await once(client, "data");
+    return response;
+};
+
+export let run = (filepath: string) => {
     const WARNING = 30;
 
-    let obj = {
-        action: "call",
-        name: "submit",
+    // see: https://github.com/m-labs/artiq/blob/master/artiq/frontend/artiq_client.py#L381
+    // see: https://github.com/m-labs/artiq/blob/master/artiq/master/scheduler.py#L436
+    rpc("schedule", "submit", [
+        "main", // pipeline_name
+        { // expid
+            file: filepath,
+            log_level: WARNING,
+            class_name: null,
+            arguments: {},
+        },
+    ]);
 
-        // see: https://github.com/m-labs/artiq/blob/master/artiq/master/scheduler.py#L436
-        args: [
-            "main", // pipeline_name
-            { // expid
-                file: filepath,
-                log_level: WARNING,
-                class_name: null,
-                arguments: {},
-            }
-        ],
-        kwargs: {},
-    };
-
-    writer.write(JSON.stringify(obj) + "\n");
     vscode.window.showInformationMessage(`Running experiment: ${filepath}`);
 };

@@ -6,10 +6,9 @@ import * as views from "./views";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
-	let r_log = net.r_log();
-	let r_schedule = net.r_schedule();
-	let w_schedule = net.w_schedule();
+export async function activate(context: vscode.ExtensionContext) {
+	let logReceiver = await net.receiverLog();
+	let scheduleReceiver = await net.receiverSchedule();
 
 	const disposable = vscode.commands.registerCommand("artiq.runExperiment", () => {
 		let experiment = vscode.window.activeTextEditor?.document.uri.fsPath;
@@ -18,7 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
-		net.run(experiment, w_schedule);
+		net.run(experiment);
 	});
 
 	let logView = new views.ArtiqViewProvider("log", context.extensionUri);
@@ -31,10 +30,10 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	logView.update("Waiting for connection ...");
-	r_log.on("ready", () => logView.update("[level, source, time, message]<br>"));
-	r_log.on("data", (line: string) => logView.append(`${line}<br>`));
+	logReceiver.on("ready", () => logView.update("[level, source, time, message]<br>"));
+	logReceiver.on("data", (line: string) => logView.append(`${line}<br>`));
 
 	scheduleView.update("Waiting for connection ...");
-	r_schedule.on("ready", () => scheduleView.update("[rid, pipeline, status, prio, due date, revision, file, class name]<br>"));
-	r_schedule.on("data", (line: string) => scheduleView.append(`${line}<br>`));
+	scheduleReceiver.on("ready", () => scheduleView.update("[rid, pipeline, status, prio, due date, revision, file, class name]<br>"));
+	scheduleReceiver.on("data", (line: string) => scheduleView.append(`${line}<br>`));
 }
