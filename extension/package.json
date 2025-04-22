@@ -37,16 +37,38 @@
       }
     ],
     "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "artiq-activitybar",
+          "title": "ARTIQ",
+          "icon": "media/artiq.svg"
+        }
+      ],
       "panel": [
         {
-          "id": "artiq",
-          "title": "Artiq",
+          "id": "artiq-panel",
+          "title": "ARTIQ",
           "icon": "artiq.png"
         }
       ]
     },
     "views": {
-      "artiq": [
+      "artiq-activitybar": [
+        {
+          "id": "explorer",
+          "name": "Explorer",
+          "icon": "media/artiq.svg",
+          "contextualTitle": "Explorer"
+        },
+        {
+          "type": "webview",
+          "id": "experiment",
+          "name": "Experiment",
+          "icon": "media/artiq.svg",
+          "contextualTitle": "Experiment"
+        }
+      ],
+      "artiq-panel": [
         {
           "type": "webview",
           "id": "log",
@@ -86,5 +108,8 @@
     "eslint": "^9.21.0",
     "typescript": "^5.7.3",
     "ws": "^8.18.1"
+  },
+  "dependencies": {
+    "jsonrepair": "^3.12.0"
   }
 }

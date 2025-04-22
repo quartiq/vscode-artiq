@@ -10,6 +10,7 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 	constructor(
 		private readonly _viewType: string,
 		private readonly _extensionUri: vscode.Uri,
+		private readonly _initText: string,
 	) {
 		this.ready = mutex.lock();
 		this.html = "";
@@ -50,4 +51,34 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 		this.html += html;
 		this._view!.webview.html = this.html;
 	}
+
+	public async reset() {
+		await this.ready.locked;
+
+		this.html = this._initText;
+		this._view!.webview.html = this.html;
+	}
 }
+
+export class ExplorerProvider implements vscode.TreeDataProvider<Experiment> {
+	constructor(private file: string | undefined) {}
+
+	getTreeItem(element: Experiment): vscode.TreeItem | Thenable<vscode.TreeItem> {
+		return element;
+	}
+
+	getChildren(element?: Experiment | undefined): Thenable<Experiment[]> {
+		if (!this.file) {
+			vscode.window.showInformationMessage("No active file in text editor");
+			return Promise.resolve([]);
+		}
+
+		if (element) {
+			return Promise.resolve([]);
+		}
+
+		return Promise.resolve([]);
+	}
+}
+
+export class Experiment extends vscode.TreeItem {}

@@ -2,6 +2,8 @@ import * as vscode from "vscode";
 let net = require("net");
 let { once } = require("events");
 
+import * as pyon from "./pyon";
+
 const host = vscode.workspace.getConfiguration("artiq").get("host");
 
 let receiver = (port: Number, banner: string, target: string) => {
@@ -36,7 +38,7 @@ export let rpc = async (target: string, method: string, args: any[], debug?: str
     let methods = await once(client, "data");
     if (debug === "methods") { return methods; }
 
-    client.write(JSON.stringify({
+    client.write(pyon.encode({
         action: "call",
         name: method,
         args: args,
@@ -44,7 +46,7 @@ export let rpc = async (target: string, method: string, args: any[], debug?: str
     }) + "\n");
 
     let response = await once(client, "data");
-    return response;
+    return pyon.decode(response.toString());
 };
 
 export let run = (filepath: string) => {
