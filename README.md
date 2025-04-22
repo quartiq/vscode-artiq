@@ -1,6 +1,7 @@
 # VS Code ARTIQ Extension
 
-A proof of concept recreating the ARTIQ dashboard in VS Code through their Extension API
+A proof of concept recreating the ARTIQ dashboard in VS Code through their Extension API.
+This extension expects to be run alongside an ARTIQ instance in the same filesystem tree.
 
 ## Run
 
