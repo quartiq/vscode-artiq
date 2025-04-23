@@ -5,9 +5,12 @@ This extension expects to be run alongside an ARTIQ instance in the same filesys
 
 ## Run
 
-- clone ARTIQ: `git clone https://github.com/m-labs/artiq`
-- obtain ARTIQ environment: `cd artiq; nix develop`
-- start ARTIQ server: `cd vscode-artiq; artiq_master`
+- run dummy ARTIQ instance:
+    - clone: `git clone https://github.com/m-labs/artiq`
+    - obtain environment: `cd artiq; nix develop`
+    - start server: `cd vscode-artiq; artiq_master`
+
+- obtain dependencies: `cd extension; npm install`
 
 - in VS Code, obtain an "Extension Development Host" window:
     - open the folder `extension`
