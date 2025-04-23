@@ -37,17 +37,30 @@ export let updateSelected = async (selection: vscode.Selection | undefined) => {
     selected = await findSelected(selection);
 };
 
-export let updateView = () => {
+export let updateCurr = () => {
+    curr = undefined;
     if (!selected) { return view.reset(); }
 
-    let curr = available[selected.name];
+    curr = available[selected.name];
     if (!curr) { return view.reset(); }
 
+    curr.file = vscode.window.activeTextEditor?.document.uri.fsPath;
+    curr.class_name = selected.name;
     view.update(JSON.stringify(curr));
+};
+
+export let runCurr = () => {
+    if (!curr) {
+        vscode.window.showErrorMessage("No experiment selected.");
+        return;
+    }
+
+    net.run(curr);
 };
 
 let available: any;
 let selected: any;
+let curr: any;
 export let view: views.ArtiqViewProvider;
 
 export let init = async (context: vscode.ExtensionContext) => {
@@ -56,5 +69,5 @@ export let init = async (context: vscode.ExtensionContext) => {
 
     await updateAvailable(vscode.window.activeTextEditor);
     await updateSelected(vscode.window.activeTextEditor?.selection);
-    updateView();
+    updateCurr();
 };

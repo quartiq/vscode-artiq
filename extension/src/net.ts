@@ -43,7 +43,7 @@ export let rpc = async (target: string, method: string, args: any[], debug?: str
     return pyon.decode(response.toString());
 };
 
-export let run = (filepath: string) => {
+export let run = (exp: any) => {
     const WARNING = 30;
 
     // see: https://github.com/m-labs/artiq/blob/master/artiq/frontend/artiq_client.py#L381
@@ -51,12 +51,12 @@ export let run = (filepath: string) => {
     rpc("schedule", "submit", [
         "main", // pipeline_name
         { // expid
-            file: filepath,
+            file: exp.file,
             log_level: WARNING,
-            class_name: null,
+            class_name: exp.class_name,
             arguments: {},
         },
     ]);
 
-    vscode.window.showInformationMessage(`Running experiment: ${filepath}`);
+    vscode.window.showInformationMessage(`Running experiment: ${exp.name}`);
 };
