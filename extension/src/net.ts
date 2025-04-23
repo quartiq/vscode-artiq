@@ -6,7 +6,7 @@ import * as pyon from "./pyon";
 
 const host = vscode.workspace.getConfiguration("artiq").get("host");
 
-let receiver = (port: Number, banner: string, target: string) => {
+export let receiver = (port: Number, banner: string, target: string) => {
     let client = new net.Socket();
 
     client.connect(port, host, () => {
@@ -17,12 +17,6 @@ let receiver = (port: Number, banner: string, target: string) => {
     client.on("connectionAttemptFailed", () => vscode.window.showErrorMessage("Connection error. Is ARTIQ server running?"));
     return client;
 };
-
-// see: https://github.com/m-labs/artiq/blob/master/artiq/frontend/artiq_client.py#L347-L348
-export let receiverLog = () => receiver(1067, "broadcast", "log");
-
-// see: https://github.com/m-labs/artiq/blob/master/artiq/frontend/artiq_client.py#L336
-export let receiverSchedule = () => receiver(3250, "sync_struct", "schedule");
 
 export let rpc = async (target: string, method: string, args: any[], debug?: string) => {
     let client = new net.Socket();

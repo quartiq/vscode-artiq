@@ -111,5 +111,8 @@
   },
   "dependencies": {
     "jsonrepair": "^3.12.0"
-  }
+  },
+  "extensionDependencies": [
+    "ms-python.python"
+  ]
 }

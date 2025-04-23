@@ -59,26 +59,3 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 		this._view!.webview.html = this.html;
 	}
 }
-
-export class ExplorerProvider implements vscode.TreeDataProvider<Experiment> {
-	constructor(private file: string | undefined) {}
-
-	getTreeItem(element: Experiment): vscode.TreeItem | Thenable<vscode.TreeItem> {
-		return element;
-	}
-
-	getChildren(element?: Experiment | undefined): Thenable<Experiment[]> {
-		if (!this.file) {
-			vscode.window.showInformationMessage("No active file in text editor");
-			return Promise.resolve([]);
-		}
-
-		if (element) {
-			return Promise.resolve([]);
-		}
-
-		return Promise.resolve([]);
-	}
-}
-
-export class Experiment extends vscode.TreeItem {}
