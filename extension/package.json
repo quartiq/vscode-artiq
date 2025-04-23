@@ -24,18 +24,31 @@
     },
     "commands": [
       {
-        "command": "artiq.runExperiment",
-        "title": "ARTIQ: Run Experiment"
+        "command": "artiq.submitExperiment",
+        "title": "ARTIQ: Submit Experiment",
+        "icon": {
+          "light": "media/run-light.svg",
+          "dark": "media/run-dark.svg"
+        }
       }
     ],
     "keybindings": [
       {
-        "command": "artiq.runExperiment",
+        "command": "artiq.submitExperiment",
         "key": "ctrl+shift+x",
         "mac": "cmd+shift+x",
         "when": "editorTextFocus"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "artiq.submitExperiment",
+          "when": "view == experiment",
+          "group": "navigation"
+        }
+      ]
+    },
     "viewsContainers": {
       "activitybar": [
         {

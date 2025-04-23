@@ -49,13 +49,13 @@ export let updateCurr = () => {
     view.update(JSON.stringify(curr));
 };
 
-export let runCurr = () => {
+export let submitCurr = () => {
     if (!curr) {
         vscode.window.showErrorMessage("No experiment selected.");
         return;
     }
 
-    net.run(curr);
+    net.submit(curr);
 };
 
 let available: any;

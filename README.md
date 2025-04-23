@@ -17,7 +17,10 @@ This extension expects to be run alongside an ARTIQ instance in the same filesys
 - in the "Extension Development Host" window:
     - edit File -> Preferences -> Settings -> Extensions -> ARTIQ Dashboard
     - open experiment file, e. g. `example_experiment.py`
-    - run experiment: `Ctrl+Shift+X`
+    - move cursor to desired class definition
+    - submit experiment: `Ctrl+Shift+X`
 
     - alternatively, open "Command Palette": `Ctrl+Shift+P`
-    - select "ARTIQ: Run Experiment"
+    - select "ARTIQ: Submit Experiment"
+
+    - alternatively, click "Submit" action in the "Experiment" sidebar toolbar

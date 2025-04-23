@@ -43,7 +43,7 @@ export let rpc = async (target: string, method: string, args: any[], debug?: str
     return pyon.decode(response.toString());
 };
 
-export let run = (exp: any) => {
+export let submit = (exp: any) => {
     const WARNING = 30;
 
     // see: https://github.com/m-labs/artiq/blob/master/artiq/frontend/artiq_client.py#L381
@@ -58,5 +58,5 @@ export let run = (exp: any) => {
         },
     ]);
 
-    vscode.window.showInformationMessage(`Running experiment: ${exp.name}`);
+    vscode.window.showInformationMessage(`Submitted experiment: ${exp.name}`);
 };
