@@ -8,7 +8,7 @@ class Alpha(EnvExperiment):
 
     def run(self):
         time.sleep(1)
-        print("This is a msg straight from an ARTIQ experiment")
+        print("Only the mediocre are always at their best.")
 
 class Beta(EnvExperiment):
     """Two"""
@@ -17,7 +17,7 @@ class Beta(EnvExperiment):
 
     def run(self):
         time.sleep(2)
-        print("This is a msg straight from an ARTIQ experiment")
+        print("Inspiration does exist, but it must find you working.")
 
 class Gamma(EnvExperiment):
     """Three"""
@@ -26,4 +26,4 @@ class Gamma(EnvExperiment):
 
     def run(self):
         time.sleep(3)
-        print("This is a msg straight from an ARTIQ experiment")
+        print("There’s nothing I like less than bad arguments for a view that I hold dear.")

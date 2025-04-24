@@ -8,7 +8,7 @@ class Foo(EnvExperiment):
 
     def run(self):
         time.sleep(1)
-        print("This is a msg straight from an ARTIQ experiment")
+        print("It’s possible that I understand better what’s going on, or it’s equally possible that I just think I do.")
 
 class Bar(EnvExperiment):
     """Test Test Test"""
@@ -17,4 +17,4 @@ class Bar(EnvExperiment):
 
     def run(self):
         time.sleep(2)
-        print("This is a msg straight from an ARTIQ experiment")
+        print("A thinker sees his own actions as experiments and questions–as attempts to find out something. Success and failure are for him answers above all.")

@@ -8,7 +8,7 @@ class Cottus(EnvExperiment):
 
     def run(self):
         time.sleep(3)
-        print("This is a msg straight from an ARTIQ experiment")
+        print("Reality is what refuses to go away when I stop believing in it.")
 
 class Alcyoneus(EnvExperiment):
     """greatest"""
@@ -17,7 +17,7 @@ class Alcyoneus(EnvExperiment):
 
     def run(self):
         time.sleep(2)
-        print("This is a msg straight from an ARTIQ experiment")
+        print("Never let your sense of morals prevent you from doing what’s right.")
 
 class Porphyrion(EnvExperiment):
     """king"""
@@ -26,7 +26,7 @@ class Porphyrion(EnvExperiment):
 
     def run(self):
         time.sleep(4)
-        print("This is a msg straight from an ARTIQ experiment")
+        print("Fools ignore complexity. Pragmatists suffer it. Some can avoid it. Geniuses remove it.")
 
 class Damysus(EnvExperiment):
     """fastest"""
@@ -35,4 +35,4 @@ class Damysus(EnvExperiment):
 
     def run(self):
         time.sleep(1)
-        print("This is a msg straight from an ARTIQ experiment")
+        print("There is nothing worse than imagination without taste.")
