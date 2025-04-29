@@ -5,7 +5,7 @@ import * as views from "../views.js";
 let examineFile = async (editor: vscode.TextEditor | undefined) => {
     if (!editor) { return {}; }
 
-    let resp = await net.rpc("experiment_db", "examine", [
+    let [resp] = await net.rpc("experiment_db", "examine", [
         editor?.document.uri.fsPath,
         false,
     ]);

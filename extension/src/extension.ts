@@ -10,18 +10,18 @@ import * as explorer from "./views/explorer";
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
-	const disposable = vscode.commands.registerCommand("artiq.submitExperiment", experiment.submitCurr);
 
 	await log.init(context);
 	await schedule.init(context);
 	await experiment.init(context);
-	explorer.init();
+	await explorer.init();
 
 	context.subscriptions.push(
-		disposable,
 		log.view.register(),
 		schedule.view.register(),
 		experiment.view.register(),
+		vscode.commands.registerCommand("artiq.submitExperiment", experiment.submitCurr),
+		vscode.commands.registerCommand("artiq.scanRepository", explorer.scan),
 	);
 
 	vscode.window.onDidChangeActiveTextEditor(async editor => {
