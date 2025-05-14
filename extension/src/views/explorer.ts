@@ -95,7 +95,10 @@ export let init = async () => {
 
 	receiver = await net.receiver(3250, "sync_struct", "explist");
 	root = (await net.rpc("experiment_db", "root", [])).ret;
-	await scan();
+
+	if (vscode.workspace.getConfiguration("artiq").get("initialScan")) {
+		await scan();
+	}
 
 	receiver.on("data", (data: any) => {
 		net.parseLines(data).forEach((msg: any) => evalMessage(msg));

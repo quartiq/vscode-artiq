@@ -16,9 +16,13 @@
       "properties": {
         "artiq.host": {
           "type": "string",
-          "format": "uri",
           "default": "::1",
           "description": "URI host of ARTIQ server"
+        },
+        "artiq.initialScan": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically refresh experiment explorer on start-up"
         }
       }
     },

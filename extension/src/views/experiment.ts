@@ -3,6 +3,21 @@ import * as net from "../net";
 import * as views from "../views";
 import * as utils from "../utils";
 
+let available: any;
+let selected: any;
+let curr: any;
+
+export let view: views.ArtiqViewProvider;
+
+export let init = async (context: vscode.ExtensionContext) => {
+    view = new views.ArtiqViewProvider("experiment", context.extensionUri, "Select an experiment in the editor or in the explorer ...");
+    view.reset();
+
+    await updateAvailable(vscode.window.activeTextEditor);
+    await updateSelected(vscode.window.activeTextEditor?.selection);
+    updateCurr();
+};
+
 let examineFile = async (editor: vscode.TextEditor | undefined) => {
     if (!editor) { return {}; }
 
@@ -51,18 +66,4 @@ export let submitCurr = () => {
     }
 
     net.submit(curr);
-};
-
-let available: any;
-let selected: any;
-let curr: any;
-export let view: views.ArtiqViewProvider;
-
-export let init = async (context: vscode.ExtensionContext) => {
-    view = new views.ArtiqViewProvider("experiment", context.extensionUri, "Select an experiment in the editor or in the explorer ...");
-    view.reset();
-
-    await updateAvailable(vscode.window.activeTextEditor);
-    await updateSelected(vscode.window.activeTextEditor?.selection);
-    updateCurr();
 };
