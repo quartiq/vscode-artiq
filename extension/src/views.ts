@@ -35,8 +35,11 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	public register(): vscode.Disposable {
-		return vscode.window.registerWebviewViewProvider(this._viewType, this);
-	} 
+		return vscode.window.registerWebviewViewProvider(this._viewType, this, {
+			// keep the webview alive, even if it is not visible
+			webviewOptions: { retainContextWhenHidden: true },
+		});
+	}
 
 	public async update(html: string) {
 		await this.ready.locked;
