@@ -1,17 +1,45 @@
 import * as vscode from "vscode";
-import * as net from "../net.js";
+import * as net from "../net";
+import * as utils from "../utils";
 
 let provider: ExplorerProvider;
 let view: vscode.TreeView<Experiment>;
 let receiver: any;
 let experiments: { [key: string]: Experiment } = {};
 let ready = false;
+let root: any;
+
+export let open = async (filename: string, classname: string) => {
+	let uri = vscode.Uri.parse(root + "/" + filename);
+	try { await vscode.workspace.fs.stat(uri); } catch {
+		vscode.window.showErrorMessage("No such file, consider to rescan ARTIQ repository");
+		return;
+	}
+
+	let symbols = await utils.symbols(uri);
+	let location = symbols.find(s => s.name === classname)?.location;
+	if (!location) {
+		vscode.window.showErrorMessage("No such class, consider to rescan ARTIQ repository");
+		return;
+	}
+
+	vscode.commands.executeCommand("vscode.open", location.uri, {selection: location.range});
+};
 
 class Experiment extends vscode.TreeItem {
 	constructor(
 		public readonly label: string,
+		public readonly obj: any,
 	) {
 		super(label);
+		this.tooltip = `${obj.file}:${obj.class_name}`;
+		let color = new vscode.ThemeColor("symbolIcon.classForeground");
+		this.iconPath = new vscode.ThemeIcon("package", color);
+		this.command = {
+			command: "artiq.openExperiment",
+			title: "",
+			arguments: [obj.file, obj.class_name],
+		};
 	}
 }
 
@@ -42,16 +70,15 @@ class ExplorerProvider implements vscode.TreeDataProvider<Experiment> {
 	}
 }
 
-let evalMessage = (msg: any) => {
+let evalMessage = async (msg: any) => {
 
 	if (msg.action === "init") {
-		experiments = experimentsFromStruct(msg.struct);
+		experiments = await initExperiments(msg.struct);
 		ready = true;
 		provider.refresh();
 
 	} else if (msg.action === "setitem") {
-		// TODO: construct proper Experiment from msg.value
-		experiments[msg.key] = new Experiment(msg.key);
+		experiments[msg.key] = new Experiment(msg.key, msg.value);
 		provider.refresh();
 
 	} else if (msg.action === "delitem") {
@@ -67,6 +94,7 @@ export let init = async () => {
 	});
 
 	receiver = await net.receiver(3250, "sync_struct", "explist");
+	root = (await net.rpc("experiment_db", "root", [])).ret;
 	await scan();
 
 	receiver.on("data", (data: any) => {
@@ -80,10 +108,11 @@ export let scan = async () => {
 	await net.rpc("experiment_db", "scan_repository", []);
 };
 
-let experimentsFromStruct = (struct: any) => {
-	let all: { [key: string]: Experiment } = {};
-
-	// TODO: construct proper Experiment from struct[k]
-	Object.keys(struct).forEach(k => all[k] = new Experiment(k));
-	return all;
+let initExperiments = async (dict: any) => {
+	let out: { [key: string]: Experiment } = {};
+	await Promise.all(Object.keys(dict).map(async k => {
+		out[k] = new Experiment(k, dict[k]);
+	}));
+	
+	return out;
 };

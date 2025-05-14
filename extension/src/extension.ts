@@ -22,6 +22,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		experiment.view.register(),
 		vscode.commands.registerCommand("artiq.submitExperiment", experiment.submitCurr),
 		vscode.commands.registerCommand("artiq.scanRepository", explorer.scan),
+		vscode.commands.registerCommand("artiq.openExperiment", explorer.open),
 	);
 
 	vscode.window.onDidChangeActiveTextEditor(async editor => {

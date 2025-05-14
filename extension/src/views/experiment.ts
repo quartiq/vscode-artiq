@@ -1,11 +1,12 @@
 import * as vscode from "vscode";
-import * as net from "../net.js";
-import * as views from "../views.js";
+import * as net from "../net";
+import * as views from "../views";
+import * as utils from "../utils";
 
 let examineFile = async (editor: vscode.TextEditor | undefined) => {
     if (!editor) { return {}; }
 
-    let [resp] = await net.rpc("experiment_db", "examine", [
+    let resp = await net.rpc("experiment_db", "examine", [
         editor?.document.uri.fsPath,
         false,
     ]);
@@ -16,15 +17,9 @@ let examineFile = async (editor: vscode.TextEditor | undefined) => {
 
 let findSelected = async (selection: vscode.Selection | undefined) => {
     if (!selection) { return; }
-
     await vscode.extensions.getExtension("ms-python.python")?.exports.ready;
 
-    let symbols = await vscode.commands.executeCommand<vscode.SymbolInformation[]>(
-        "vscode.executeDocumentSymbolProvider",
-        vscode.window.activeTextEditor?.document.uri,
-    ) ?? [];
-
-    return symbols
+    return (await utils.symbols(vscode.window.activeTextEditor?.document.uri))
         .filter(s => s.kind === vscode.SymbolKind.Class)
         .find(s => s.location.range.contains(selection.active));
 };

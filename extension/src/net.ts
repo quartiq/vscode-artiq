@@ -39,16 +39,13 @@ export let rpc = async (target: string, method: string, args: any[], debug?: str
         kwargs: {},
     }) + "\n");
 
-    return await readLines(client);
+    return parseLine(await once(client, "data"));
 };
+
+let parseLine = (bytes: any) => pyon.decode(bytes.toString());
 
 export let parseLines = (bytes: any) => bytes.toString().trim().split("\n")
     .map((s: string) => pyon.decode(s));
-
-export let readLines = async (client: any) => {
-    let response = await once(client, "data");
-    return parseLines(response);
-};
 
 export let submit = (exp: any) => {
     const WARNING = 30;
