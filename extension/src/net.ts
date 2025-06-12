@@ -47,19 +47,30 @@ let parseLine = (bytes: any) => pyon.decode(bytes.toString());
 export let parseLines = (bytes: any) => bytes.toString().trim().split("\n")
     .map((s: string) => pyon.decode(s));
 
-export let submit = (exp: any) => {
-    const WARNING = 30;
+let logging: { [name: string]: Number } = {
+    // see: https://docs.python.org/3/library/logging.html#logging-levels
+    NOTSET: 0,
+    DEBUG: 10,
+    INFO: 20,
+    WARNING: 30,
+    ERROR: 40,
+    CRITICAL: 50,
+};
 
+export let submit = (exp: any, options?: any) => {
     // see: https://github.com/m-labs/artiq/blob/master/artiq/frontend/artiq_client.py#L381
     // see: https://github.com/m-labs/artiq/blob/master/artiq/master/scheduler.py#L436
     rpc("schedule", "submit", [
-        "main", // pipeline_name
+        options?.pipeline_name ?? "main",
         { // expid
             file: exp.file,
-            log_level: WARNING,
+            log_level: logging[options?.log_level ?? "WARNING"],
             class_name: exp.class_name,
             arguments: {},
         },
+        options?.priority ?? null,
+        null, // due date
+        options?.flush ?? null,
     ]);
 
     vscode.window.showInformationMessage(`Submitted experiment: ${exp.name}`);

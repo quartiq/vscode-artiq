@@ -1,5 +1,8 @@
 from artiq.experiment import *
 import time
+import logging
+
+logger = logging.getLogger()
 
 class Cottus(EnvExperiment):
     """furious"""
@@ -7,6 +10,7 @@ class Cottus(EnvExperiment):
         pass  # no devices used
 
     def run(self):
+        logger.warning("Play around with the log level to make this warning disappear.")
         time.sleep(3)
         print("Reality is what refuses to go away when I stop believing in it.")
 

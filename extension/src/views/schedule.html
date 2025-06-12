@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Schedule</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script type="module" src="{VSCODE_ELEMENTS_SCRIPT_URI}"></script>
+
+    <style>
+        body { padding: 0 }
+    </style>
+</head>
+<body>
+    <vscode-table bordered-columns zebra resizable>
+        <vscode-table-header>
+            <vscode-table-header-cell>RID</vscode-table-header-cell>
+            <vscode-table-header-cell>Pipeline</vscode-table-header-cell>
+            <vscode-table-header-cell>Status</vscode-table-header-cell>
+            <vscode-table-header-cell>Prio</vscode-table-header-cell>
+            <vscode-table-header-cell>Due date</vscode-table-header-cell>
+            <vscode-table-header-cell>Revision</vscode-table-header-cell>
+            <vscode-table-header-cell>File</vscode-table-header-cell>
+            <vscode-table-header-cell>Class name</vscode-table-header-cell>
+        </vscode-table-header>
+
+        <vscode-table-body>
+        </vscode-table-body>
+    </vscode-table>
+
+    <script>
+        // FIXME: Implement m-labs/sipyco sync_struct
+
+        let create = msg => {
+            let bodyel = document.querySelector("vscode-table-body");
+            let rowel = document.createElement("vscode-table-row");
+            rowel.dataset.key = msg.key;
+
+            let v = msg.value;
+            let row = {
+                key: msg.key,
+                pipeline: v.pipeline,
+                status: v.status,
+                priority: v.priority,
+                due_date: v.due_date,
+                repo_rev: v.expid.repo_rev ? v.expid.repo_rev : "w/o repo",
+                file: v.expid.file,
+                class_name: v.expid.class_name,
+            };
+
+            Object.entries(row).forEach(([k, v]) => {
+                let cellel = document.createElement("vscode-table-cell");
+                cellel.className = k;
+                cellel.textContent = v;
+                rowel.append(cellel);
+            });
+
+            bodyel.append(rowel);
+        };
+
+        let update = msg => {
+            let cellel = document.querySelector(`[data-key="${msg.path[0]}"] .${msg.key}`);
+            cellel.textContent = msg.value;
+        };
+
+        let actions = {};
+        
+        actions.setitem = msg => {
+            if (msg.path.length > 0) return update(msg);
+            create(msg);
+        };
+
+        actions.delitem = msg => {
+            let rowel = document.querySelector(`[data-key="${msg.key}"]`);
+            rowel.remove();
+        };
+
+        window.addEventListener("message", ev => ev.data.forEach(msg => actions[msg.action]?.(msg)));
+    </script>
+</body>
+</html>

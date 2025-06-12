@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Log</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script type="module" src="{VSCODE_ELEMENTS_SCRIPT_URI}"></script>
+
+    <style>
+        body { padding: 0 }
+    </style>
+</head>
+<body>
+    <vscode-table bordered-columns zebra resizable>
+        <vscode-table-header>
+            <vscode-table-header-cell>Level</vscode-table-header-cell>
+            <vscode-table-header-cell>Source</vscode-table-header-cell>
+            <vscode-table-header-cell>Time</vscode-table-header-cell>
+            <vscode-table-header-cell>Message</vscode-table-header-cell>
+        </vscode-table-header>
+
+        <vscode-table-body>
+        </vscode-table-body>
+    </vscode-table>
+
+    <script>
+        window.addEventListener("message", ev => {
+            let bodyel = document.querySelector("vscode-table-body");
+
+            ev.data.forEach(row => {
+                let rowel = document.createElement("vscode-table-row");
+
+                row.forEach(cell => {
+                    let cellel = document.createElement("vscode-table-cell");
+                    cellel.textContent = cell;
+                    rowel.append(cellel);
+                });
+
+                bodyel.append(rowel);
+            });
+        });
+    </script>
+</body>
+</html>

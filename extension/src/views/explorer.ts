@@ -1,4 +1,6 @@
 import * as vscode from "vscode";
+import * as path from "path";
+
 import * as net from "../net";
 import * as utils from "../utils";
 
@@ -10,7 +12,7 @@ let ready = false;
 let root: any;
 
 export let open = async (filename: string, classname: string) => {
-	let uri = vscode.Uri.parse(root + "/" + filename);
+	let uri = vscode.Uri.parse(path.posix.join(root, filename));
 	try { await vscode.workspace.fs.stat(uri); } catch {
 		vscode.window.showErrorMessage("No such file, consider to rescan ARTIQ repository");
 		return;

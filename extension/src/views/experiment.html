@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Experiment</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script type="module" src="{VSCODE_ELEMENTS_SCRIPT_URI}"></script>
+
+    <style>
+        .hidden { display: none }
+    </style>
+</head>
+<body>
+    <div class="idle">
+        <p>Select an experiment in the editor or in the explorer ...</p>
+    </div>
+
+    <main>
+        <h1></h1>
+        <form>
+            <vscode-form-group variant="vertical">
+                <vscode-label for="priority">Priority</vscode-label>
+                <vscode-textfield name="priority" id="priority" value="0"></vscode-textfield>
+            </vscode-form-group>
+
+            <vscode-form-group variant="vertical">
+                <vscode-label for="log_level">Log level</vscode-label>
+                <vscode-single-select name="log_level" id="log_level">
+                    <vscode-option value="DEBUG">DEBUG</vscode-option>
+                    <vscode-option value="INFO">INFO</vscode-option>
+                    <vscode-option value="WARNING" selected>WARNING</vscode-option>
+                    <vscode-option value="ERROR">ERROR</vscode-option>
+                    <vscode-option value="CRITICAL">CRITICAL</vscode-option>
+                </vscode-single-select>
+            </vscode-form-group>
+
+            <vscode-form-group variant="vertical">
+                <vscode-label for="pipeline_name">Pipeline</vscode-label>
+                <vscode-textfield name="pipeline_name" id="pipeline_name" value="main"></vscode-textfield>
+            </vscode-form-group>
+
+            <vscode-form-group variant="vertical">
+                <vscode-checkbox label="Flush" name="flush" id="flush"></vscode-checkbox>
+            </vscode-form-group>
+
+            <vscode-form-group variant="vertical">
+                <vscode-button type="submit">Submit</vscode-button>
+            </vscode-form-group>
+        </form>
+    </main>
+
+    <script>
+        const vscode = acquireVsCodeApi();
+
+        let idleel = document.querySelector(".idle");
+        let mainel = document.querySelector("main");
+        let formel = document.querySelector("form");
+        let flushel = document.querySelector("#flush");
+
+        formel.addEventListener("submit", ev => {
+            ev.preventDefault(); // suppress iframe refresh and thus demolition
+
+            let options = new FormData(formel);
+            options = Object.fromEntries(options); // postMessage can not serialize FormData
+            options.flush = flushel.checked; // force boolean representation for checkbox
+            vscode.postMessage( {action: "submit", data: options} );
+        });
+
+        window.addEventListener("message", ev => {
+            if (!ev.data.active) {
+                idleel.classList.remove("hidden");
+                mainel.classList.add("hidden");
+                return;
+            }
+
+            idleel.classList.add("hidden");
+            mainel.classList.remove("hidden");
+
+            // TODO: remove this, rather update explorer selection
+            mainel.querySelector("h1").textContent = ev.data.curr.name;
+        });
+    </script>
+</body>
+</html>

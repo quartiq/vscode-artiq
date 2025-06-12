@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
-import * as net from "../net";
+
 import * as views from "../views";
+import * as net from "../net";
 import * as utils from "../utils";
 
 let available: any;
@@ -10,8 +11,12 @@ let curr: any;
 export let view: views.ArtiqViewProvider;
 
 export let init = async (context: vscode.ExtensionContext) => {
-    view = new views.ArtiqViewProvider("experiment", context.extensionUri, "Select an experiment in the editor or in the explorer ...");
-    view.reset();
+    view = new views.ArtiqViewProvider("experiment", context.extensionUri, {
+        submit: (options: any) => net.submit(curr, options),
+    });
+
+    view.init();
+    view.post( {active: false} );
 
     await updateAvailable(vscode.window.activeTextEditor);
     await updateSelected(vscode.window.activeTextEditor?.selection);
@@ -40,6 +45,7 @@ let findSelected = async (selection: vscode.Selection | undefined) => {
 };
 
 export let updateAvailable = async (editor: vscode.TextEditor | undefined) => {
+    // TODO: dont examine anytime. cache from repo instead
     available = await examineFile(editor);
 };
 
@@ -49,14 +55,14 @@ export let updateSelected = async (selection: vscode.Selection | undefined) => {
 
 export let updateCurr = () => {
     curr = undefined;
-    if (!selected) { return view.reset(); }
+    if (!selected) { return view.post( {active: false} ); }
 
     curr = available[selected.name];
-    if (!curr) { return view.reset(); }
+    if (!curr) { return view.post( {active: false} ); }
 
     curr.file = vscode.window.activeTextEditor?.document.uri.fsPath;
     curr.class_name = selected.name;
-    view.update(JSON.stringify(curr));
+    view.post( {active: true, curr: curr} );
 };
 
 export let submitCurr = () => {

@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import * as mutex from "./mutex";
+import * as utils from "./utils";
 
 export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 
@@ -10,7 +11,7 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 	constructor(
 		private readonly _viewType: string,
 		private readonly _extensionUri: vscode.Uri,
-		private readonly _initText: string,
+		private readonly _actions?: any,
 	) {
 		this.ready = mutex.lock();
 		this.html = "";
@@ -32,6 +33,8 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 				this._extensionUri
 			]
 		};
+
+		webviewView.webview.onDidReceiveMessage(msg => this._actions[msg.action](msg.data));
 	}
 
 	public register(): vscode.Disposable {
@@ -41,24 +44,29 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 		});
 	}
 
-	public async update(html: string) {
+	public async set(text: string) {
 		await this.ready.locked;
 
-		this.html = html;
+		this.html = text;
 		this._view!.webview.html = this.html;
 	}
 
-	public async append(html: string) {
+	public async init() {
 		await this.ready.locked;
 
-		this.html += html;
+		let scriptUri = this._view!.webview.asWebviewUri(
+			vscode.Uri.joinPath(this._extensionUri, "node_modules", "@vscode-elements/elements", "dist", "bundled.js")
+		);
+
+		this.html = utils.html(this._viewType, this._extensionUri.fsPath)
+			.replace("{VSCODE_ELEMENTS_SCRIPT_URI}", scriptUri.toString());
+
 		this._view!.webview.html = this.html;
 	}
 
-	public async reset() {
+	public async post(msg: any) {
 		await this.ready.locked;
 
-		this.html = this._initText;
-		this._view!.webview.html = this.html;
+		this._view!.webview.postMessage(msg);
 	}
 }
