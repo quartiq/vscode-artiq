@@ -1,38 +1,46 @@
 import * as vscode from "vscode";
+import * as path from "path";
 
 import * as views from "../views";
 import * as net from "../net";
 import * as utils from "../utils";
+import * as cached from "../cached";
 
-let available: any;
-let selected: any;
-let curr: any;
+let availableExps: any[] = [];
+let selectedClass: any;
 
 export let view: views.ArtiqViewProvider;
 
 export let init = async (context: vscode.ExtensionContext) => {
     view = new views.ArtiqViewProvider("experiment", context.extensionUri, {
-        submit: (options: any) => net.submit(curr, options),
+        submit: (options: any) => net.submit(cached.curr, options),
     });
 
     view.init();
     view.post( {active: false} );
-
-    await updateAvailable(vscode.window.activeTextEditor);
-    await updateSelected(vscode.window.activeTextEditor?.selection);
-    updateCurr();
 };
 
-let examineFile = async (editor: vscode.TextEditor | undefined) => {
-    if (!editor) { return {}; }
-
-    let resp = await net.rpc("experiment_db", "examine", [
-        editor?.document.uri.fsPath,
-        false,
-    ]);
+let examineFile = async (path: string) => {
+    let resp = await net.rpc("experiment_db", "examine", [path, false]);
 
     if (resp.status === "failed") { return {}; }
     return resp.ret;
+};
+
+export let updateAvailable = async (editor: vscode.TextEditor | undefined) => {
+    if (!editor) { return; }
+
+    let root = await cached.repoRoot;
+    await cached.repoExpsReady.locked;
+
+    let entries = Object.entries(cached.repoExps)
+        .filter(([k, v]) => path.posix.join(root, v.file) === editor.document.uri.fsPath);
+    availableExps = entries.map(([k, v]) => ({name: k, ...v}));
+
+    if (entries.length > 0) { return; } // examine file only if file is not part of most recent repo scan
+    entries = Object.entries(await examineFile(editor.document.uri.fsPath));
+    availableExps = entries.map(([k, v]) => ({class_name: k, ...v}));
+    // FIXME: what experiment_db/examine and sync_struct/explist return different maps. why though?
 };
 
 let findSelected = async (selection: vscode.Selection | undefined) => {
@@ -44,32 +52,23 @@ let findSelected = async (selection: vscode.Selection | undefined) => {
         .find(s => s.location.range.contains(selection.active));
 };
 
-export let updateAvailable = async (editor: vscode.TextEditor | undefined) => {
-    // TODO: dont examine anytime. cache from repo instead
-    available = await examineFile(editor);
-};
-
 export let updateSelected = async (selection: vscode.Selection | undefined) => {
-    selected = await findSelected(selection);
+    selectedClass = (await findSelected(selection))?.name;
 };
 
 export let updateCurr = () => {
-    curr = undefined;
-    if (!selected) { return view.post( {active: false} ); }
+    let curr = availableExps.find(exp => exp.class_name === selectedClass);
+    cached.setCurr(curr);
 
-    curr = available[selected.name];
-    if (!curr) { return view.post( {active: false} ); }
-
-    curr.file = vscode.window.activeTextEditor?.document.uri.fsPath;
-    curr.class_name = selected.name;
-    view.post( {active: true, curr: curr} );
+    if (!cached.curr) { return view.post( {active: false} ); }
+    view.post( {active: true, curr: cached.curr} );
 };
 
 export let submitCurr = () => {
-    if (!curr) {
+    if (!cached.curr) {
         vscode.window.showErrorMessage("No experiment selected.");
         return;
     }
 
-    net.submit(curr);
+    net.submit(cached.curr);
 };

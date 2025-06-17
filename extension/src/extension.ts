@@ -27,10 +27,17 @@ export async function activate(context: vscode.ExtensionContext) {
 	vscode.window.onDidChangeActiveTextEditor(async editor => {
 		await experiment.updateAvailable(editor);
 		experiment.updateCurr();
+		explorer.updateSelected();
 	});
 
 	vscode.window.onDidChangeTextEditorSelection(async ev => {
 		await experiment.updateSelected(ev.selections[0]);
 		experiment.updateCurr();
+		explorer.updateSelected();
 	});
+
+	await experiment.updateAvailable(vscode.window.activeTextEditor);
+	await experiment.updateSelected(vscode.window.activeTextEditor?.selection);
+	experiment.updateCurr();
+	explorer.updateSelected();
 };

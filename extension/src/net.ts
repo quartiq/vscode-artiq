@@ -63,7 +63,7 @@ export let submit = (exp: any, options?: any) => {
     rpc("schedule", "submit", [
         options?.pipeline_name ?? "main",
         { // expid
-            file: exp.file,
+            file: vscode.window.activeTextEditor?.document.uri.fsPath,
             log_level: logging[options?.log_level ?? "WARNING"],
             class_name: exp.class_name,
             arguments: {},
