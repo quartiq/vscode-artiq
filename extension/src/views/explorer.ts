@@ -13,14 +13,14 @@ let ready = false;
 export let open = async (filename: string, classname: string) => {
 	let uri = vscode.Uri.parse(path.posix.join(await cached.repoRoot, filename));
 	try { await vscode.workspace.fs.stat(uri); } catch {
-		vscode.window.showErrorMessage("No such file, consider to rescan ARTIQ repository");
+		vscode.window.showErrorMessage("No such file, consider rescanning ARTIQ repository");
 		return;
 	}
 
 	let symbols = await utils.symbols(uri);
 	let location = symbols.find(s => s.name === classname)?.location;
 	if (!location) {
-		vscode.window.showErrorMessage("No such class, consider to rescan ARTIQ repository");
+		vscode.window.showErrorMessage("No such class, consider rescanning ARTIQ repository");
 		return;
 	}
 
