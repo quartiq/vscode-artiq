@@ -21,7 +21,7 @@
 
 - on click on TreeItem, in Editor:
     - [x] open corresponding file
-    - [ ] selects first line of corresponding class
+    - [x] selects first line/char of corresponding class
 
 - on click on "Scan Repository" button:
     - [x] request scan via ARTIQ server

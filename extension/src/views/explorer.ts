@@ -24,7 +24,8 @@ export let open = async (filename: string, classname: string) => {
 		return;
 	}
 
-	vscode.commands.executeCommand("vscode.open", location.uri, {selection: location.range});
+	let selection = new vscode.Selection(location.range.start, location.range.start);
+	vscode.commands.executeCommand("vscode.open", location.uri, {selection});
 };
 
 class ExperimentTreeItem extends vscode.TreeItem {
