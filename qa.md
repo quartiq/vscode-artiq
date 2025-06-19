@@ -71,9 +71,6 @@
     - [x] "Flush" checkbox
     - [x] "Submit" button
 
-on load:
-    - [ ] cache global submit params via ARTIQ server
-
 - on click on "Submit" form button
     - [ ] submit experiment with form params via ARTIQ server
 

@@ -60,6 +60,7 @@ let logging: { [name: string]: Number } = {
 export let submit = (exp: any, options?: any) => {
     // see: https://github.com/m-labs/artiq/blob/master/artiq/frontend/artiq_client.py#L381
     // see: https://github.com/m-labs/artiq/blob/master/artiq/master/scheduler.py#L436
+    // for default params, see: artiq/dashboard/experiments.py:ExperimentManager.get_submission_scheduling
     rpc("schedule", "submit", [
         options?.pipeline_name ?? "main",
         { // expid
@@ -68,9 +69,9 @@ export let submit = (exp: any, options?: any) => {
             class_name: exp.class_name,
             arguments: {},
         },
-        options?.priority ?? null,
+        options?.priority ?? 0,
         null, // due date
-        options?.flush ?? null,
+        options?.flush ?? false,
     ]);
 
     vscode.window.showInformationMessage(`Submitted experiment: ${exp.name}`);
