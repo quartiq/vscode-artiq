@@ -36,6 +36,14 @@
         }
       },
       {
+        "command": "artiq.examineFile",
+        "title": "Examine File",
+        "icon": {
+          "light": "media/refresh-light.svg",
+          "dark": "media/refresh-dark.svg"
+        }
+      },
+      {
         "command": "artiq.scanRepository",
         "title": "Scan Repository",
         "icon": {
@@ -56,6 +64,11 @@
       "view/title": [
         {
           "command": "artiq.submitExperiment",
+          "when": "view == experiment",
+          "group": "navigation"
+        },
+        {
+          "command": "artiq.examineFile",
           "when": "view == experiment",
           "group": "navigation"
         },

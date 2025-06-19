@@ -27,14 +27,15 @@
     - [x] request scan via ARTIQ server
     - on response:
         - [x] update repo cache
-        - [ ] update list of TreeItems
+        - [x] update list of TreeItems
+        - [x] update "Experiment" view
 
 # Editor
 
 - on change of file:
-    - [x] check repo cache for corresponding repo experiments
-    - [x] if none, request file examination via ARTIQ server
-    - [x] cache available experiments
+    - [x] check repo and exam caches for corresponding experiments
+    - [x] if none, hint scan or examination in "Experiment" view
+    - [x] update available experiments cache
 
     - in "Explorer":
         - [x] select corresponding TreeItem
@@ -61,6 +62,7 @@
 - *todo* persistant custom data in form fields
 
 - [x] "Submit Experiment" button in View Toolbar
+- [x] "Examine File" button in View Toolbar
 
 - form consists of:
     - [x] "Priority" input field
@@ -77,4 +79,14 @@ on load:
 
 - on click on "Submit Experiment" toolbar button
     - [ ] submit experiment with global params via ARTIQ server
-    - [ ] shortcut Ctrl+Shift+X
+    - [ ] shortcut Ctrl+Shift+X (?)
+
+- on click on "Examine File" button:
+    - [x] request examination via ARTIQ server
+    - [ ] shortcut Ctrl+Shift+E (?)
+    - on response:
+        - [x] update exam cache
+        - [x] update "Experiment" view
+
+- on change of file:
+    - [ ] hide "Examine File" button if active file is repository file

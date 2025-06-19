@@ -13,7 +13,9 @@
 </head>
 <body>
     <div class="idle">
-        <p>Select an experiment in the editor or in the explorer ...</p>
+        <p class="msg select">Select an experiment in the editor or in the explorer ...</p>
+        <p class="msg scan">Unknown experiment. Consider to save the file and rescan the repository ...</p>
+        <p class="msg examine">Unknown experiment. Consider to save and examine the file ...</p>
     </div>
 
     <form>
@@ -51,6 +53,7 @@
         const vscode = acquireVsCodeApi();
 
         let idleel = document.querySelector(".idle");
+        let msgels = idleel.querySelectorAll(".msg");
         let formel = document.querySelector("form");
         let flushel = document.querySelector("#flush");
 
@@ -63,10 +66,27 @@
             vscode.postMessage( {action: "submit", data: options} );
         });
 
+        let showIdle = type => {
+            msgels.forEach(el => el.classList.add("hidden"));
+            idleel.querySelector(`.msg.${type}`).classList.remove("hidden");
+
+            idleel.classList.remove("hidden");
+            formel.classList.add("hidden");
+        };
+
         window.addEventListener("message", ev => {
-            if (!ev.data.active) {
-                idleel.classList.remove("hidden");
-                formel.classList.add("hidden");
+            if (!ev.data.selectedClass) {
+                showIdle("select");
+                return;
+            }
+
+            if (!ev.data.curr && ev.data.isRepoFile) {
+                showIdle("scan");
+                return;
+            }
+
+            if (!ev.data.curr) {
+                showIdle("examine");
                 return;
             }
 

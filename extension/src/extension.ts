@@ -2,6 +2,8 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 
+import * as cached from "./cached";
+
 import * as log from "./views/log";
 import * as schedule from "./views/schedule";
 import * as experiment from "./views/experiment";
@@ -20,6 +22,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		schedule.view.register(),
 		experiment.view.register(),
 		vscode.commands.registerCommand("artiq.submitExperiment", experiment.submitCurr),
+		vscode.commands.registerCommand("artiq.examineFile", experiment.examineFile),
 		vscode.commands.registerCommand("artiq.scanRepository", explorer.scan),
 		vscode.commands.registerCommand("artiq.openExperiment", explorer.open),
 	);
@@ -32,6 +35,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	vscode.window.onDidChangeTextEditorSelection(async ev => {
 		await experiment.updateSelected(ev.selections[0]);
+		experiment.updateCurr();
+		explorer.updateSelected();
+	});
+
+	cached.handleUpdate(async () => {
+		await experiment.updateAvailable(vscode.window.activeTextEditor);
 		experiment.updateCurr();
 		explorer.updateSelected();
 	});
