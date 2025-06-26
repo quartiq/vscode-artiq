@@ -3,6 +3,7 @@ let net = require("net");
 let { once } = require("events");
 
 import * as pyon from "./pyon";
+import * as dbio from "./dbio";
 
 const host = vscode.workspace.getConfiguration("artiq").get("host");
 
@@ -47,7 +48,7 @@ let parseLine = (bytes: any) => pyon.decode(bytes.toString());
 export let parseLines = (bytes: any) => bytes.toString().trim().split("\n")
     .map((s: string) => pyon.decode(s));
 
-let logging: { [name: string]: Number } = {
+export let logging: { [name: string]: Number } = {
     // see: https://docs.python.org/3/library/logging.html#logging-levels
     NOTSET: 0,
     DEBUG: 10,
@@ -57,21 +58,20 @@ let logging: { [name: string]: Number } = {
     CRITICAL: 50,
 };
 
-export let submit = (exp: any, options?: any) => {
+export let submit = (exp: dbio.Experiment) => {
     // see: https://github.com/m-labs/artiq/blob/master/artiq/frontend/artiq_client.py#L381
     // see: https://github.com/m-labs/artiq/blob/master/artiq/master/scheduler.py#L436
-    // for default params, see: artiq/dashboard/experiments.py:ExperimentManager.get_submission_scheduling
     rpc("schedule", "submit", [
-        options?.pipeline_name ?? "main",
+        exp.scheduler_defaults.pipeline_name,
         { // expid
             file: vscode.window.activeTextEditor?.document.uri.fsPath,
-            log_level: logging[options?.log_level ?? "WARNING"],
+            log_level: logging[exp.submission_options.log_level],
             class_name: exp.class_name,
             arguments: {},
         },
-        options?.priority ?? 0,
-        null, // due date
-        options?.flush ?? false,
+        exp.scheduler_defaults.priority,
+        exp.scheduler_defaults.due_date,
+        exp.scheduler_defaults.flush,
     ]);
 
     vscode.window.showInformationMessage(`Submitted experiment: ${exp.name}`);

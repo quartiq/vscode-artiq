@@ -2,51 +2,43 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 
-import * as cached from "./cached";
+import * as dbio from "./dbio";
 
-import * as log from "./views/log";
-import * as schedule from "./views/schedule";
-import * as experiment from "./views/experiment";
-import * as explorer from "./views/explorer";
+import * as viewLog from "./views/log";
+import * as viewSchedule from "./views/schedule";
+import * as viewExperiment from "./views/experiment";
+import * as viewExplorer from "./views/explorer";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
-	await log.init(context);
-	await schedule.init(context);
-	await experiment.init(context);
-	await explorer.init();
+	dbio.init(context);
+
+	await viewLog.init(context);
+	await viewSchedule.init(context);
+	await viewExperiment.init(context);
+	await viewExplorer.init();
 
 	context.subscriptions.push(
-		log.view.register(),
-		schedule.view.register(),
-		experiment.view.register(),
-		vscode.commands.registerCommand("artiq.submitExperiment", experiment.submitCurr),
-		vscode.commands.registerCommand("artiq.examineFile", experiment.examineFile),
-		vscode.commands.registerCommand("artiq.scanRepository", explorer.scan),
-		vscode.commands.registerCommand("artiq.openExperiment", explorer.open),
+		viewLog.view.register(),
+		viewSchedule.view.register(),
+		viewExperiment.view.register(),
+
+		vscode.commands.registerCommand("artiq.submitExperiment", viewExperiment.submit),
+		vscode.commands.registerCommand("artiq.examineFile", viewExperiment.examineFile),
+		vscode.commands.registerCommand("artiq.scanRepository", viewExplorer.scan),
+		vscode.commands.registerCommand("artiq.openExperiment", viewExplorer.open),
 	);
 
-	vscode.window.onDidChangeActiveTextEditor(async editor => {
-		await experiment.updateAvailable(editor);
-		experiment.updateCurr();
-		explorer.updateSelected();
+	vscode.window.onDidChangeActiveTextEditor(async () => {});
+
+	vscode.window.onDidChangeTextEditorSelection(async () => {
+		viewExperiment.update();
+		viewExplorer.update();
 	});
 
-	vscode.window.onDidChangeTextEditorSelection(async ev => {
-		await experiment.updateSelected(ev.selections[0]);
-		experiment.updateCurr();
-		explorer.updateSelected();
+	dbio.onUpdate(() => {
+		viewExperiment.update();
+		viewExplorer.update();
 	});
-
-	cached.handleUpdate(async () => {
-		await experiment.updateAvailable(vscode.window.activeTextEditor);
-		experiment.updateCurr();
-		explorer.updateSelected();
-	});
-
-	await experiment.updateAvailable(vscode.window.activeTextEditor);
-	await experiment.updateSelected(vscode.window.activeTextEditor?.selection);
-	experiment.updateCurr();
-	explorer.updateSelected();
 };

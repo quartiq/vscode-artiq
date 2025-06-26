@@ -1,17 +1,17 @@
 import * as vscode from "vscode";
-import * as path from "path";
 
 import * as net from "../net";
 import * as utils from "../utils";
-import * as cached from "../cached";
+import * as repo from "../repo";
+import * as dbio from "../dbio";
 
 let provider: ExplorerProvider;
 let view: vscode.TreeView<ExperimentTreeItem>;
 let receiver: any;
 let ready = false;
 
-export let open = async (filename: string, classname: string) => {
-	let uri = vscode.Uri.parse(path.posix.join(await cached.repoRoot, filename));
+export let open = async (path: string, classname: string) => {
+	let uri = vscode.Uri.parse(path);
 	try { await vscode.workspace.fs.stat(uri); } catch {
 		vscode.window.showErrorMessage("No such file, consider rescanning ARTIQ repository");
 		return;
@@ -39,7 +39,7 @@ class ExperimentTreeItem extends vscode.TreeItem {
 		this.command = {
 			command: "artiq.openExperiment",
 			title: "",
-			arguments: [exp.file, exp.class_name],
+			arguments: [exp.path, exp.class_name],
 		};
 	}
 }
@@ -57,22 +57,21 @@ class ExplorerProvider implements vscode.TreeDataProvider<ExperimentTreeItem> {
 		return element;
 	}
 
-	getParent(): undefined {} // must be implemented to access TreeView.reveal()
+	getParent(): undefined {} // no-op must be implemented to access TreeView.reveal()
 
 	getChildren(element?: ExperimentTreeItem | undefined): Thenable<ExperimentTreeItem[]> {
 		if (!ready) { return Promise.resolve([]); } // prevents the population cta from jibbering its way through for 1 second
 
 		view.message = "";
 
-		if (Object.values(cached.repoExps).length === 0) {
+		if (Object.values(repo.exps).length === 0) {
 			view.message = "Populate the repository directory with experiment files ...";
 			return Promise.resolve([]);
 		}
 
 		if (element) { return Promise.resolve([]); }
 
-		let treeItems = Object.entries(cached.repoExps)
-			.map(([k, v]) => new ExperimentTreeItem({name: k, ...v}));
+		let treeItems = Object.values(repo.exps).map(exp => new ExperimentTreeItem(exp));
 		return Promise.resolve(treeItems);
 	}
 }
@@ -90,12 +89,12 @@ export let init = async () => {
 	}
 
 	receiver.on("data", (data: any) => {
-		net.parseLines(data).forEach((msg: any) => cached.evalRepoUpdate(msg));
+		net.parseLines(data).forEach((msg: any) => repo.update(msg));
 		provider.refresh();
 		vscode.window.showInformationMessage("Updated Explorer");
 	});
 
-	cached.repoExpsReady.locked.then(() => ready = true);
+	repo.ready.locked.then(() => ready = true);
 };
 
 export let scan = async () => {
@@ -108,22 +107,15 @@ let deselectAll = (items: ExperimentTreeItem[]) => {
 	// see https://github.com/microsoft/vscode/issues/48754
 };
 
-export let updateSelected = async () => {
+export let update = async () => {
 	let items = await provider.getChildren();
-
-	if (!cached.curr) {
+	let curr = await dbio.curr();
+	
+	if (!curr || !curr.inRepo) {
 		deselectAll(items);
 		return;
 	}
 
-	// "file" property is "undefined" for examined exp files,
-	// hence selection will fail even on same filename and classname
-	// FIXME: completely relying on artiq protocol anomaly here, maybe this is bad
-	let item = items.find(i => i.tooltip === `${cached.curr.file}:${cached.curr.class_name}`);
-	if (!item) {
-		deselectAll(items);
-		return;
-	}
-
-	view.reveal(item);
+	let item = items.find(i => i.label === curr.name);
+	item ? view.reveal(item) : deselectAll(items);
 };

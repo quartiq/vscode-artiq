@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Experiment</title>
@@ -11,37 +12,32 @@
         .hidden { display: none }
     </style>
 </head>
+
 <body>
-    <div class="idle">
+    <div class="idle hidden">
         <p class="msg select">Select an experiment in the editor or in the explorer ...</p>
         <p class="msg scan">Unknown experiment. Consider saving the file and rescanning the repository ...</p>
         <p class="msg examine">Unknown experiment. Consider saving and examining the file ...</p>
     </div>
 
-    <form>
+    <form class="hidden">
         <vscode-form-group variant="vertical">
             <vscode-label for="priority">Priority</vscode-label>
-            <vscode-textfield name="priority" id="priority" value="0"></vscode-textfield>
+            <vscode-textfield class="input" name="scheduler_defaults.priority" id="priority" value="0"></vscode-textfield>
         </vscode-form-group>
 
         <vscode-form-group variant="vertical">
             <vscode-label for="log_level">Log level</vscode-label>
-            <vscode-single-select name="log_level" id="log_level">
-                <vscode-option value="DEBUG">DEBUG</vscode-option>
-                <vscode-option value="INFO">INFO</vscode-option>
-                <vscode-option value="WARNING" selected>WARNING</vscode-option>
-                <vscode-option value="ERROR">ERROR</vscode-option>
-                <vscode-option value="CRITICAL">CRITICAL</vscode-option>
-            </vscode-single-select>
+            <vscode-single-select class="input" name="submission_options.log_level" id="log_level"></vscode-single-select>
         </vscode-form-group>
 
         <vscode-form-group variant="vertical">
             <vscode-label for="pipeline_name">Pipeline</vscode-label>
-            <vscode-textfield name="pipeline_name" id="pipeline_name" value="main"></vscode-textfield>
+            <vscode-textfield class="input" name="scheduler_defaults.pipeline_name" id="pipeline_name" value="main"></vscode-textfield>
         </vscode-form-group>
 
         <vscode-form-group variant="vertical">
-            <vscode-checkbox label="Flush" name="flush" id="flush"></vscode-checkbox>
+            <vscode-checkbox class="input" label="Flush" name="scheduler_defaults.flush" id="flush"></vscode-checkbox>
         </vscode-form-group>
 
         <vscode-form-group variant="vertical">
@@ -54,17 +50,70 @@
 
         let idleel = document.querySelector(".idle");
         let msgels = idleel.querySelectorAll(".msg");
+
         let formel = document.querySelector("form");
         let flushel = document.querySelector("#flush");
+        let inputels = document.querySelectorAll(".input");
 
         formel.addEventListener("submit", ev => {
             ev.preventDefault(); // suppress iframe refresh and thus demolition
-
-            let options = new FormData(formel);
-            options = Object.fromEntries(options); // postMessage can not serialize FormData
-            options.flush = flushel.checked; // force boolean representation for checkbox
-            vscode.postMessage( {action: "submit", data: options} );
+            vscode.postMessage( {action: "submit"} );
         });
+
+        inputels.forEach(el => el.addEventListener("change", ev => {
+            let dataFlat = new FormData(formel);
+            dataFlat = Object.fromEntries(dataFlat); // postMessage can not serialize FormData
+            dataFlat["scheduler_defaults.flush"] = flushel.checked; // force boolean representation for checkbox
+            vscode.postMessage( {action: "change", data: {...expFlat, ...dataFlat} } );
+        }));
+
+        let updateForm = expFlat => {
+            Object.entries(expFlat).forEach(([k, v]) => {
+                let el = document.querySelector(`[name="${k}"]`);
+                if (!el) return;
+
+                if (k === "scheduler_defaults.flush") {
+                    el.checked = v;
+                    return;
+                }
+                el.value = v;
+            });
+        };
+
+        let actions = {
+            init: data => {
+                let parentel = document.querySelector("vscode-single-select");
+                data.logLevels.forEach(name => {
+                    let el = document.createElement("vscode-option");
+                    el.value = name;
+                    el.textContent = name;
+                    parentel.append(el);
+                });
+            },
+
+            update: data => {
+                if (!data.selectedClass) {
+                    showIdle("select");
+                    return;
+                }
+
+                if (!data.expFlat && data.inRepo) {
+                    showIdle("scan");
+                    return;
+                }
+
+                if (!data.expFlat) {
+                    showIdle("examine");
+                    return;
+                }
+
+                expFlat = data.expFlat;
+                updateForm(expFlat);
+
+                idleel.classList.add("hidden");
+                formel.classList.remove("hidden");
+            }
+        };
 
         let showIdle = type => {
             msgels.forEach(el => el.classList.add("hidden"));
@@ -74,25 +123,8 @@
             formel.classList.add("hidden");
         };
 
-        window.addEventListener("message", ev => {
-            if (!ev.data.selectedClass) {
-                showIdle("select");
-                return;
-            }
-
-            if (!ev.data.curr && ev.data.isRepoFile) {
-                showIdle("scan");
-                return;
-            }
-
-            if (!ev.data.curr) {
-                showIdle("examine");
-                return;
-            }
-
-            idleel.classList.add("hidden");
-            formel.classList.remove("hidden");
-        });
+        window.addEventListener("message", ev => actions[ev.data.action](ev.data.data));
     </script>
 </body>
+
 </html>

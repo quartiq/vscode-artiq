@@ -32,22 +32,9 @@
 
 # Editor
 
-- on change of file:
-    - [x] check repo and exam caches for corresponding experiments
-    - [x] if none, hint scan or examination in "Experiment" view
-    - [x] update available experiments cache
-
-    - in "Explorer":
-        - [x] select corresponding TreeItem
-        - [ ] otherwise deselect any TreeItem
-
-    - in "Experiment":
-        - [x] show corresponding submit form
-        - [ ] transfer experiment data into form fields
-        - [x] otherwise hide submit form
-
 - on change of selection:
-    - [x] check available cache for corresponding experiment
+    - [x] check db for corresponding experiment
+    - [x] if none, hint scan or examination in "Experiment" view
 
     - in "Explorer":
         - [x] select corresponding TreeItem
@@ -55,14 +42,14 @@
 
     - in "Experiment":
         - [x] show corresponding submit form
-        - [ ] transfer experiment data into form fields
+        - [x] transfer db data into form fields
         - [x] otherwise hide submit form
 
 # "Experiment"
-- *todo* persistant custom data in form fields
 
 - [x] "Submit Experiment" button in View Toolbar
 - [x] "Examine File" button in View Toolbar
+- [ ] "Forget custom params" button in View Toolbar
 
 - form consists of:
     - [x] "Priority" input field
@@ -71,12 +58,15 @@
     - [x] "Flush" checkbox
     - [x] "Submit" button
 
+- on focus drop of input field
+    - [x] persistantly save custom params
+
 - on click on "Submit" form button
-    - [ ] submit experiment with form params via ARTIQ server
+    - [x] submit experiment via ARTIQ server
 
 - on click on "Submit Experiment" toolbar button
-    - [ ] submit experiment with global params via ARTIQ server
-    - [ ] shortcut Ctrl+Shift+X (?)
+    - [x] submit experiment via ARTIQ server
+    - [x] shortcut Ctrl+Shift+X
 
 - on click on "Examine File" button:
     - [x] request examination via ARTIQ server
