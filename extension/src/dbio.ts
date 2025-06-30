@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 
 import * as utils from "./utils";
+import * as mutex from "./mutex";
 
 export type SchedulerDefaults = {
 	pipeline_name: string,
@@ -43,24 +44,24 @@ export type Experiment = {
 };
 
 let db: vscode.Memento;
-let updateHandler: () => void;
+let updateHandler = mutex.lock();
 
 export let init = (ctx: vscode.ExtensionContext) => db = ctx.globalState;
-export let onUpdate = (fn: () => void) => updateHandler = fn;
+export let onUpdate = (fn: () => void) => updateHandler.unlock(fn);
 
 let key = (exp: Experiment) => ["experiments", exp.path, exp.class_name].join();
 
 export let update = (exp: Experiment) => db.update(key(exp), exp);
 
-export let updateAll = (exps: Experiment[]) => {
+export let updateAll = async (exps: Experiment[]) => {
 	exps.forEach(exp => db.update(key(exp), exp));
-	updateHandler();
+	await updateHandler.locked.then(fn => fn());
 };
 
-export let createAll = (exps: Experiment[]) => {
+export let createAll = async (exps: Experiment[]) => {
 	// only write if key is not yet occupied
 	exps.forEach(exp => !db.get(key(exp)) && db.update(key(exp), exp));
-	updateHandler();
+	await updateHandler.locked.then(fn => fn());
 };
 
 export let flush = () => db.keys().forEach(k => db.update(k, undefined));
