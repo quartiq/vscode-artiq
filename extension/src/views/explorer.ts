@@ -7,8 +7,6 @@ import * as dbio from "../dbio";
 
 let provider: ExplorerProvider;
 let view: vscode.TreeView<ExperimentTreeItem>;
-let receiver: any;
-let ready = false;
 
 export let open = async (path: string, classname: string) => {
 	let uri = vscode.Uri.parse(path);
@@ -30,7 +28,7 @@ export let open = async (path: string, classname: string) => {
 
 class ExperimentTreeItem extends vscode.TreeItem {
 	constructor(
-		public readonly exp: any,
+		private readonly exp: any, // FIXME tree items have an "exp" property, which is not intended
 	) {
 		super(exp.name);
 		this.tooltip = `${exp.file}:${exp.class_name}`;
@@ -49,28 +47,26 @@ class ExplorerProvider implements vscode.TreeDataProvider<ExperimentTreeItem> {
 	readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
 	public refresh(): void {
 		this._onDidChangeTreeData.fire(undefined);
+		vscode.window.showInformationMessage("Updated Explorer");
 	}
 
 	constructor() {}
 
-	getTreeItem(element: ExperimentTreeItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
+	getTreeItem(element: ExperimentTreeItem): vscode.TreeItem {
 		return element;
 	}
 
 	getParent(): undefined {} // no-op must be implemented to access TreeView.reveal()
 
-	getChildren(element?: ExperimentTreeItem | undefined): Thenable<ExperimentTreeItem[]> {
-		if (!ready) { return Promise.resolve([]); } // prevents the population cta from jibbering its way through for 1 second
-
-		view.message = "";
+	getChildren(element?: ExperimentTreeItem): Thenable<ExperimentTreeItem[]> {
+		if (element) { return Promise.resolve([]); }
 
 		if (Object.values(repo.exps).length === 0) {
 			view.message = "Populate the repository directory with experiment files ...";
 			return Promise.resolve([]);
 		}
 
-		if (element) { return Promise.resolve([]); }
-
+		view.message = "";
 		let treeItems = Object.values(repo.exps).map(exp => new ExperimentTreeItem(exp));
 		return Promise.resolve(treeItems);
 	}
@@ -82,19 +78,15 @@ export let init = async () => {
 		treeDataProvider: provider,
 	});
 
-	receiver = net.receiver(3250, "sync_struct", "explist");
+	net.receiver(3250, "sync_struct", "explist").on("data", async (data: any) => {
+		let msgs = net.parseLines(data);
+		await repo.updateAll(msgs);
+		provider.refresh();
+	});
 
 	if (vscode.workspace.getConfiguration("artiq").get("initialScan")) {
 		await scan();
 	}
-
-	receiver.on("data", (data: any) => {
-		net.parseLines(data).forEach((msg: any) => repo.update(msg));
-		provider.refresh();
-		vscode.window.showInformationMessage("Updated Explorer");
-	});
-
-	repo.ready.locked.then(() => ready = true);
 };
 
 export let scan = async () => {

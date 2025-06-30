@@ -30,8 +30,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand("artiq.openExperiment", viewExplorer.open),
 	);
 
-	vscode.window.onDidChangeActiveTextEditor(async () => {});
-
 	vscode.window.onDidChangeTextEditorSelection(async () => {
 		viewExperiment.update();
 		viewExplorer.update();
