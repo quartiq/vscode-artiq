@@ -5,6 +5,8 @@ let { once } = require("events");
 import * as pyon from "./pyon";
 import * as dbio from "./dbio";
 
+export type Bytes = {type: "Buffer", data: number[]};
+
 const host = vscode.workspace.getConfiguration("artiq").get("host");
 
 export let receiver = (port: Number, banner: string, target: string) => {
@@ -43,9 +45,9 @@ export let rpc = async (target: string, method: string, args: any[], debug?: str
     return parseLine(await once(client, "data"));
 };
 
-let parseLine = (bytes: any) => pyon.decode(bytes.toString());
+let parseLine = (bytes: Bytes) => pyon.decode(bytes.toString());
 
-export let parseLines = (bytes: any) => bytes.toString().trim().split("\n")
+export let parseLines = (bytes: Bytes) => bytes.toString().trim().split("\n")
     .map((s: string) => pyon.decode(s));
 
 export let logging: { [name: string]: Number } = {

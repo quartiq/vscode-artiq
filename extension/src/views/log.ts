@@ -13,5 +13,5 @@ export let init = async (context: vscode.ExtensionContext) => {
     // see: https://github.com/m-labs/artiq/blob/master/artiq/frontend/artiq_client.py#L347-L348
     receiver = await net.receiver(1067, "broadcast", "log");
     receiver.on("ready", () => view.init());
-    receiver.on("data", (data: string) => view.post(net.parseLines(data)));
+    receiver.on("data", (data: net.Bytes) => view.post(net.parseLines(data)));
 };

@@ -28,7 +28,7 @@ export let open = async (path: string, classname: string) => {
 
 class ExperimentTreeItem extends vscode.TreeItem {
 	constructor(
-		private readonly exp: any, // FIXME tree items have an "exp" property, which is not intended
+		exp: any,
 	) {
 		super(exp.name);
 		this.tooltip = `${exp.file}:${exp.class_name}`;
@@ -78,9 +78,9 @@ export let init = async () => {
 		treeDataProvider: provider,
 	});
 
-	net.receiver(3250, "sync_struct", "explist").on("data", async (data: any) => {
-		let msgs = net.parseLines(data);
-		await repo.updateAll(msgs);
+	net.receiver(3250, "sync_struct", "explist").on("data", async (data: net.Bytes) => {
+		let mods = net.parseLines(data);
+		await repo.updateAll(mods);
 		provider.refresh();
 	});
 

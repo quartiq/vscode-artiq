@@ -109,6 +109,12 @@
           "name": "Experiment",
           "icon": "media/artiq.svg",
           "contextualTitle": "Experiment"
+        },
+        {
+          "id": "datasets",
+          "name": "Datasets",
+          "icon": "media/artiq.svg",
+          "contextualTitle": "Datasets"
         }
       ],
       "artiq-panel": [

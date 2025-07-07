@@ -8,6 +8,7 @@ import * as viewLog from "./views/log";
 import * as viewSchedule from "./views/schedule";
 import * as viewExperiment from "./views/experiment";
 import * as viewExplorer from "./views/explorer";
+import * as viewDatasets from "./views/datasets";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -18,6 +19,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	await viewSchedule.init(context);
 	await viewExperiment.init(context);
 	await viewExplorer.init();
+	await viewDatasets.init();
 
 	context.subscriptions.push(
 		viewLog.view.register(),
