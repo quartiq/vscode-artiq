@@ -4,7 +4,7 @@ import * as pyon from "../pyon";
 import * as syncstruct from "../syncstruct";
 
 let provider: DatasetsProvider;
-let view: vscode.TreeView<vscode.TreeItem>;
+let view: vscode.TreeView<string>;
 let sets: syncstruct.Struct = {};
 
 let name = (keypath: string) => keypath.split(".").slice(-1)[0];
@@ -13,7 +13,7 @@ let fmt = (set: pyon.Tuple) => `${set[0] ? "🟢" : "🔴"} ${set[1]}${set[2].un
 
 class DatasetTreeItem extends vscode.TreeItem {
     constructor(
-        keypath: any,
+        keypath: string,
     ) {
         super(name(keypath));
         if (sets[keypath]) { this.description = fmt(sets[keypath]); }

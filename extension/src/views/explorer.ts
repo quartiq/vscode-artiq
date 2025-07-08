@@ -1,15 +1,22 @@
 import * as vscode from "vscode";
+import * as path from "path";
 
-import * as net from "../net";
 import * as utils from "../utils";
-import * as repo from "../repo";
+import * as net from "../net";
 import * as dbio from "../dbio";
+import * as syncstruct from "../syncstruct";
 
 let provider: ExplorerProvider;
-let view: vscode.TreeView<ExperimentTreeItem>;
+let view: vscode.TreeView<string>;
+let exps: syncstruct.Struct = {};
 
-export let open = async (path: string, classname: string) => {
-	let uri = vscode.Uri.parse(path);
+let root: Promise<string> = new Promise(resolve => {
+	net.rpc("experiment_db", "root", []).then((data: any) => resolve(data.ret));
+});
+
+export let open = async (filename: string, classname: string) => {
+	let p = path.posix.join(await root, filename);
+	let uri = vscode.Uri.parse(p);
 	try { await vscode.workspace.fs.stat(uri); } catch {
 		vscode.window.showErrorMessage("No such file, consider rescanning ARTIQ repository");
 		return;
@@ -28,47 +35,48 @@ export let open = async (path: string, classname: string) => {
 
 class ExperimentTreeItem extends vscode.TreeItem {
 	constructor(
-		exp: any,
+		name: string,
 	) {
-		super(exp.name);
+		super(name);
+		let exp = exps[name];
+
 		this.tooltip = `${exp.file}:${exp.class_name}`;
 		let color = new vscode.ThemeColor("symbolIcon.classForeground");
 		this.iconPath = new vscode.ThemeIcon("package", color);
 		this.command = {
 			command: "artiq.openExperiment",
 			title: "",
-			arguments: [exp.path, exp.class_name],
+			arguments: [exp.file, exp.class_name],
 		};
 	}
 }
 
-class ExplorerProvider implements vscode.TreeDataProvider<ExperimentTreeItem> {
+class ExplorerProvider implements vscode.TreeDataProvider<string> {
 	private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
 	readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
-	public refresh(): void {
-		this._onDidChangeTreeData.fire(undefined);
+	public refresh(name: string): void {
+		this._onDidChangeTreeData.fire(name);
 		vscode.window.showInformationMessage("Updated Explorer");
 	}
 
 	constructor() {}
 
-	getTreeItem(element: ExperimentTreeItem): vscode.TreeItem {
-		return element;
+	getTreeItem(name: string): vscode.TreeItem {
+		return new ExperimentTreeItem(name);
 	}
 
 	getParent(): undefined {} // no-op must be implemented to access TreeView.reveal()
 
-	getChildren(element?: ExperimentTreeItem): Thenable<ExperimentTreeItem[]> {
-		if (element) { return Promise.resolve([]); }
+	async getChildren(name?: string): Promise<string[]> {
+		if (name) { return Promise.resolve([]); }
 
-		if (Object.values(repo.exps).length === 0) {
+		if (Object.keys(exps).length === 0) {
 			view.message = "Populate the repository directory with experiment files ...";
 			return Promise.resolve([]);
 		}
 
 		view.message = "";
-		let treeItems = Object.values(repo.exps).map(exp => new ExperimentTreeItem(exp));
-		return Promise.resolve(treeItems);
+		return Object.keys(exps);
 	}
 }
 
@@ -78,10 +86,19 @@ export let init = async () => {
 		treeDataProvider: provider,
 	});
 
-	net.receiver(3250, "sync_struct", "explist").on("data", async (data: net.Bytes) => {
-		let mods = net.parseLines(data);
-		await repo.updateAll(mods);
-		provider.refresh();
+	exps = syncstruct.from({
+		channel: "explist",
+		onReceive: async name => {
+			let basepath = await root;
+			// update "softly" to provide what is new
+			// yet to sustain what was known and customized
+			dbio.createAll(Object.entries(exps).map(([name, exp]) => ({
+				...exp, name,
+				path: path.posix.join(basepath, exp.file),
+				inRepo: true,
+			})));
+			provider.refresh(name);
+		},
 	});
 
 	if (vscode.workspace.getConfiguration("artiq").get("initialScan")) {
@@ -94,20 +111,19 @@ export let scan = async () => {
 	await net.rpc("experiment_db", "scan_repository", []);
 };
 
-let deselectAll = (items: ExperimentTreeItem[]) => {
+let deselectAll = (names: string[]) => {
 	// TODO: waiting for feature to ship
 	// see https://github.com/microsoft/vscode/issues/48754
 };
 
 export let update = async () => {
-	let items = await provider.getChildren();
+	let names = Object.keys(exps);
 	let curr = await dbio.curr();
 	
 	if (!curr || !curr.inRepo) {
-		deselectAll(items);
+		deselectAll(names);
 		return;
 	}
 
-	let item = items.find(i => i.label === curr.name);
-	item ? view.reveal(item) : deselectAll(items);
+	names.includes(curr.name) ? view.reveal(curr.name) : deselectAll(names);
 };
