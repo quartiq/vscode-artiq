@@ -45,10 +45,11 @@ class DatasetsProvider implements vscode.TreeDataProvider<string> {
     async getChildren(keypath?: string): Promise<string[]> {
         let parentKeys = keypath ? keypath.split(".") : [];
         let dup = Object.keys(sets)
-            .map(keypath => keypath.split(".").slice(0, parentKeys.length + 1))
+            .map(kp => kp.split(".").slice(0, parentKeys.length + 1))
             .filter(keys => startsWith(keys, parentKeys))
             .filter(keys => keys.length > parentKeys.length)
-            .map(keys => keys.join("."));
+            .map(keys => keys.join("."))
+            .sort((a, b) => name(a).localeCompare(name(b)));
         return [...new Set(dup)];
     }
 }
