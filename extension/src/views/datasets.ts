@@ -27,6 +27,11 @@ class DatasetsProvider implements vscode.TreeDataProvider<string> {
     private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
     readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
     public refresh(keypath: string): void {
+        if (keypath) {
+            // tree model assumes the existence of an element
+            // so we update through "getChildren" on its parent
+            keypath = keypath.split(".").slice(0, -1).join(".");
+        }
         this._onDidChangeTreeData.fire(keypath);
         vscode.window.showInformationMessage("Updated Datasets");
     }

@@ -54,8 +54,8 @@ class ExperimentTreeItem extends vscode.TreeItem {
 class ExplorerProvider implements vscode.TreeDataProvider<string> {
 	private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
 	readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
-	public refresh(name: string): void {
-		this._onDidChangeTreeData.fire(name);
+	public refresh(): void {
+		this._onDidChangeTreeData.fire(undefined);
 		vscode.window.showInformationMessage("Updated Explorer");
 	}
 
@@ -97,7 +97,7 @@ export let init = async () => {
 				path: path.posix.join(basepath, exp.file),
 				inRepo: true,
 			})));
-			provider.refresh(name);
+			provider.refresh();
 		},
 	});
 
