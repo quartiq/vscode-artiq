@@ -4,7 +4,7 @@ import * as pyon from "../pyon";
 import * as syncstruct from "../syncstruct";
 
 let provider: DatasetsProvider;
-let view: vscode.TreeView<string>;
+export let view: vscode.TreeView<string>;
 let sets: syncstruct.Struct = {};
 
 let name = (keypath: string) => keypath.split(".").slice(-1)[0];

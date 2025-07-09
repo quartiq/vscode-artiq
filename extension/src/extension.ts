@@ -25,6 +25,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		viewLog.view.register(),
 		viewSchedule.view.register(),
 		viewExperiment.view.register(),
+		viewExplorer.view,
+		viewDatasets.view,
 
 		vscode.commands.registerCommand("artiq.submitExperiment", viewExperiment.submit),
 		vscode.commands.registerCommand("artiq.examineFile", viewExperiment.examineFile),

@@ -7,7 +7,7 @@ import * as dbio from "../dbio";
 import * as syncstruct from "../syncstruct";
 
 let provider: ExplorerProvider;
-let view: vscode.TreeView<string>;
+export let view: vscode.TreeView<string>;
 let exps: syncstruct.Struct = {};
 
 let root: Promise<string> = new Promise(resolve => {
