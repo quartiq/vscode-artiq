@@ -29,53 +29,39 @@
     </vscode-table>
 
     <script>
-        // FIXME: Implement m-labs/sipyco sync_struct
+        let cellel = value => {
+            let el = document.createElement("vscode-table-cell");
+            el.textContent = value;
+            return el;
+        };
 
-        let create = msg => {
-            let bodyel = document.querySelector("vscode-table-body");
+        let rowel = (rid, record) => {
             let rowel = document.createElement("vscode-table-row");
-            rowel.dataset.key = msg.key;
 
-            let v = msg.value;
-            let row = {
-                key: msg.key,
-                pipeline: v.pipeline,
-                status: v.status,
-                priority: v.priority,
-                due_date: v.due_date,
-                repo_rev: v.expid.repo_rev ? v.expid.repo_rev : "w/o repo",
-                file: v.expid.file,
-                class_name: v.expid.class_name,
-            };
+            [
+                rid,
+                record.pipeline,
+                record.status,
+                record.priority,
+                record.due_date,
+                record.expid.repo_rev ?? "w/o repo",
+                record.expid.file,
+                record.expid.class_name,
+            ]
+            .map(value => cellel(value))
+            .forEach(cellel => rowel.append(cellel));
 
-            Object.entries(row).forEach(([k, v]) => {
-                let cellel = document.createElement("vscode-table-cell");
-                cellel.className = k;
-                cellel.textContent = v;
-                rowel.append(cellel);
-            });
-
-            bodyel.append(rowel);
+            return rowel;
         };
 
-        let update = msg => {
-            let cellel = document.querySelector(`[data-key="${msg.path[0]}"] .${msg.key}`);
-            cellel.textContent = msg.value;
-        };
+        window.addEventListener("message", ev => {
+            let bodyel = document.querySelector("vscode-table-body");
+            bodyel.innerHTML = "";
 
-        let actions = {};
-        
-        actions.setitem = msg => {
-            if (msg.path.length > 0) return update(msg);
-            create(msg);
-        };
-
-        actions.delitem = msg => {
-            let rowel = document.querySelector(`[data-key="${msg.key}"]`);
-            rowel.remove();
-        };
-
-        window.addEventListener("message", ev => ev.data.forEach(msg => actions[msg.action]?.(msg)));
+            Object.entries(ev.data.records)
+                .map(([rid, record]) => rowel(rid, record))
+                .forEach(rowel => bodyel.append(rowel));
+        });
     </script>
 </body>
 </html>
