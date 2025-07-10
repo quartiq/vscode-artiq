@@ -50,6 +50,10 @@
           "light": "media/refresh-light.svg",
           "dark": "media/refresh-dark.svg"
         }
+      },
+      {
+        "command": "artiq.renameDataset",
+        "title": "Rename..."
       }
     ],
     "keybindings": [
@@ -76,6 +80,13 @@
           "command": "artiq.scanRepository",
           "when": "view == explorer",
           "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "artiq.renameDataset",
+          "when": "view == datasets && viewItem == dataset",
+          "group": "edit"
         }
       ]
     },

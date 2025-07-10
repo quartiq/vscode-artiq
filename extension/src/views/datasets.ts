@@ -1,14 +1,23 @@
 import * as vscode from "vscode";
 
+import * as net from "../net";
 import * as pyon from "../pyon";
 import * as syncstruct from "../syncstruct";
 
 let provider: DatasetsProvider;
 export let view: vscode.TreeView<string>;
-let sets: syncstruct.Struct = {};
+
+type Set = [persist: boolean, value: any, metadata: {unit: string, scale: Number, precision: Number}];
+let sets: Record<string, Set> = {};
 
 let name = (keypath: string) => keypath.split(".").slice(-1)[0];
+let setname = (keypath: string, name: string) => {
+    let keys = keypath.split(".");
+    keys.splice(keys.length - 1, 1, name);
+    return keys.join(".");
+};
 let startsWith = (arr: string[], prefix: string[]) => arr.slice(0, prefix.length).every((val, index) => val === prefix[index]);
+// TODO: should persist status rather be represented by tree item icon and color, than unicode?
 let fmt = (set: pyon.Tuple) => `${set[0] ? "🟢" : "🔴"} ${set[1]}${set[2].unit ? " " + set[2].unit : ""}`;
 
 class DatasetTreeItem extends vscode.TreeItem {
@@ -16,7 +25,11 @@ class DatasetTreeItem extends vscode.TreeItem {
         keypath: string,
     ) {
         super(name(keypath));
-        if (sets[keypath]) { this.description = fmt(sets[keypath]); }
+
+        if (sets[keypath]) {
+            this.description = fmt(sets[keypath]);
+            this.contextValue = "dataset";
+        }
 
         let hasChildren = Object.keys(sets).some(k => k.startsWith(`${keypath}.`));
         if (hasChildren) { this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed; }
@@ -64,4 +77,17 @@ export let init = async () => {
         channel: "datasets",
         onReceive: keypath => provider.refresh(keypath),
     });
+};
+
+export let rename = async (keypath: string) => {
+    let newName = await vscode.window.showInputBox({ prompt: "New name:", value: name(keypath) });
+    if (newName && newName !== name(keypath)) {
+        console.log(setname(keypath, newName));
+        let set = sets[keypath];
+        net.rpc("dataset_db", "delete", [keypath]);
+        // unfortunately the interfaces of m-labs/artiq/master/databases:DatasetDB.set()
+        // and the underlying data model differ in field order
+        // and as they are external interfaces, they can never be changed
+        net.rpc("dataset_db", "set", [setname(keypath, newName), set[1], set[0], set[2]]);
+    }
 };

@@ -8,7 +8,7 @@ import * as syncstruct from "../syncstruct";
 
 let provider: ExplorerProvider;
 export let view: vscode.TreeView<string>;
-let exps: syncstruct.Struct = {};
+let exps: Record<string, dbio.Experiment> = {};
 
 let root: Promise<string> = new Promise(resolve => {
 	net.rpc("experiment_db", "root", []).then((data: any) => resolve(data.ret));
@@ -94,7 +94,7 @@ export let init = async () => {
 			// yet to sustain what was known and customized
 			dbio.createAll(Object.entries(exps).map(([name, exp]) => ({
 				...exp, name,
-				path: path.posix.join(basepath, exp.file),
+				path: path.posix.join(basepath, exp.file!),
 				inRepo: true,
 			})));
 			provider.refresh();

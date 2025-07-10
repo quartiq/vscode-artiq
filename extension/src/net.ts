@@ -21,6 +21,7 @@ export let receiver = (port: Number, banner: string, target: string) => {
     return client;
 };
 
+// TODO: use kwargs instead of args, less ugly
 export let rpc = async (target: string, method: string, args: any[], debug?: string) => {
     let client = new net.Socket();
     client.connect(3251, host);
