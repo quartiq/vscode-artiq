@@ -17,8 +17,8 @@ let setname = (keypath: string, name: string) => {
     return keys.join(".");
 };
 let startsWith = (arr: string[], prefix: string[]) => arr.slice(0, prefix.length).every((val, index) => val === prefix[index]);
-// TODO: should persist status rather be represented by tree item icon and color, than unicode?
-let fmt = (set: pyon.Tuple) => `${set[0] ? "🟢" : "🔴"} ${set[1]}${set[2].unit ? " " + set[2].unit : ""}`;
+// TODO: this should be created according to m-labs/artiq/dashboard/datasets:77
+let fmt = (set: pyon.Tuple) => `${set[1]}${set[2].unit ? " " + set[2].unit : ""}`;
 
 class DatasetTreeItem extends vscode.TreeItem {
     constructor(
@@ -26,9 +26,12 @@ class DatasetTreeItem extends vscode.TreeItem {
     ) {
         super(name(keypath));
 
-        if (sets[keypath]) {
-            this.description = fmt(sets[keypath]);
+        let set = sets[keypath];
+        if (set) {
+            this.description = fmt(set);
             this.contextValue = "dataset";
+            this.checkboxState = Number(set[0]);
+            this.tooltip = "Checkbox: Make dataset persist ARTIQ restart";
         }
 
         let hasChildren = Object.keys(sets).some(k => k.startsWith(`${keypath}.`));
@@ -73,6 +76,12 @@ export let init = async () => {
         treeDataProvider: provider,
     });
 
+    view.onDidChangeCheckboxState(ev => ev.items.forEach(item => {
+        let [keypath, checked] = item;
+        let set = sets[keypath];
+        net.rpc("dataset_db", "set", [keypath, set[1], Boolean(checked), set[2]]);
+    }));
+
     sets = syncstruct.from({
         channel: "datasets",
         onReceive: keypath => provider.refresh(keypath),
@@ -82,7 +91,6 @@ export let init = async () => {
 export let rename = async (keypath: string) => {
     let newName = await vscode.window.showInputBox({ prompt: "New name:", value: name(keypath) });
     if (newName && newName !== name(keypath)) {
-        console.log(setname(keypath, newName));
         let set = sets[keypath];
         net.rpc("dataset_db", "delete", [keypath]);
         // unfortunately the interfaces of m-labs/artiq/master/databases:DatasetDB.set()
