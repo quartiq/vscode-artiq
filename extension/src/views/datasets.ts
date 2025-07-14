@@ -9,6 +9,12 @@ export let view: vscode.TreeView<string>;
 
 type Set = [persist: boolean, value: any, metadata: {unit: string, scale: Number, precision: Number}];
 let sets: Record<string, Set> = {};
+let leafpaths: {[name: string]: any[]} = {
+    Value: [1],
+    Unit: [2, "unit"],
+    Scale: [2, "scale"],
+    Precision: [2, "precision"],
+};
 
 let name = (keypath: string) => keypath.split(".").slice(-1)[0];
 let setname = (keypath: string, name: string) => {
@@ -34,8 +40,17 @@ class DatasetTreeItem extends vscode.TreeItem {
             this.tooltip = "Checkbox: Make dataset persist ARTIQ restart";
         }
 
-        let hasChildren = Object.keys(sets).some(k => k.startsWith(`${keypath}.`));
-        if (hasChildren) { this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed; }
+        let isNode = Object.keys(sets).some(k => k.startsWith(keypath));
+        if (isNode) {
+            this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+            return;
+        }
+
+        // only "inputs" left at this point
+        set = sets[keypath.split(".").slice(0, -1).join(".")];
+        this.description = String(leafpaths[name(keypath)].reduce((acc, key) => acc[key], set));
+        let color = new vscode.ThemeColor("symbolIcon.variableForeground");
+        this.iconPath = new vscode.ThemeIcon("edit", color);
     }
 }
 
@@ -66,7 +81,13 @@ class DatasetsProvider implements vscode.TreeDataProvider<string> {
             .filter(keys => keys.length > parentKeys.length)
             .map(keys => keys.join("."))
             .sort((a, b) => name(a).localeCompare(name(b)));
-        return [...new Set(dup)];
+
+        let leafs: string[] = [];
+        if (keypath && keypath in sets) {
+            leafs = Object.keys(leafpaths).map(name => [keypath, name].join("."));
+        }
+
+        return [...leafs, ...new Set(dup)];
     }
 }
 
