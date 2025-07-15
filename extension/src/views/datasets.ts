@@ -90,6 +90,10 @@ class DatasetsProvider implements vscode.TreeDataProvider<string> {
         return new DatasetTreeItem(keypath);
     }
 
+    getParent(keypath: string): string {
+        return keypath.split(".").slice(0, -1).join(".");
+    }
+
     async getChildren(keypath?: string): Promise<string[]> {
         let parentKeys = keypath ? keypath.split(".") : [];
         let dups = findChildren(Object.keys(sets), parentKeys, 1)
@@ -121,7 +125,12 @@ export let init = async () => {
 
     sets = syncstruct.from({
         channel: "datasets",
-        onReceive: keypath => provider.refresh(keypath),
+        onReceive: mod => {
+            provider.refresh(mod.key);
+            if (mod.action === "setitem") {
+                view.reveal(mod.key, {focus: true, expand: true});
+            }
+        },
     });
 };
 

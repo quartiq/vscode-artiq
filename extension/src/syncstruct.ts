@@ -19,7 +19,7 @@ let actions: { [name: string]: Action } = { init, setitem, delitem };
 export let from = (params: {
     channel: string,
     onReady?: () => void,
-    onReceive: (key: string) => void,
+    onReceive: (mod: Mod) => void,
 }) => {
     let struct: Struct = {};
 
@@ -30,7 +30,7 @@ export let from = (params: {
         let mods = net.parseLines(data);
         mods.map(async (mod: any) => {
             actions[mod.action](struct, mod);
-            params.onReceive(mod.key);
+            params.onReceive(mod);
         });
     });
 
