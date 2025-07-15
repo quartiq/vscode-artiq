@@ -88,7 +88,7 @@ export let init = async () => {
 
 	exps = syncstruct.from({
 		channel: "explist",
-		onReceive: async name => {
+		onReceive: async () => {
 			let basepath = await root;
 			// update "softly" to provide what is new
 			// yet to sustain what was known and customized

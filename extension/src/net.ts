@@ -9,7 +9,8 @@ export type Bytes = {type: "Buffer", data: number[]};
 
 const host = vscode.workspace.getConfiguration("artiq").get("host");
 
-export let receiver = (port: Number, banner: string, target: string) => {
+export let receiver = (port: number, banner: string, target: string) => {
+    // TODO: use "readline" module wrapper, make "parseLines" save to use
     let client = new net.Socket();
 
     client.connect(port, host, () => {
@@ -51,7 +52,7 @@ let parseLine = (bytes: Bytes) => pyon.decode(bytes.toString());
 export let parseLines = (bytes: Bytes) => bytes.toString().trim().split("\n")
     .map((s: string) => pyon.decode(s));
 
-export let logging: { [name: string]: Number } = {
+export let logging: { [name: string]: number } = {
     // see: https://docs.python.org/3/library/logging.html#logging-levels
     NOTSET: 0,
     DEBUG: 10,
