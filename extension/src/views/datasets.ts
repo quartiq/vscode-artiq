@@ -7,22 +7,42 @@ import * as syncstruct from "../syncstruct";
 let provider: DatasetsProvider;
 export let view: vscode.TreeView<string>;
 
-type Set = [persist: boolean, value: any, metadata: {unit: string, scale: Number, precision: Number}];
+type Set = [persist: boolean, value: any, metadata: { unit: string, scale: Number, precision: Number }];
 let sets: Record<string, Set> = {};
-let leafpaths: {[name: string]: any[]} = {
+let leafpaths: { [name: string]: any[] } = {
     Value: [1],
     Unit: [2, "unit"],
     Scale: [2, "scale"],
     Precision: [2, "precision"],
 };
 
-let name = (keypath: string) => keypath.split(".").slice(-1)[0];
-let setname = (keypath: string, name: string) => {
-    let keys = keypath.split(".");
-    keys.splice(keys.length - 1, 1, name);
-    return keys.join(".");
+let name = (keypath: string): string => keypath.split(".").pop()!;
+
+// makes no implicit statement regarding overflow one way or the other
+let startsWith = (arr: string[], prefix: string[]) => arr
+    .slice(0, prefix.length)
+    .every((val, index) => val === prefix[index]);
+
+let findChildren = (keypaths: string[], prefix: string[], depth?: number): string[][] => keypaths
+    .map(kp => kp.split("."))
+    .filter(keys => startsWith(keys, prefix))
+    .filter(keys => keys.length >= prefix.length + (depth ?? 0));
+
+let isNode = (keypath: string): boolean => findChildren(Object.keys(sets), keypath.split(".")).length > 0;
+
+let closestParent = (keypath: string | undefined): string | undefined => {
+    if (!keypath || Object.keys(sets).length === 0) { return undefined; }
+
+    let target = keypath.split(".");
+    while (true) {
+        target.pop();
+        let related = findChildren(Object.keys(sets), target);
+        if (related.length > 0) { break; }
+    }
+
+    return target.join(".");
 };
-let startsWith = (arr: string[], prefix: string[]) => arr.slice(0, prefix.length).every((val, index) => val === prefix[index]);
+
 // TODO: this should be created according to m-labs/artiq/dashboard/datasets:77
 let fmt = (set: pyon.Tuple) => `${set[1]}${set[2].unit ? " " + set[2].unit : ""}`;
 
@@ -40,13 +60,12 @@ class DatasetTreeItem extends vscode.TreeItem {
             this.tooltip = "Checkbox: Make dataset persist ARTIQ restart";
         }
 
-        let isNode = Object.keys(sets).some(k => k.startsWith(keypath));
-        if (isNode) {
+        if (isNode(keypath)) {
             this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
             return;
         }
 
-        // only "inputs" left at this point
+        // only value and metadata nodes left at this point
         set = sets[keypath.split(".").slice(0, -1).join(".")];
         this.description = String(leafpaths[name(keypath)].reduce((acc, key) => acc[key], set));
         let color = new vscode.ThemeColor("symbolIcon.variableForeground");
@@ -54,20 +73,18 @@ class DatasetTreeItem extends vscode.TreeItem {
     }
 }
 
+
 class DatasetsProvider implements vscode.TreeDataProvider<string> {
     private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
     readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
-    public refresh(keypath: string): void {
-        if (keypath) {
-            // tree model assumes the existence of an element
-            // so we update through "getChildren" on its parent
-            keypath = keypath.split(".").slice(0, -1).join(".");
-        }
-        this._onDidChangeTreeData.fire(keypath);
+    public refresh(keypath: string | undefined): void {
+        // tree model assumes the existence of a node, so
+        // we update through "getChildren" on closest existing parent node
+        this._onDidChangeTreeData.fire(closestParent(keypath));
         vscode.window.showInformationMessage("Updated Datasets");
     }
 
-    constructor() {}
+    constructor() { }
 
     getTreeItem(keypath: string): vscode.TreeItem {
         return new DatasetTreeItem(keypath);
@@ -75,11 +92,8 @@ class DatasetsProvider implements vscode.TreeDataProvider<string> {
 
     async getChildren(keypath?: string): Promise<string[]> {
         let parentKeys = keypath ? keypath.split(".") : [];
-        let dup = Object.keys(sets)
-            .map(kp => kp.split(".").slice(0, parentKeys.length + 1))
-            .filter(keys => startsWith(keys, parentKeys))
-            .filter(keys => keys.length > parentKeys.length)
-            .map(keys => keys.join("."))
+        let dups = findChildren(Object.keys(sets), parentKeys, 1)
+            .map(keys => keys.slice(0, parentKeys.length + 1).join("."))
             .sort((a, b) => name(a).localeCompare(name(b)));
 
         let leafs: string[] = [];
@@ -87,7 +101,9 @@ class DatasetsProvider implements vscode.TreeDataProvider<string> {
             leafs = Object.keys(leafpaths).map(name => [keypath, name].join("."));
         }
 
-        return [...leafs, ...new Set(dup)];
+        // create Set() instance to erase duplicates
+        // see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set
+        return [...leafs, ...new Set(dups)];
     }
 }
 
@@ -109,14 +125,14 @@ export let init = async () => {
     });
 };
 
-export let rename = async (keypath: string) => {
-    let newName = await vscode.window.showInputBox({ prompt: "New name:", value: name(keypath) });
-    if (newName && newName !== name(keypath)) {
+export let move = async (keypath: string) => {
+    let newPath = await vscode.window.showInputBox({ prompt: "New path:", value: keypath });
+    if (newPath && newPath !== keypath) {
         let set = sets[keypath];
         net.rpc("dataset_db", "delete", [keypath]);
         // unfortunately the interfaces of m-labs/artiq/master/databases:DatasetDB.set()
         // and the underlying data model differ in field order
         // and as they are external interfaces, they can never be changed
-        net.rpc("dataset_db", "set", [setname(keypath, newName), set[1], set[0], set[2]]);
+        net.rpc("dataset_db", "set", [newPath, set[1], set[0], set[2]]);
     }
 };

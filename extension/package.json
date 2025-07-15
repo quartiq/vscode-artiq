@@ -52,8 +52,8 @@
         }
       },
       {
-        "command": "artiq.renameDataset",
-        "title": "Rename..."
+        "command": "artiq.moveDataset",
+        "title": "Move and rename..."
       }
     ],
     "keybindings": [
@@ -84,7 +84,7 @@
       ],
       "view/item/context": [
         {
-          "command": "artiq.renameDataset",
+          "command": "artiq.moveDataset",
           "when": "view == datasets && viewItem == dataset",
           "group": "edit"
         }
