@@ -52,6 +52,14 @@
         }
       },
       {
+        "command": "artiq.createDataset",
+        "title": "New...",
+        "icon": {
+          "light": "media/add-light.svg",
+          "dark": "media/add-dark.svg"
+        }
+      },
+      {
         "command": "artiq.moveDataset",
         "title": "Move and rename..."
       }
@@ -79,6 +87,11 @@
         {
           "command": "artiq.scanRepository",
           "when": "view == explorer",
+          "group": "navigation"
+        },
+        {
+          "command": "artiq.createDataset",
+          "when": "view == datasets",
           "group": "navigation"
         }
       ],

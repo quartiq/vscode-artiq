@@ -134,6 +134,11 @@ export let init = async () => {
     });
 };
 
+export let create = async () => {
+    let path = await vscode.window.showInputBox({ prompt: "Path:" });
+    if (path) { console.log(await net.rpc("dataset_db", "set", [path, , , ])); }
+};
+
 export let move = async (keypath: string) => {
     let newPath = await vscode.window.showInputBox({ prompt: "New path:", value: keypath });
     if (newPath && newPath !== keypath) {
