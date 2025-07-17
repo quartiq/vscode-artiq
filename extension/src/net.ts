@@ -10,7 +10,7 @@ export type Bytes = {type: "Buffer", data: number[]};
 const host = vscode.workspace.getConfiguration("artiq").get("host");
 
 export let receiver = (port: number, banner: string, target: string) => {
-    // TODO: use "readline" module wrapper, make "parseLines" save to use
+    // TODO: use "readline" module wrapper, make "parseLine(s)" save to use
     let client = new net.Socket();
 
     client.connect(port, host, () => {
@@ -30,12 +30,23 @@ export let rpc = async (target: string, method: string, args: any[], debug?: str
     await once(client, "connect");
 
     client.write("ARTIQ pc_rpc\n");
-    let targets = await once(client, "data");
-    if (debug === "targets") { return targets; }
+    let response = parseLine(await once(client, "data"));
 
-    client.write(target + "\n");
-    let methods = await once(client, "data");
-    if (debug === "methods") { return methods; }
+    if (!response.targets.contains(target)) {
+        vscode.window.showErrorMessage("RPC target not found. Custom port in use?");
+        return;
+    }
+
+    if (!response.features.contains("pyon_v2")) {
+        vscode.window.showErrorMessage("PYON v2 not supported. ARTIQ update may help.");
+        return;
+    }
+
+    if (debug === "targets") { return response; }
+
+    client.write(target + " pyon_v2\n");
+    response = parseLine(await once(client, "data"));
+    if (debug === "methods") { return response; }
 
     client.write(pyon.encode({
         action: "call",
