@@ -61,7 +61,19 @@
       },
       {
         "command": "artiq.moveDataset",
-        "title": "Move and rename..."
+        "title": "Move and rename...",
+        "icon": {
+          "light": "media/edit-light.svg",
+          "dark": "media/edit-dark.svg"
+        }
+      },
+      {
+        "command": "artiq.deleteDataset",
+        "title": "Delete",
+        "icon": {
+          "light": "media/trash-light.svg",
+          "dark": "media/trash-dark.svg"
+        }
       }
     ],
     "keybindings": [
@@ -99,7 +111,12 @@
         {
           "command": "artiq.moveDataset",
           "when": "view == datasets && viewItem == dataset",
-          "group": "edit"
+          "group": "inline"
+        },
+        {
+          "command": "artiq.deleteDataset",
+          "when": "view == datasets && viewItem == dataset",
+          "group": "inline"
         }
       ]
     },

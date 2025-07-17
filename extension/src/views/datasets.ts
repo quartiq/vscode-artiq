@@ -136,7 +136,7 @@ export let init = async () => {
 
 export let create = async () => {
     let path = await vscode.window.showInputBox({ prompt: "Path:" });
-    if (path) { console.log(await net.rpc("dataset_db", "set", [path, , , ])); }
+    if (path) { net.rpc("dataset_db", "set", [path, , , ]); }
 };
 
 export let move = async (keypath: string) => {
@@ -148,5 +148,17 @@ export let move = async (keypath: string) => {
         // and the underlying data model differ in field order
         // and as they are external interfaces, they can never be changed
         net.rpc("dataset_db", "set", [newPath, set[1], set[0], set[2]]);
+    }
+};
+
+// TODO: Create config bool for confirmation dialog on/off
+export let del = async (keypath: string) => {
+    let result = await vscode.window.showWarningMessage(
+      `Do you really want to delete dataset "${keypath}"?`,
+      { modal: true },
+      "Delete"
+    );
+    if (result === "Delete") {
+        net.rpc("dataset_db", "delete", [keypath]);
     }
 };
