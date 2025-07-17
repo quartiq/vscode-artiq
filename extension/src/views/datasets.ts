@@ -1,5 +1,8 @@
+// TODO: clarify and distinguish between keypath, setpath and leafpath
+
 import * as vscode from "vscode";
 
+import * as utils from "../utils";
 import * as net from "../net";
 import * as pyon from "../pyon";
 import * as syncstruct from "../syncstruct";
@@ -7,8 +10,8 @@ import * as syncstruct from "../syncstruct";
 let provider: DatasetsProvider;
 export let view: vscode.TreeView<string>;
 
-type Set = [persist: boolean, value: any, metadata: { unit: string, scale: Number, precision: Number }];
-let sets: Record<string, Set> = {};
+type Dataset = [persist: boolean, value: any, metadata: { unit: string, scale: Number, precision: Number }];
+let sets: Record<string, Dataset> = {};
 let leafpaths: { [name: string]: any[] } = {
     Value: [1],
     Unit: [2, "unit"],
@@ -43,6 +46,17 @@ let closestParent = (keypath: string | undefined): string | undefined => {
     return target.join(".");
 };
 
+// unfortunately the interfaces of m-labs/artiq/master/databases:DatasetDB.set()
+// and the underlying data model differ in field order
+// and as they are external interfaces, they can never be harmonized
+// TODO: maybe this will become pretty via kwargs implementation of rpc?
+let submit = async (setpath: string, set?: Dataset) => await net.rpc("dataset_db", "set", [setpath, set?.[1], set?.[0], set?.[2]]);
+
+let retrieveValue = (keypath: string): any => {
+    let set = sets[keypath.split(".").slice(0, -1).join(".")];
+    return leafpaths[name(keypath)].reduce((acc, key) => acc[key], set);
+};
+
 // TODO: this should be created according to m-labs/artiq/dashboard/datasets:77
 let fmt = (set: pyon.Tuple) => `${set[1]}${set[2].unit ? " " + set[2].unit : ""}`;
 
@@ -65,14 +79,17 @@ class DatasetTreeItem extends vscode.TreeItem {
             return;
         }
 
-        // only value and metadata nodes left at this point
-        set = sets[keypath.split(".").slice(0, -1).join(".")];
-        this.description = String(leafpaths[name(keypath)].reduce((acc, key) => acc[key], set));
+        // only value and metadata nodes (= leafs) left at this point
+        this.description = String(retrieveValue(keypath));
         let color = new vscode.ThemeColor("symbolIcon.variableForeground");
         this.iconPath = new vscode.ThemeIcon("edit", color);
+        this.command = {
+            command: "artiq.editDataset",
+            title: "",
+            arguments: [keypath],
+        };
     }
 }
-
 
 class DatasetsProvider implements vscode.TreeDataProvider<string> {
     private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
@@ -106,7 +123,6 @@ class DatasetsProvider implements vscode.TreeDataProvider<string> {
         }
 
         // create Set() instance to erase duplicates
-        // see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set
         return [...leafs, ...new Set(dups)];
     }
 }
@@ -120,7 +136,8 @@ export let init = async () => {
     view.onDidChangeCheckboxState(ev => ev.items.forEach(item => {
         let [keypath, checked] = item;
         let set = sets[keypath];
-        net.rpc("dataset_db", "set", [keypath, set[1], Boolean(checked), set[2]]);
+        set[0] = Boolean(checked);
+        submit(keypath, set);
     }));
 
     sets = syncstruct.from({
@@ -136,7 +153,7 @@ export let init = async () => {
 
 export let create = async () => {
     let path = await vscode.window.showInputBox({ prompt: "Path:" });
-    if (path) { net.rpc("dataset_db", "set", [path, , , ]); }
+    if (path) { submit(path); }
 };
 
 export let move = async (keypath: string) => {
@@ -144,10 +161,7 @@ export let move = async (keypath: string) => {
     if (newPath && newPath !== keypath) {
         let set = sets[keypath];
         net.rpc("dataset_db", "delete", [keypath]);
-        // unfortunately the interfaces of m-labs/artiq/master/databases:DatasetDB.set()
-        // and the underlying data model differ in field order
-        // and as they are external interfaces, they can never be changed
-        net.rpc("dataset_db", "set", [newPath, set[1], set[0], set[2]]);
+        submit(newPath, set);
     }
 };
 
@@ -160,5 +174,17 @@ export let del = async (keypath: string) => {
     );
     if (result === "Delete") {
         net.rpc("dataset_db", "delete", [keypath]);
+    }
+};
+
+export let edit = async (keypath: string) => {
+    let value = retrieveValue(keypath);
+    let newValue = await vscode.window.showInputBox({ prompt: `New ${name(keypath)}:`, value });
+    if (newValue !== value) {
+        let [setname, leafname] = utils.splitOnLast(keypath, ".");
+        let set = sets[setname];
+        // TODO: cast value to right type
+        utils.setPath(set, leafpaths[leafname], newValue);
+        submit(setname, set);
     }
 };

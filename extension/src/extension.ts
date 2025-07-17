@@ -35,6 +35,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand("artiq.createDataset", viewDatasets.create),
 		vscode.commands.registerCommand("artiq.moveDataset", viewDatasets.move),
 		vscode.commands.registerCommand("artiq.deleteDataset", viewDatasets.del),
+		vscode.commands.registerCommand("artiq.editDataset", viewDatasets.edit),
 	);
 
 	vscode.window.onDidChangeTextEditorSelection(async () => {

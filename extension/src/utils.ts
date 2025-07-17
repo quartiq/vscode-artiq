@@ -33,3 +33,17 @@ export let setMissing = (target: Record<string, any>, source: Record<string, any
 
     return result;
 };
+
+export let splitOnLast = (str: string, delimiter: string): string[] => {
+    let i = str.lastIndexOf(delimiter);
+    if (i === -1) { return [str]; }
+    return [str.slice(0, i), str.slice(i + delimiter.length)];
+};
+
+let splitArrOnLast = (arr: any[]): [any[], any] => [arr.slice(0, -1), arr[arr.length - 1]];
+
+export let setPath = (target: Record<string, any>, keys: string[], value: any) => {
+    let [approach, access] = splitArrOnLast(keys);
+    let sub = approach.reduce((acc, key) => acc[key], target);
+    sub[access] = value;
+};
