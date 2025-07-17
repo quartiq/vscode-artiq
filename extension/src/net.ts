@@ -32,12 +32,12 @@ export let rpc = async (target: string, method: string, args: any[], debug?: str
     client.write("ARTIQ pc_rpc\n");
     let response = parseLine(await once(client, "data"));
 
-    if (!response.targets.contains(target)) {
+    if (!response.targets.includes(target)) {
         vscode.window.showErrorMessage("RPC target not found. Custom port in use?");
         return;
     }
 
-    if (!response.features.contains("pyon_v2")) {
+    if (!response.features.includes("pyon_v2")) {
         vscode.window.showErrorMessage("PYON v2 not supported. ARTIQ update may help.");
         return;
     }
