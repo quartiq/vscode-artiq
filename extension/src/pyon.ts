@@ -3,6 +3,15 @@ const marker = "__jsonclass__";
 export let decode = (s: string) => JSON.parse(s, reviver);
 export let encode = (v: any) => JSON.stringify(v, replacer);
 
+export let isValid = (s: string) => {
+    try {
+        let obj = decode(s);
+        return true;
+    } catch {
+        return false;
+    }
+};
+
 let reviver = (k: string, v: any) => {
     if (typeof v !== "object") { return v; }
     if (v === null) { return v; }

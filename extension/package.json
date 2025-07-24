@@ -63,8 +63,8 @@
         "command": "artiq.moveDataset",
         "title": "Move and rename...",
         "icon": {
-          "light": "media/edit-light.svg",
-          "dark": "media/edit-dark.svg"
+          "light": "media/rename-light.svg",
+          "dark": "media/rename-dark.svg"
         }
       },
       {

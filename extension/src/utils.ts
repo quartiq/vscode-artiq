@@ -34,16 +34,19 @@ export let setMissing = (target: Record<string, any>, source: Record<string, any
     return result;
 };
 
-export let splitOnLast = (str: string, delimiter: string): string[] => {
+export let splitOnLast = (str: string, delimiter: string): [string, string | undefined] => {
     let i = str.lastIndexOf(delimiter);
-    if (i === -1) { return [str]; }
+    if (i === -1) { return [str, undefined]; }
     return [str.slice(0, i), str.slice(i + delimiter.length)];
 };
 
 let splitArrOnLast = (arr: any[]): [any[], any] => [arr.slice(0, -1), arr[arr.length - 1]];
 
-export let setPath = (target: Record<string, any>, keys: string[], value: any) => {
+export let getByPath = (target: Record<string, any>, path: any[]) => path.reduce((acc, key) => acc[key], target);
+
+export let setByPath = (target: Record<string, any>, keys: string[], value: any) => {
     let [approach, access] = splitArrOnLast(keys);
-    let sub = approach.reduce((acc, key) => acc[key], target);
-    sub[access] = value;
+    getByPath(target, approach)[access] = value;
 };
+
+export let clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));

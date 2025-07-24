@@ -3,6 +3,7 @@
 - [x] "ARTIQ" View Container in Activity Bar
     - [x] "Explorer" TreeView in Primary Sidebar
     - [x] "Experiment" WebView in Primary Sidebar
+    - [x] "Datasets" TreeView in Primary Sidebar
 
 - [x] "ARTIQ" View Container in Panel
     - [x] "Log" WebView in Panel
@@ -77,3 +78,25 @@
 
 - on change of file:
     - [ ] hide "Examine File" button if active file is repository file
+
+# "Datasets"
+
+- [x] TreeItem.label is node name
+- [x] TreeItem.description is formatted value
+- [x] TreeItem.checkbox is persist
+- [ ] TreeItem.label.highlights marquee indicates activity/update
+- [x] metadata properties are leafnodes
+- [x] on move, focus and expand corresponding TreeItem
+- [x] show delete and move actions for dataset items inline
+
+- on load:
+    - [x] list all dataset nodes hierarchically
+
+- on context on intermediate TreeItem:
+    - [ ] show "Delete this subtree" command
+
+- on drag of intermediate TreeItem:
+    - [ ] move to selected subtree on drop
+
+- on click on Dataset and Metadata TreeItems:
+    - [x] show InputBox

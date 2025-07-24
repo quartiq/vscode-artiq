@@ -3,6 +3,7 @@
 import * as vscode from "vscode";
 
 import * as utils from "../utils";
+import * as units from "../units";
 import * as net from "../net";
 import * as pyon from "../pyon";
 import * as syncstruct from "../syncstruct";
@@ -10,13 +11,16 @@ import * as syncstruct from "../syncstruct";
 let provider: DatasetsProvider;
 export let view: vscode.TreeView<string>;
 
-type Dataset = [persist: boolean, value: any, metadata: { unit: string, scale: Number, precision: Number }];
+type Metadata = { unit: string, scale: number, precision: number };
+type Dataset = [persist: boolean, value: any, metadata: Metadata];
 let sets: Record<string, Dataset> = {};
-let leafpaths: { [name: string]: any[] } = {
-    Value: [1],
-    Unit: [2, "unit"],
-    Scale: [2, "scale"],
-    Precision: [2, "precision"],
+let inputProps: { [name: string]: { path: any[], desc: string, test: Function, parse: Function } } = {
+    // TODO: add tooltip messages to explain, how each metadata applies to the database
+    Value: { path: [1], desc: "PYON v2 string", test: (s: string) => pyon.isValid(s), parse: (s: string) => s },
+    Unit: { path: [2, "unit"], desc: "string", test: (s: string) => typeof s === "string", parse: (s: string) => s },
+    Scale: { path: [2, "scale"], desc: "number", test: (s: string) => /^-?\d+(\.\d+)?$/.test(s), parse: (s: string) => Number(s) },
+    // see: https://numpy.org/doc/stable/reference/generated/numpy.format_float_positional.html
+    Precision: { path: [2, "precision"], desc: "non-negative integer", test: (s: string) => /^(0|[1-9][0-9]*)$/.test(s), parse: (s: string) => Number(s) },
 };
 
 let name = (keypath: string): string => keypath.split(".").pop()!;
@@ -52,13 +56,31 @@ let closestParent = (keypath: string | undefined): string | undefined => {
 // TODO: maybe this will become pretty via kwargs implementation of rpc?
 let submit = async (setpath: string, set?: Dataset) => await net.rpc("dataset_db", "set", [setpath, set?.[1], set?.[0], set?.[2]]);
 
-let retrieveValue = (keypath: string): any => {
-    let set = sets[keypath.split(".").slice(0, -1).join(".")];
-    return leafpaths[name(keypath)].reduce((acc, key) => acc[key], set);
+
+let applyScale = (value: string, meta: Metadata, inverse?: boolean): string => {
+    let n = pyon.decode(value);
+    if (!Number.isFinite(n)) { return value; }
+
+    let scale = meta.scale ?? units.scale(meta.unit); // see: m-labs/artiq/tools:scale_from_metadata
+    if (!Number.isFinite(scale)) { return value; }
+
+    if (inverse) { return pyon.encode(n / scale); }
+    return pyon.encode(n * scale);
 };
 
-// TODO: this should be created according to m-labs/artiq/dashboard/datasets:77
-let fmt = (set: pyon.Tuple) => `${set[1]}${set[2].unit ? " " + set[2].unit : ""}`;
+let applyPrecision = (value: string, precision: number): string => {
+    let n = pyon.decode(value);
+    if (!Number.isFinite(n)) { return value; }
+    if (!Number.isFinite(precision)) { return value; }
+    // see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/toPrecision#exceptions
+    return n.toPrecision(utils.clamp(precision, 1, 100));
+};
+
+let fmt = (set: pyon.Tuple) => {
+    let v = applyScale(set[1], set[2], true);
+    v = applyPrecision(v, set[2].precision);
+    return `${v}${set[2].unit ? " " + set[2].unit : ""}`;
+};
 
 class DatasetTreeItem extends vscode.TreeItem {
     constructor(
@@ -72,6 +94,11 @@ class DatasetTreeItem extends vscode.TreeItem {
             this.contextValue = "dataset";
             this.checkboxState = Number(set[0]);
             this.tooltip = "Checkbox: Make dataset persist ARTIQ restart";
+            this.command = {
+                command: "artiq.editDataset",
+                title: "",
+                arguments: [keypath, "Value"],
+            };
         }
 
         if (isNode(keypath)) {
@@ -79,14 +106,16 @@ class DatasetTreeItem extends vscode.TreeItem {
             return;
         }
 
-        // only value and metadata nodes (= leafs) left at this point
-        this.description = String(retrieveValue(keypath));
+        // only metadata nodes (= leafs) left at this point
+        let propname;
+        [keypath, propname] = utils.splitOnLast(keypath, ".");
+        this.description = String(utils.getByPath(sets[keypath], inputProps[propname!].path));
         let color = new vscode.ThemeColor("symbolIcon.variableForeground");
         this.iconPath = new vscode.ThemeIcon("edit", color);
         this.command = {
             command: "artiq.editDataset",
             title: "",
-            arguments: [keypath],
+            arguments: [keypath, propname],
         };
     }
 }
@@ -119,7 +148,9 @@ class DatasetsProvider implements vscode.TreeDataProvider<string> {
 
         let leafs: string[] = [];
         if (keypath && keypath in sets) {
-            leafs = Object.keys(leafpaths).map(name => [keypath, name].join("."));
+            leafs = Object.keys(inputProps)
+                .filter(name => name !== "Value")
+                .map(name => [keypath, name].join("."));
         }
 
         // create Set() instance to erase duplicates
@@ -145,7 +176,7 @@ export let init = async () => {
         onReceive: mod => {
             provider.refresh(mod.key);
             if (mod.action === "setitem") {
-                view.reveal(mod.key, {focus: true, expand: true});
+                view.reveal(mod.key, { focus: true, expand: true });
             }
         },
     });
@@ -168,23 +199,32 @@ export let move = async (keypath: string) => {
 // TODO: Create config bool for confirmation dialog on/off
 export let del = async (keypath: string) => {
     let result = await vscode.window.showWarningMessage(
-      `Do you really want to delete dataset "${keypath}"?`,
-      { modal: true },
-      "Delete"
+        `Do you really want to delete dataset "${keypath}"?`,
+        { modal: true },
+        "Delete"
     );
     if (result === "Delete") {
         net.rpc("dataset_db", "delete", [keypath]);
     }
 };
 
-export let edit = async (keypath: string) => {
-    let value = retrieveValue(keypath);
-    let newValue = await vscode.window.showInputBox({ prompt: `New ${name(keypath)}:`, value });
-    if (newValue !== value) {
-        let [setname, leafname] = utils.splitOnLast(keypath, ".");
-        let set = sets[setname];
-        // TODO: cast value to right type
-        utils.setPath(set, leafpaths[leafname], newValue);
-        submit(setname, set);
-    }
+// see: m-labs/artiq/dashboard/datasets:CreateEditDialog.accept
+export let edit = async (keypath: string, propname: string) => {
+    let set = structuredClone(sets[keypath]);
+    set[1] = applyScale(set[1], set[2], true);
+
+    let prop = inputProps[propname];
+    let validateInput = (s: string) => {
+        if (prop.test(s)) { return null; }
+        return `Please enter a valid ${prop.desc}`;
+    };
+
+    let value = utils.getByPath(set, prop.path);
+    let newValue = await vscode.window.showInputBox({ prompt: `Edit ${propname}:`, validateInput, value });
+    newValue = prop.parse(newValue);
+    if (newValue === undefined || newValue === value) { return; }
+
+    utils.setByPath(set, prop.path, newValue);
+    set[1] = applyScale(set[1], set[2]);
+    submit(keypath, set);
 };
