@@ -56,7 +56,6 @@ let closestParent = (keypath: string | undefined): string | undefined => {
 // TODO: maybe this will become pretty via kwargs implementation of rpc?
 let submit = async (setpath: string, set?: Dataset) => await net.rpc("dataset_db", "set", [setpath, set?.[1], set?.[0], set?.[2]]);
 
-
 let applyScale = (value: string, meta: Metadata, inverse?: boolean): string => {
     let n = pyon.decode(value);
     if (!Number.isFinite(n)) { return value; }
@@ -221,8 +220,10 @@ export let edit = async (keypath: string, propname: string) => {
 
     let value = utils.getByPath(set, prop.path);
     let newValue = await vscode.window.showInputBox({ prompt: `Edit ${propname}:`, validateInput, value });
+    if (newValue === undefined) { return; }
+
     newValue = prop.parse(newValue);
-    if (newValue === undefined || newValue === value) { return; }
+    if (newValue === value) { return; }
 
     utils.setByPath(set, prop.path, newValue);
     set[1] = applyScale(set[1], set[2]);
