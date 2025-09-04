@@ -23,8 +23,8 @@ export let defaults = {
 		flush: false,
 	},
 	submission_options: {
-    // see: artiq/dashboard/experiments.py:ExperimentManager.get_submission_options
-    log_level: "WARNING",
+		// see: artiq/dashboard/experiments.py:ExperimentManager.get_submission_options
+		log_level: "WARNING",
 	},
 };
 
@@ -35,6 +35,7 @@ export let defaults = {
 export type Experiment = {
 	path: string,
 	class_name: string,
+	arginfo: { [key: string]: Argument },
 
 	name: string,
 	inRepo: boolean,
@@ -42,6 +43,55 @@ export type Experiment = {
 	scheduler_defaults: SchedulerDefaults,
 	submission_options: SubmissionOptions,
 };
+
+export type Argument = [procdesc: Procdesc, group: any, tooltip: string, state: any];
+interface Procdesc {
+	ty: string,
+	default: any,
+}
+
+export interface Boolean extends Procdesc {
+	ty: "BooleanValue",
+	default: boolean,
+}
+
+export interface Enum extends Procdesc {
+	ty: "EnumerationValue",
+	choices: any[],
+	quickstyle: boolean,
+}
+
+export interface Number extends Procdesc {
+	ty: "NumberValue",
+	default: number,
+	max: number,
+	min: number,
+	precision: number,
+	scale: number,
+	step: number,
+	type: string,
+	unit: string,
+}
+
+export interface PYON extends Procdesc {
+	ty: "PYONValue",
+}
+
+export interface Scan extends Procdesc {
+	ty: "Scannable",
+	default: any[], // TODO: any = NoScan | RangeScan | CenterScan | ExplicitScan
+	global_max: number,
+	global_min: number,
+	global_step: number,
+	precision: number,
+	scale: number,
+	unit: number,
+}
+
+export interface String extends Procdesc {
+	ty: "StringValue",
+	default: string,
+}
 
 let db: vscode.Memento;
 let updateHandler = mutex.lock();

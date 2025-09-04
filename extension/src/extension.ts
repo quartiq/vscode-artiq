@@ -3,10 +3,12 @@
 import * as vscode from "vscode";
 
 import * as dbio from "./dbio";
+import * as net from "./net";
 
 import * as viewLog from "./views/log";
 import * as viewSchedule from "./views/schedule";
 import * as viewExperiment from "./views/experiment";
+import * as viewArguments from "./views/arguments";
 import * as viewExplorer from "./views/explorer";
 import * as viewDatasets from "./views/datasets";
 
@@ -18,6 +20,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	await viewLog.init(context);
 	await viewSchedule.init(context);
 	await viewExperiment.init(context);
+	await viewArguments.init(context);
 	await viewExplorer.init();
 	await viewDatasets.init();
 
@@ -25,10 +28,11 @@ export async function activate(context: vscode.ExtensionContext) {
 		viewLog.view.register(),
 		viewSchedule.view.register(),
 		viewExperiment.view.register(),
+		viewArguments.view.register(),
 		viewExplorer.view,
 		viewDatasets.view,
 
-		vscode.commands.registerCommand("artiq.submitExperiment", viewExperiment.submit),
+		vscode.commands.registerCommand("artiq.submitExperiment", net.submitCurr),
 		vscode.commands.registerCommand("artiq.examineFile", viewExperiment.examineFile),
 		vscode.commands.registerCommand("artiq.scanRepository", viewExplorer.scan),
 		vscode.commands.registerCommand("artiq.openExperiment", viewExplorer.open),
@@ -40,11 +44,13 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	vscode.window.onDidChangeTextEditorSelection(async () => {
 		viewExperiment.update();
+		viewArguments.update();
 		viewExplorer.update();
 	});
 
 	dbio.onUpdate(() => {
 		viewExperiment.update();
+		viewArguments.update();
 		viewExplorer.update();
 	});
 };

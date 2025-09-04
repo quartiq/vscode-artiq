@@ -152,6 +152,13 @@
           "contextualTitle": "Experiment"
         },
         {
+          "type": "webview",
+          "id": "arguments",
+          "name": "Arguments",
+          "icon": "media/artiq.svg",
+          "contextualTitle": "Arguments"
+        },
+        {
           "id": "datasets",
           "name": "Datasets",
           "icon": "media/artiq.svg",
@@ -180,8 +187,8 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "compile": "tsc -p tsconfig.json && tsc -p tsconfig.shared.json",
+    "watch": "concurrently \"tsc -p tsconfig.json -w\" \"tsc -p tsconfig.shared.json -w\"",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test"
@@ -195,12 +202,14 @@
     "@typescript-eslint/parser": "^8.25.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
+    "concurrently": "^9.2.1",
     "eslint": "^9.21.0",
     "typescript": "^5.7.3",
     "ws": "^8.18.1"
   },
   "dependencies": {
-    "@vscode-elements/elements": "^1.16.1"
+    "@vscode-elements/elements": "^1.16.1",
+    "tabulator-tables": "^6.3.1"
   },
   "extensionDependencies": [
     "ms-python.python"

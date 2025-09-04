@@ -2,15 +2,15 @@ import * as vscode from "vscode";
 let { flatten, unflatten } = require("flat");
 
 import * as views from "../views";
-import * as net from "../net";
 import * as utils from "../utils";
 import * as dbio from "../dbio";
+import * as net from "../net";
 
 export let view: views.ArtiqViewProvider;
 
 export let init = async (context: vscode.ExtensionContext) => {
     view = new views.ArtiqViewProvider("experiment", context.extensionUri, {
-        submit,
+        submit: net.submitCurr,
         change: (exp: dbio.Experiment) => dbio.update(unflatten(exp)),
     });
 
@@ -22,12 +22,7 @@ export let update = async () => {
     let selectedClass = await utils.selectedClass();
     let exp = await dbio.curr();
     let expFlat = exp && flatten(utils.setMissing(exp, dbio.defaults));
-    view.post( {action: "update", data: {selectedClass, expFlat} } );
-};
-
-export let submit = async () => {
-    let curr = await dbio.curr();
-    curr ? net.submit(curr) : vscode.window.showErrorMessage("Submit failed: No experiment selected.");
+    view.post( {action: "update", data: {selectedClass, expFlat}} );
 };
 
 export let examineFile = async () => {

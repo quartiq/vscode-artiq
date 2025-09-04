@@ -73,16 +73,18 @@ export let logging: { [name: string]: number } = {
     CRITICAL: 50,
 };
 
-export let submit = (exp: dbio.Experiment) => {
+let submit = (exp: dbio.Experiment) => {
     // see: https://github.com/m-labs/artiq/blob/master/artiq/frontend/artiq_client.py#L381
     // see: https://github.com/m-labs/artiq/blob/master/artiq/master/scheduler.py#L436
+    let argEntries = Object.entries(exp.arginfo).map(entry => [entry[0], entry[1][3]]);
+
     rpc("schedule", "submit", [
         exp.scheduler_defaults.pipeline_name,
         { // expid
             file: vscode.window.activeTextEditor?.document.uri.fsPath,
             log_level: logging[exp.submission_options.log_level],
             class_name: exp.class_name,
-            arguments: {},
+            arguments: Object.fromEntries(argEntries),
         },
         exp.scheduler_defaults.priority,
         exp.scheduler_defaults.due_date,
@@ -90,4 +92,9 @@ export let submit = (exp: dbio.Experiment) => {
     ]);
 
     vscode.window.showInformationMessage(`Submitted experiment: ${exp.name}`);
+};
+
+export let submitCurr = async () => {
+    let curr = await dbio.curr();
+    curr ? submit(curr) : vscode.window.showErrorMessage("Submit failed: No experiment selected.");
 };

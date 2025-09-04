@@ -54,12 +54,27 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 	public async init() {
 		await this.ready.locked;
 
-		let scriptUri = this._view!.webview.asWebviewUri(
+		let vsceScriptUri = this._view!.webview.asWebviewUri(
 			vscode.Uri.joinPath(this._extensionUri, "node_modules", "@vscode-elements/elements", "dist", "bundled.js")
 		);
 
+		let tabulatorScriptUri = this._view!.webview.asWebviewUri(
+			vscode.Uri.joinPath(this._extensionUri, "node_modules", "tabulator-tables", "dist", "js", "tabulator.min.js")
+		);
+
+		let tabulatorStylesUri = this._view!.webview.asWebviewUri(
+			vscode.Uri.joinPath(this._extensionUri, "node_modules", "tabulator-tables", "dist", "css", "tabulator.min.css")
+		);
+
+		let sharedUri = this._view!.webview.asWebviewUri(
+			vscode.Uri.joinPath(this._extensionUri, "shared")
+		);
+
 		this.html = utils.html(this._viewType, this._extensionUri.fsPath)
-			.replace("{VSCODE_ELEMENTS_SCRIPT_URI}", scriptUri.toString());
+			.replace("{VSCODE_ELEMENTS_SCRIPT_URI}", vsceScriptUri.toString())
+			.replace("{TABULATOR_SCRIPT_URI}", tabulatorScriptUri.toString())
+			.replace("{TABULATOR_STYLES_URI}", tabulatorStylesUri.toString())
+			.replace("{SHARED_URI}", sharedUri.toString());
 
 		this._view!.webview.html = this.html;
 	}

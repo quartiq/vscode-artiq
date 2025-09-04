@@ -12,7 +12,7 @@ let provider: DatasetsProvider;
 export let view: vscode.TreeView<string>;
 
 type Metadata = { unit: string, scale: number, precision: number };
-type Dataset = [persist: boolean, value: any, metadata: Metadata];
+type Dataset = [ persist: boolean, value: any, metadata: Metadata ];
 let sets: Record<string, Dataset> = {};
 let inputProps: { [name: string]: { path: any[], desc: string, test: Function, parse: Function } } = {
     // TODO: add tooltip messages to explain, how each metadata applies to the database

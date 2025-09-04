@@ -5,6 +5,7 @@ import * as utils from "../utils";
 import * as net from "../net";
 import * as dbio from "../dbio";
 import * as syncstruct from "../syncstruct";
+import * as entries from "../entries";
 
 let provider: ExplorerProvider;
 export let view: vscode.TreeView<string>;
@@ -96,6 +97,11 @@ export let init = async () => {
 				...exp, name,
 				path: path.posix.join(basepath, exp.file!),
 				inRepo: true,
+				arginfo: Object.fromEntries(Object.entries(exp.arginfo).map(([name, arg]) => {
+					// see: artiq/dashboard/experiments:ExperimentManager.initialize_submission_arguments
+					arg[3] = entries.entry(arg[0].ty)?.getDefault(arg[0]);
+					return [name, arg];
+				})),
 			})));
 			provider.refresh();
 		},

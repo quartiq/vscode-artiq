@@ -17,6 +17,8 @@ This extension expects to be run alongside an ARTIQ instance in the same filesys
     - edit `src/extension.ts`
     - press `F5`
 
+- run file watcher automatic compilation: `cd extension; npm run watch`
+
 - in the "Extension Development Host" window:
     - edit File -> Preferences -> Settings -> Extensions -> ARTIQ Dashboard
     - open experiment file, e. g. `example_experiment.py`

@@ -7,6 +7,7 @@ last_rid.pyon
 results/
 
 extension/out
+extension/shared
 extension/dist
 extension/node_modules
 extension/package-lock.json
