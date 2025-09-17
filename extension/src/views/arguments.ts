@@ -2,13 +2,13 @@ import * as vscode from "vscode";
 
 import * as views from "../views";
 import * as dbio from "../dbio";
-import * as net from "../net";
+import * as netutils from "../netutils";
 
 export let view: views.ArtiqViewProvider;
 
 export let init = async (context: vscode.ExtensionContext) => {
     view = new views.ArtiqViewProvider("arguments", context.extensionUri, {
-        submit: net.submitCurr,
+        submit: netutils.submitCurr,
         change: async (data: {name: string, arg: dbio.Argument}) => {
             let exp = await dbio.curr();
             if (!exp) { return; }

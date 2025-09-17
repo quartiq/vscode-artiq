@@ -10,6 +10,7 @@
     <script type="text/javascript" src="{TABULATOR_SCRIPT_URI}"></script>
 
     <style>
+        body { padding: 0 }
         .hidden { display: none }
     </style>
 </head>
@@ -27,68 +28,9 @@
         const vscode = acquireVsCodeApi();
         let table;
 
-        let buttonsEditor = (cell, onRendered, success, cancel) => {
-            let procdesc = cell.getRow().getData().procdesc;
-            let el = document.createElement("div");
-
-            procdesc.choices.forEach(c => {
-                let cel = document.createElement("input");
-                cel.setAttribute("type", "button");
-                cel.setAttribute("value", c);
-                cel.addEventListener("click", ev => {
-                    success(c);
-                    vscode.postMessage( {action: "submit"} );
-                });
-                el.append(cel);
-            });
-
-            onRendered(() => el.focus());
-            el.addEventListener("keydown", ev => ev.key === "Escape" && cancel());
-
-            return el;
-        };
-
-        let selectEditor = (cell, onRendered, success, cancel) => {
-            let procdesc = cell.getRow().getData().procdesc;
-            let el = document.createElement("select");
-            el.value = cell.getValue();
-
-            procdesc.choices.forEach(c => {
-                let cel = document.createElement("option");
-                cel.textContent = c;
-                cel.setAttribute("value", c);
-                el.append(cel);
-            });
-
-            onRendered(() => el.focus());
-            el.addEventListener("change", () => success(parseInput(el)));
-            el.addEventListener("keydown", ev => ev.key === "Escape" && cancel());
-
-            return el;
-        };
-
-        let inputEditor = (cell, onRendered, success, cancel) => {
-            let procdesc = cell.getRow().getData().procdesc;
-            let el = document.createElement("input");
-            let parse = entry(procdesc.ty)?.parseInput;
-            el.value = cell.getValue();
-            entry(procdesc.ty)?.setAttributes(el, procdesc);
-
-            onRendered(() => el.focus());
-            el.addEventListener("blur", () => success(parse(el)));
-            el.addEventListener("keydown", ev => {
-                if (ev.key === "Enter") success(parse(el));
-                if (ev.key === "Escape") cancel();
-            });
-
-            return el;
-        };
-
         let editor = (cell, onRendered, success, cancel) => {
             let procdesc = cell.getRow().getData().procdesc;
-            if (procdesc.ty !== "EnumerationValue") { return inputEditor(cell, onRendered, success, cancel); }
-            if (!procdesc.quickstyle) { return selectEditor(cell, onRendered, success, cancel); }
-            return buttonsEditor(cell, onRendered, success, cancel);
+            return entry(procdesc.ty)?.editor({procdesc, cell, onRendered, success, cancel, post: vscode.postMessage});
         };
 
         let cellEdited = cell => {
@@ -108,7 +50,7 @@
             table?.destroy?.();
             table = new Tabulator(".table", {
                 headerVisible: false,
-                layout: "fitDataStretch",
+                layout: "fitDataFill",
                 data,
                 groupBy: "group",
                 groupHeader: value => value ?? "",

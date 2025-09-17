@@ -1,12 +1,12 @@
 import * as vscode from "vscode";
 
-import * as utils from "./utils";
+import * as hostutils from "./hostutils";
 import * as mutex from "./mutex";
 
 export type SchedulerDefaults = {
 	pipeline_name: string,
 	priority: number,
-	due_date: null, // FIXME: use proper datatype
+	due_date: number,
 	flush: boolean,
 };
 
@@ -45,7 +45,8 @@ export type Experiment = {
 };
 
 export type Argument = [procdesc: Procdesc, group: any, tooltip: string, state: any];
-interface Procdesc {
+
+export interface Procdesc {
 	ty: string,
 	default: any,
 }
@@ -71,6 +72,11 @@ export interface Number extends Procdesc {
 	step: number,
 	type: string,
 	unit: string,
+}
+
+export interface Unixtime extends Procdesc {
+	ty: "UnixtimeValue",
+	default: number,
 }
 
 export interface PYON extends Procdesc {
@@ -119,5 +125,5 @@ export let flush = () => db.keys().forEach(k => db.update(k, undefined));
 export let curr = async (): Promise<Experiment | undefined> => db.get([
 	"experiments",
 	vscode.window.activeTextEditor!.document.uri.fsPath,
-	await utils.selectedClass(),
+	await hostutils.selectedClass(),
 ].join());

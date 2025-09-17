@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 let net = require("net");
 let { once } = require("events");
 
+import * as utils from "./utils";
 import * as pyon from "./pyon";
 import * as dbio from "./dbio";
 
@@ -63,17 +64,7 @@ let parseLine = (bytes: Bytes) => pyon.decode(bytes.toString());
 export let parseLines = (bytes: Bytes) => bytes.toString().trim().split("\n")
     .map((s: string) => pyon.decode(s));
 
-export let logging: { [name: string]: number } = {
-    // see: https://docs.python.org/3/library/logging.html#logging-levels
-    NOTSET: 0,
-    DEBUG: 10,
-    INFO: 20,
-    WARNING: 30,
-    ERROR: 40,
-    CRITICAL: 50,
-};
-
-let submit = (exp: dbio.Experiment) => {
+export let submit = (exp: dbio.Experiment) => {
     // see: https://github.com/m-labs/artiq/blob/master/artiq/frontend/artiq_client.py#L381
     // see: https://github.com/m-labs/artiq/blob/master/artiq/master/scheduler.py#L436
     let argEntries = Object.entries(exp.arginfo).map(entry => [entry[0], entry[1][3]]);
@@ -82,7 +73,7 @@ let submit = (exp: dbio.Experiment) => {
         exp.scheduler_defaults.pipeline_name,
         { // expid
             file: vscode.window.activeTextEditor?.document.uri.fsPath,
-            log_level: logging[exp.submission_options.log_level],
+            log_level: utils.logging[exp.submission_options.log_level],
             class_name: exp.class_name,
             arguments: Object.fromEntries(argEntries),
         },
@@ -92,9 +83,4 @@ let submit = (exp: dbio.Experiment) => {
     ]);
 
     vscode.window.showInformationMessage(`Submitted experiment: ${exp.name}`);
-};
-
-export let submitCurr = async () => {
-    let curr = await dbio.curr();
-    curr ? submit(curr) : vscode.window.showErrorMessage("Submit failed: No experiment selected.");
 };

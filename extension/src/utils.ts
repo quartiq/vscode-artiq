@@ -1,39 +1,3 @@
-import * as vscode from "vscode";
-import * as path from "path";
-import * as fs from "fs";
-
-export let symbols = async (uri: vscode.Uri | undefined) => {
-    return await vscode.commands.executeCommand<vscode.SymbolInformation[]>(
-        "vscode.executeDocumentSymbolProvider",
-        uri,
-    ) ?? [];
-};
-
-export let html = (name: string, root: string) => {
-    let filePath = path.join(root, "src", "views", `${name}.html`);
-    return fs.readFileSync(filePath, "utf-8");
-};
-
-export let selectedClass = async () => {
-    await vscode.extensions.getExtension("ms-python.python")!.exports.ready;
-
-    let ed = vscode.window.activeTextEditor!;
-    let symbol = (await symbols(ed.document.uri))
-        .filter(s => s.kind === vscode.SymbolKind.Class)
-        .find(s => s.location.range.contains(ed.selection.active));
-
-    return symbol?.name;
-};
-
-export let setMissing = (target: Record<string, any>, source: Record<string, any>): Record<string, any> => {
-    let result = target;
-    Object.keys(source).forEach(k => {
-        result[k] = {...source[k], ...target[k]};
-    });
-
-    return result;
-};
-
 export let splitOnLast = (str: string, delimiter: string): [string, string | undefined] => {
     let i = str.lastIndexOf(delimiter);
     if (i === -1) { return [str, undefined]; }
@@ -50,3 +14,27 @@ export let setByPath = (target: Record<string, any>, keys: string[], value: any)
 };
 
 export let clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+
+export let logging: { [name: string]: number } = {
+    // see: https://docs.python.org/3/library/logging.html#logging-levels
+    NOTSET: 0,
+    DEBUG: 10,
+    INFO: 20,
+    WARNING: 30,
+    ERROR: 40,
+    CRITICAL: 50,
+};
+
+export let nowsecs = (): number => Math.floor(Date.now() / 1000);
+
+export let datetimelocal = (secs: number): string => {
+    let date = new Date(secs * 1000);
+
+    let a = date.getFullYear();
+    let mo = String(date.getMonth() + 1).padStart(2, "0"); // months are 0-based
+    let d = String(date.getDate()).padStart(2, "0");
+    let h = String(date.getHours()).padStart(2, "0");
+    let min = String(date.getMinutes()).padStart(2, "0");
+
+    return `${a}-${mo}-${d}T${h}:${min}`;
+};

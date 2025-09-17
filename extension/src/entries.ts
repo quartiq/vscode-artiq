@@ -1,8 +1,10 @@
 import * as dbio from "./dbio";
+import * as utils from "./utils.js"; // FIXME: why is this only working with .js suffix?
+import * as editors from "./editors.js";
 
-type Entry = {
-    setAttributes?: Function,
-    parseInput: Function,
+type Entry<P extends dbio.Procdesc> = {
+    editor: editors.Editor<P>,
+    // TODO: replace all (project wide) implicit "Function" types with explicit type aliases
     getDefault: Function,
 };
 
@@ -12,43 +14,74 @@ export let entry = (ty: string) => ({
     BooleanValue: BooleanEntry,
     EnumerationValue: EnumerationEntry,
     StringValue: StringEntry,
+    UnixtimeValue: DatetimeEntry,
     Scannable: ScanEntry,
 })[ty];
 
-let NumberEntry: Entry = {
-    setAttributes: (el: HTMLInputElement, procdesc: dbio.Number) => {
+let NumberEntry: Entry<dbio.Number> = {
+    editor: (args: editors.Args<dbio.Number>): HTMLElement => {
+        let parse = (el: HTMLElement): number => Number((el as HTMLInputElement).value);
+        let el = editors.input({ ...args, parse });
+
         el.setAttribute("type", "text");
-        el.setAttribute("max", String(procdesc.max));
-        el.setAttribute("min", String(procdesc.min));
-        el.setAttribute("step", String(procdesc.step));
-        // TODO: add magic
+        el.setAttribute("max", String(args.procdesc.max));
+        el.setAttribute("min", String(args.procdesc.min));
+        el.setAttribute("step", String(args.procdesc.step));
+        // TODO: add unit suffix and scaling, see datasets:applyScale()
+        return el;
     },
-    parseInput: (el: HTMLInputElement): number => Number(el.value),
     getDefault: (procdesc: dbio.Number): number => procdesc.default ?? 0,
 };
 
-let StringEntry: Entry = {
-    setAttributes: (el: HTMLInputElement) => el.setAttribute("type", "text"),
-    parseInput: (el: HTMLInputElement): string => el.value,
+let StringEntry: Entry<dbio.String> = {
+    editor: (args: editors.Args<dbio.String>): HTMLElement => {
+        let parse = (el: HTMLElement): string => (el as HTMLInputElement).value;
+        let el = editors.input({ ...args, parse });
+        el.setAttribute("type", "text");
+        return el;
+    },
     getDefault: (procdesc: dbio.PYON | dbio.String): string => procdesc.default ?? "",
 };
 
-let BooleanEntry: Entry = {
-    setAttributes: (el: HTMLInputElement, procdesc: dbio.Boolean) => {
-        el.setAttribute("type", "checkbox");
-        el.checked = procdesc.default;
+let unixsecs = (date: Date): number => Math.floor(date.getTime() / 1000);
+
+let DatetimeEntry: Entry<dbio.Unixtime> = {
+    editor: (args: editors.Args<dbio.Unixtime>): HTMLElement => {
+        let parse = (el: HTMLElement): number => {
+            let d = new Date((el as HTMLInputElement).value);
+            let v = isNaN(d.getTime()) ? utils.nowsecs() : unixsecs(d);
+            return v;
+        };
+
+        let el = editors.input({ ...args, parse });
+        el.setAttribute("type", "datetime-local");
+        el.value = utils.datetimelocal(args.cell.getValue());
+        return el;
     },
-    parseInput: (el: HTMLInputElement): boolean => el.checked,
+    getDefault: (procdesc: dbio.Unixtime): number => Number(procdesc.default) ?? utils.nowsecs(),
+};
+
+let BooleanEntry: Entry<dbio.Boolean> = {
+    editor: (args: editors.Args<dbio.Boolean>): HTMLElement => {
+        let parse = (el: HTMLElement): boolean => (el as HTMLInputElement).checked;
+        let el = editors.input({ ...args, parse });
+        el.setAttribute("type", "checkbox");
+        el.checked = args.cell.getValue();
+        return el;
+    },
     getDefault: (procdesc: dbio.Boolean): boolean => procdesc.default ?? false,
 };
 
-let EnumerationEntry: Entry = {
-    parseInput: (el: HTMLSelectElement): string => el.value,
+let EnumerationEntry: Entry<dbio.Enum> = {
+    editor: (args: editors.Args<dbio.Enum>): HTMLElement => {
+        if (args.procdesc?.quickstyle) { return editors.buttons(args); }
+        return editors.select(args);
+    },
     getDefault: (procdesc: dbio.Enum): string => procdesc.default ?? procdesc.choices[0],
 };
 
-let ScanEntry: Entry = {
+let ScanEntry: Entry<dbio.Scan> = {
     // TODO: see artiq/gui/entries:ScanEntry.default_state
-    parseInput: (el: HTMLElement): object => ({}),
+    editor: (): HTMLElement => document.createElement("div"),
     getDefault: (procdesc: dbio.Scan): object => ({}),
 };

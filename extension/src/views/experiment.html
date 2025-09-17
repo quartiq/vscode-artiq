@@ -6,9 +6,11 @@
     <title>Experiment</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <script type="module" src="{VSCODE_ELEMENTS_SCRIPT_URI}"></script>
+    <link href="{TABULATOR_STYLES_URI}" rel="stylesheet">
+    <script type="text/javascript" src="{TABULATOR_SCRIPT_URI}"></script>
 
     <style>
+        body { padding: 0 }
         .hidden { display: none }
     </style>
 </head>
@@ -20,98 +22,86 @@
         <p class="msg examine">Unknown experiment. Consider saving and examining the file ...</p>
     </div>
 
-    <form class="hidden">
-        <vscode-form-group variant="vertical">
-            <vscode-label for="priority">Priority</vscode-label>
-            <vscode-textfield class="input" name="scheduler_defaults.priority" id="priority" value="0"></vscode-textfield>
-        </vscode-form-group>
+    <div class="table"></div>
 
-        <vscode-form-group variant="vertical">
-            <vscode-label for="log_level">Log level</vscode-label>
-            <vscode-single-select class="input" name="submission_options.log_level" id="log_level"></vscode-single-select>
-        </vscode-form-group>
-
-        <vscode-form-group variant="vertical">
-            <vscode-label for="pipeline_name">Pipeline</vscode-label>
-            <vscode-textfield class="input" name="scheduler_defaults.pipeline_name" id="pipeline_name" value="main"></vscode-textfield>
-        </vscode-form-group>
-
-        <vscode-form-group variant="vertical">
-            <vscode-checkbox class="input" label="Flush" name="scheduler_defaults.flush" id="flush"></vscode-checkbox>
-        </vscode-form-group>
-
-        <vscode-form-group variant="vertical">
-            <vscode-button type="submit">Submit</vscode-button>
-        </vscode-form-group>
-    </form>
-
-    <script>
+    <script type="module">
+        // TODO: unify experiments and arguments
+        import {getByPath, logging, nowsecs} from "{SHARED_URI}/utils.js";
+        import {entry} from "{SHARED_URI}/entries.js";
         const vscode = acquireVsCodeApi();
+        let table;
 
         let idleel = document.querySelector(".idle");
         let msgels = idleel.querySelectorAll(".msg");
+        let tableel = document.querySelector(".table");
 
-        let formel = document.querySelector("form");
-        let flushel = document.querySelector("#flush");
-        let inputels = document.querySelectorAll(".input");
+        let fields = {
+            "Priority": { path: ["scheduler_defaults", "priority"], procdesc: { ty: "StringValue" }},
+            "Log level": { path: ["submission_options", "log_level"], procdesc: { ty: "EnumerationValue", choices: Object.keys(logging) }},
+            "Pipeline": { path: ["scheduler_defaults", "pipeline_name"], procdesc: { ty: "StringValue" }},
+            "Due date": { path: ["scheduler_defaults", "due_date"], procdesc: { ty: "UnixtimeValue" }},
+            "Flush": { path: ["scheduler_defaults", "flush"], procdesc: { ty: "BooleanValue" }},
+        };
 
-        formel.addEventListener("submit", ev => {
-            ev.preventDefault(); // suppress iframe refresh and thus demolition
-            vscode.postMessage( {action: "submit"} );
-        });
+        let editor = (cell, onRendered, success, cancel) => {
+            let procdesc = cell.getRow().getData().procdesc;
+            return entry(procdesc.ty)?.editor({procdesc, cell, onRendered, success, cancel, post: vscode.postMessage});
+        };
 
-        inputels.forEach(el => el.addEventListener("change", ev => {
-            let dataFlat = new FormData(formel);
-            dataFlat = Object.fromEntries(dataFlat); // postMessage can not serialize FormData
-            dataFlat["scheduler_defaults.flush"] = flushel.checked; // force boolean representation for checkbox
-            vscode.postMessage( {action: "change", data: {...expFlat, ...dataFlat} } );
-        }));
+        let cellEdited = cell => {
+            let raw = cell.getRow().getData();
+            vscode.postMessage({
+                action: "change", data: {
+                    path: fields[raw.name].path,
+                    value: raw.state,
+                },
+            });
+        };
 
-        let updateForm = expFlat => {
-            Object.entries(expFlat).forEach(([k, v]) => {
-                let el = document.querySelector(`[name="${k}"]`);
-                if (!el) return;
+        let formatter = cell => {
+            let data = cell.getRow().getData();
+            if (data.name !== "Due date") return data.state;
+            return (new Date(data.state * 1000)).toLocaleString();
+        };
 
-                if (k === "scheduler_defaults.flush") {
-                    el.checked = v;
-                    return;
-                }
-                el.value = v;
+        let mutator = (value, data) => data.name === "Due date" && value === null ? nowsecs() : value;
+
+        let updateTable = exp => {
+            let data = Object.entries(fields)
+                .map(([name, meta]) => ({ name, procdesc: meta.procdesc, state: getByPath(exp, meta.path) }));
+
+            table?.destroy?.();
+            table = new Tabulator(".table", {
+                headerVisible: false,
+                layout: "fitDataFill",
+                data,
+                columns: [
+                    { field: "name" },
+                    { field: "state", editor, cellEdited, formatter, mutator },
+                ],
             });
         };
 
         let actions = {
-            init: data => {
-                let parentel = document.querySelector("vscode-single-select");
-                data.logLevels.forEach(name => {
-                    let el = document.createElement("vscode-option");
-                    el.value = name;
-                    el.textContent = name;
-                    parentel.append(el);
-                });
-            },
-
             update: data => {
                 if (!data.selectedClass) {
                     showIdle("select");
                     return;
                 }
 
-                if (!data.expFlat && data.inRepo) {
+                if (!data.exp && data.inRepo) {
                     showIdle("scan");
                     return;
                 }
 
-                if (!data.expFlat) {
+                if (!data.exp) {
                     showIdle("examine");
                     return;
                 }
 
-                expFlat = data.expFlat;
-                updateForm(expFlat);
-
+                updateTable(data.exp);
                 idleel.classList.add("hidden");
-                formel.classList.remove("hidden");
+                tableel.classList.remove("hidden");
             }
         };
 
@@ -120,7 +110,7 @@
             idleel.querySelector(`.msg.${type}`).classList.remove("hidden");
 
             idleel.classList.remove("hidden");
-            formel.classList.add("hidden");
+            tableel.classList.add("hidden");
         };
 
         window.addEventListener("message", ev => actions[ev.data.action](ev.data.data));

@@ -3,7 +3,7 @@
 import * as vscode from "vscode";
 
 import * as dbio from "./dbio";
-import * as net from "./net";
+import * as netutils from "./netutils";
 
 import * as viewLog from "./views/log";
 import * as viewSchedule from "./views/schedule";
@@ -32,8 +32,9 @@ export async function activate(context: vscode.ExtensionContext) {
 		viewExplorer.view,
 		viewDatasets.view,
 
-		vscode.commands.registerCommand("artiq.submitExperiment", net.submitCurr),
-		vscode.commands.registerCommand("artiq.examineFile", viewExperiment.examineFile),
+		vscode.commands.registerCommand("artiq.submitExperiment", netutils.submitCurr),
+		vscode.commands.registerCommand("artiq.examineFile", netutils.examineFile),
+		// TODO: maybe all of these functions should live in netutils?
 		vscode.commands.registerCommand("artiq.scanRepository", viewExplorer.scan),
 		vscode.commands.registerCommand("artiq.openExperiment", viewExplorer.open),
 		vscode.commands.registerCommand("artiq.createDataset", viewDatasets.create),

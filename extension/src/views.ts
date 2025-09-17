@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import * as mutex from "./mutex";
-import * as utils from "./utils";
+import * as hostutils from "./hostutils";
 
 export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 
@@ -54,10 +54,6 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 	public async init() {
 		await this.ready.locked;
 
-		let vsceScriptUri = this._view!.webview.asWebviewUri(
-			vscode.Uri.joinPath(this._extensionUri, "node_modules", "@vscode-elements/elements", "dist", "bundled.js")
-		);
-
 		let tabulatorScriptUri = this._view!.webview.asWebviewUri(
 			vscode.Uri.joinPath(this._extensionUri, "node_modules", "tabulator-tables", "dist", "js", "tabulator.min.js")
 		);
@@ -70,11 +66,11 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 			vscode.Uri.joinPath(this._extensionUri, "shared")
 		);
 
-		this.html = utils.html(this._viewType, this._extensionUri.fsPath)
-			.replace("{VSCODE_ELEMENTS_SCRIPT_URI}", vsceScriptUri.toString())
-			.replace("{TABULATOR_SCRIPT_URI}", tabulatorScriptUri.toString())
-			.replace("{TABULATOR_STYLES_URI}", tabulatorStylesUri.toString())
-			.replace("{SHARED_URI}", sharedUri.toString());
+		// TODO: make all webviews typescript based, no more html files!
+		this.html = hostutils.html(this._viewType, this._extensionUri.fsPath)
+			.replaceAll("{TABULATOR_SCRIPT_URI}", tabulatorScriptUri.toString())
+			.replaceAll("{TABULATOR_STYLES_URI}", tabulatorStylesUri.toString())
+			.replaceAll("{SHARED_URI}", sharedUri.toString());
 
 		this._view!.webview.html = this.html;
 	}

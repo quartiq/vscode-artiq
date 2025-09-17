@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 
-import * as utils from "../utils";
+import * as hostutils from "../hostutils";
 import * as net from "../net";
 import * as dbio from "../dbio";
 import * as syncstruct from "../syncstruct";
@@ -23,7 +23,7 @@ export let open = async (filename: string, classname: string) => {
 		return;
 	}
 
-	let symbols = await utils.symbols(uri);
+	let symbols = await hostutils.symbols(uri);
 	let location = symbols.find(s => s.name === classname)?.location;
 	if (!location) {
 		vscode.window.showErrorMessage("No such class, consider rescanning ARTIQ repository");
@@ -102,6 +102,9 @@ export let init = async () => {
 					arg[3] = entries.entry(arg[0].ty)?.getDefault(arg[0]);
 					return [name, arg];
 				})),
+				// TODO: can this be simplified? are these structures really mandatory from server side?
+				scheduler_defaults: {...dbio.defaults.scheduler_defaults, ...exp.scheduler_defaults},
+				submission_options: {...dbio.defaults.submission_options, ...exp.submission_options},
 			})));
 			provider.refresh();
 		},
