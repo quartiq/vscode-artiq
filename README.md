@@ -5,27 +5,30 @@ This extension expects to be run alongside an ARTIQ instance in the same filesys
 
 ## Run
 
-- run dummy ARTIQ instance:
+- run dummy ARTIQ master instance:
     - clone: `git clone https://github.com/m-labs/artiq`
     - obtain environment: `cd artiq; nix develop`
-    - start server: `cd vscode-artiq; artiq_master`
+    - start server: `cd artiq/examples/no_hardware; artiq_master`
 
-- obtain dependencies: `cd extension; npm install`
+- prepare ARTIQ VSCode extension:
+    - clone: `git clone https://github.com/quartiq/vscode-artiq`
+    - obtain dependencies: `cd vscode-artiq; npm install`
+    - (for development) automate typescript compilation: `npm run watch`
 
-- in VS Code, obtain an "Extension Development Host" window:
-    - open the folder `extension`
-    - edit `src/extension.ts`
+- obtain an "Extension Development Host" window:
+    - open VSCode
+    - open the folder `vscode-artiq`
     - press `F5`
 
-- run file watcher automatic compilation: `cd extension; npm run watch`
+## Submit your first experiment
 
-- in the "Extension Development Host" window:
-    - edit File -> Preferences -> Settings -> Extensions -> ARTIQ Dashboard
-    - open experiment file, e. g. `example_experiment.py`
-    - move cursor to desired class definition
-    - submit experiment: `Ctrl+Shift+X`
+- switch to the "Extension Development Host" window
+- edit File -> Preferences -> Settings -> Extensions -> ARTIQ Dashboard
+- open experiment file, e. g. `example_experiment.py`
+- move cursor to desired class definition
+- submit experiment: `Ctrl+Shift+X`
 
-    - alternatively, open "Command Palette": `Ctrl+Shift+P`
-    - select "ARTIQ: Submit Experiment"
+- alternatively, open "Command Palette": `Ctrl+Shift+P`
+- select "ARTIQ: Submit Experiment"
 
-    - alternatively, click "Submit" action in the "Experiment" sidebar toolbar
+- alternatively, click "Submit" action icon in the "Experiment" sidebar toolbar
