@@ -214,6 +214,7 @@ export let edit = async (keypath: string, propname: string) => {
 
     let prop = inputProps[propname];
     let validateInput = (s: string) => {
+        if (s === "") { return null; }
         if (prop.test(s)) { return null; }
         return `Please enter a valid ${prop.desc}`;
     };
@@ -222,7 +223,7 @@ export let edit = async (keypath: string, propname: string) => {
     let newValue = await vscode.window.showInputBox({ prompt: `Edit ${propname}:`, validateInput, value });
     if (newValue === undefined) { return; }
 
-    newValue = prop.parse(newValue);
+    newValue = newValue === "" ? undefined : prop.parse(newValue);
     if (newValue === value) { return; }
 
     utils.setByPath(set, prop.path, newValue);
