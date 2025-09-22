@@ -40,11 +40,13 @@ let isNode = (keypath: string): boolean => findChildren(Object.keys(sets), keypa
 let closestParent = (keypath: string | undefined): string | undefined => {
     if (!keypath || Object.keys(sets).length === 0) { return undefined; }
 
+    let ancestors = Object.keys(sets).filter(path => path !== keypath); // exclude self
     let target = keypath.split(".");
+
     while (true) {
         target.pop();
-        let related = findChildren(Object.keys(sets), target);
-        if (related.length > 0) { break; }
+        let descendants = findChildren(ancestors, target);
+        if (descendants.length > 0) { break; }
     }
 
     return target.join(".");
