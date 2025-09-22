@@ -1,7 +1,7 @@
 {
-  "name": "artiq-dashboard",
-  "displayName": "ARTIQ Dashboard",
-  "description": "A proof of concept recreating the ARTIQ dashboard in VS Code through their Extension API",
+  "name": "artiq",
+  "displayName": "ARTIQ",
+  "description": "An ARTIQ user interface",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.98.0"

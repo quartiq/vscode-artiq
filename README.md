@@ -1,6 +1,6 @@
 # VS Code ARTIQ Extension
 
-A proof of concept recreating the ARTIQ dashboard in VS Code through their Extension API.
+A proof of concept creating an ARTIQ user interface in VS Code through their Extension API.
 This extension expects to be run alongside an ARTIQ instance in the same filesystem tree.
 
 ## Run
@@ -23,7 +23,7 @@ This extension expects to be run alongside an ARTIQ instance in the same filesys
 ## Submit your first experiment
 
 - switch to the "Extension Development Host" window
-- edit File -> Preferences -> Settings -> Extensions -> ARTIQ Dashboard
+- edit File -> Preferences -> Settings -> Extensions -> ARTIQ
 - open experiment file, e. g. `example_experiment.py`
 - move cursor to desired class definition
 - submit experiment: `Ctrl+Shift+X`
