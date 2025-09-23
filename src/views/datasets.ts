@@ -163,6 +163,7 @@ export let init = async () => {
     provider = new DatasetsProvider();
     view = vscode.window.createTreeView("datasets", {
         treeDataProvider: provider,
+        manageCheckboxStateManually: true, // prevent coupling of checkbox state throughout the whole tree path
     });
 
     view.onDidChangeCheckboxState(ev => ev.items.forEach(item => {
