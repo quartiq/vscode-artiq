@@ -1,0 +1,83 @@
+
+body {
+    padding: 0;
+}
+
+.tabulator {
+    background-color: var(--vscode-editor-background);
+    border-color: var(--vscode-editorWidget-border);
+}
+
+/* Table header */
+
+.tabulator .tabulator-header {
+    background-color: var(--vscode-sideBar-background);
+    color: var(--vscode-sideBar-foreground);
+    border-color: var(--vscode-editorWidget-border);
+}
+.tabulator .tabulator-header .tabulator-col {
+    background-color: var(--vscode-sideBar-background);
+    border-color: var(--vscode-editorWidget-border);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .tabulator .tabulator-header .tabulator-col.tabulator-sortable.tabulator-col-sorter-element:hover {
+        background-color: var(--vscode-list-activeSelectionBackground);
+        color: var(--vscode-list-activeSelectionForeground);
+    }
+}
+
+.tabulator .tabulator-header .tabulator-col.tabulator-sortable[aria-sort=none] .tabulator-col-content .tabulator-col-sorter .tabulator-arrow {
+    border-bottom-color: var(--vscode-list-foreground);
+    border-top-color: var(--vscode-list-foreground);
+}
+
+.tabulator .tabulator-header .tabulator-col.tabulator-sortable[aria-sort=ascending] .tabulator-col-content .tabulator-col-sorter .tabulator-arrow,
+.tabulator .tabulator-header .tabulator-col.tabulator-sortable[aria-sort=descending] .tabulator-col-content .tabulator-col-sorter .tabulator-arrow {
+    border-bottom-color: var(--vscode-list-activeSelectionForeground);
+    border-top-color: var(--vscode-list-activeSelectionForeground);
+}
+
+/* Table body */
+
+.tabulator-row .tabulator-cell {
+    border-color: var(--vscode-editorWidget-border);
+}
+
+.tabulator .tabulator-tableholder .tabulator-table {
+    color: var(--vscode-editor-foreground);
+}
+
+.tabulator-row {
+    background-color: var(--vscode-editor-background);
+}
+
+.tabulator-row.tabulator-row-even {
+    background-color: var(--vscode-list-inactiveSelectionBackground);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .tabulator-row.tabulator-selectable:hover {
+        background-color: var(--vscode-list-activeSelectionBackground);
+        color: var(--vscode-list-activeSelectionForeground);
+    }
+}
+
+/* Group header */
+
+.tabulator-row.tabulator-group {
+    background-color: var(--vscode-sideBar-background);
+    border-color: var(--vscode-editorWidget-border);
+}
+
+.tabulator-row.tabulator-group:hover {
+    background-color: var(--vscode-list-activeSelectionBackground);
+}
+
+.tabulator-row.tabulator-group.tabulator-group-visible .tabulator-arrow {
+    border-top-color: var(--vscode-list-foreground);
+}
+
+.tabulator-row.tabulator-group .tabulator-arrow {
+    border-left-color: var(--vscode-list-foreground);
+}

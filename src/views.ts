@@ -62,6 +62,10 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 			vscode.Uri.joinPath(this._extensionUri, "node_modules", "tabulator-tables", "dist", "css", "tabulator.min.css")
 		);
 
+		let customStylesUri = this._view!.webview.asWebviewUri(
+			vscode.Uri.joinPath(this._extensionUri, "src", "views", "tabulator.css")
+		);
+
 		let sharedUri = this._view!.webview.asWebviewUri(
 			vscode.Uri.joinPath(this._extensionUri, "shared")
 		);
@@ -70,6 +74,7 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 		this.html = hostutils.html(this._viewType, this._extensionUri.fsPath)
 			.replaceAll("{TABULATOR_SCRIPT_URI}", tabulatorScriptUri.toString())
 			.replaceAll("{TABULATOR_STYLES_URI}", tabulatorStylesUri.toString())
+			.replaceAll("{CUSTOM_STYLES_URI}", customStylesUri.toString())
 			.replaceAll("{SHARED_URI}", sharedUri.toString());
 
 		this._view!.webview.html = this.html;
