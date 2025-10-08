@@ -24,10 +24,8 @@ Whether you are new to ARTIQ or an experienced ARTIQ user, we hope this
 extension fits your needs and enhances your working experience.
 
 1.  Install [ARTIQ](https://github.com/m-labs/artiq) if you haven't already.
-
-**⚠️ Note**: The extension expects to be run alongside an ARTIQ instance
-in the same filesystem tree.
-
+    **⚠️ Note:** The extension expects to be run alongside an ARTIQ instance
+    in the same filesystem tree.
 
 1.  Install the [VS Code ARTIQ extension].
 
