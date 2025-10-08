@@ -24,10 +24,8 @@ Whether you are new to ARTIQ or an experienced ARTIQ user, we hope this
 extension fits your needs and enhances your working experience.
 
 1.  Install [ARTIQ](https://github.com/m-labs/artiq) if you haven't already.
-    **⚠️ Note:** The extension expects to be run alongside an ARTIQ instance
-    in the same filesystem tree.
 
-1.  Install the [VS Code ARTIQ extension].
+1.  Install the [VS Code ARTIQ extension](https://marketplace.visualstudio.com/items?itemName=quartiq.artiq).
 
 1.  Access the extension via Primary Sidebar and Panel. Select available
     experiments through the ARTIQ Explorer and they will pop-up in the Editor.
@@ -38,6 +36,9 @@ extension fits your needs and enhances your working experience.
 <!--TODO: add animated screenshot sequence from install to workspace-->
 
 You are ready to go :-) &nbsp;&nbsp; 🎉🎉🎉
+
+⚠️ **Note:** The extension expects to be run alongside `artiq_master` in the
+same filesystem tree.
 
 ## What's next
 
