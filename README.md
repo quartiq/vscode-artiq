@@ -1,34 +1,73 @@
-# VS Code ARTIQ Extension
+# ARTIQ for Visual Studio Code
 
-A proof of concept creating an ARTIQ user interface in VS Code through their Extension API.
-This extension expects to be run alongside an ARTIQ instance in the same filesystem tree.
+[The VS Code ARTIQ extension](https://marketplace.visualstudio.com/items?itemName=quartiq.artiq)
+provides rich UI for the
+[ARTIQ control system for quantum information experiments](https://github.com/m-labs/artiq).
 
-## Run
+## Requirements
 
-- run dummy ARTIQ master instance:
-    - clone: `git clone https://github.com/m-labs/artiq`
-    - obtain environment: `cd artiq; nix develop`
-    - start server: `cd artiq/examples/no_hardware; artiq_master`
+*   Visual Studio Code 1.98 or newer
+*   ARTIQ: HEAD of the `master` branch (what becomes `release-9` one day).
+    Clone directly from the [repository](https://github.com/m-labs/artiq), e.g.:
 
-- prepare ARTIQ VSCode extension:
-    - clone: `git clone https://github.com/quartiq/vscode-artiq`
-    - obtain dependencies: `cd vscode-artiq; npm install`
-    - (for development) automate typescript compilation: `npm run watch`
+    ```sh
+    git clone https://github.com/m-labs/artiq
+    cd artiq
+    nix run # obtain nix via https://nix.dev/install-nix#install-nix
+    cd path/to/my/experiments
+    artiq_master
 
-- obtain an "Extension Development Host" window:
-    - open VSCode
-    - open the folder `vscode-artiq`
-    - press `F5`
+## Quick Start
 
-## Submit your first experiment
+Welcome! 👋🏻<br/>
+Whether you are new to ARTIQ or an experienced ARTIQ user, we hope this
+extension fits your needs and enhances your working experience.
 
-- switch to the "Extension Development Host" window
-- edit File -> Preferences -> Settings -> Extensions -> ARTIQ
-- open experiment file, e. g. `example_experiment.py`
-- move cursor to desired class definition
-- submit experiment: `Ctrl+Shift+X`
+1.  Install [ARTIQ](https://github.com/m-labs/artiq) if you haven't already.
 
-- alternatively, open "Command Palette": `Ctrl+Shift+P`
-- select "ARTIQ: Submit Experiment"
+**⚠️ Note**: The extension expects to be run alongside an ARTIQ instance
+in the same filesystem tree.
 
-- alternatively, click "Submit" action icon in the "Experiment" sidebar toolbar
+
+1.  Install the [VS Code ARTIQ extension].
+
+1.  Access the extension via Primary Sidebar and Panel. Select available
+    experiments through the ARTIQ Explorer and they will pop-up in the Editor.
+
+1.  The extension depends on `ms-python.python`. If `ms-python.python` is
+    missing, the extension will try to install it.
+
+<!--TODO: add animated screenshot sequence from install to workspace-->
+
+You are ready to go :-) &nbsp;&nbsp; 🎉🎉🎉
+
+## What's next
+
+<!--TODO: explore more features -> link to github wiki-->
+<!--TODO: view settings doku -> link to github wiki-->
+<!--TODO: advanced topics (customization) -> link to github wiki-->
+<!--TODO: troubleshooting -> link to github wiki-->
+<!--TODO: full list of commands and kb shortcuts -> link to github wiki-->
+*   [file an issue](https://github.com/quartiq/vscode-artiq/issues/new) for
+  problems with the extension.
+*   Start a [GitHub discussion](https://github.com/quartiq/vscode-artiq/discussions)
+  or get help in [chat](https://matrix.to/#/#quartiq:matrix.org).
+* Explore ARTIQ resources on [m-labs.hk/artiq/manual/](https://m-labs.hk/artiq/manual/) and
+  [forum.m-labs.hk](https://forum.m-labs.hk/).
+
+
+If you are new to ARTIQ, [this article](https://m-labs.hk/artiq/manual/rtio.html) provides
+the overview on ARTIQ Real-Time I/O concepts and basic terminology.
+<!--TODO: screencast showing how to write and run your first experiment using VS Code ARTIQ-->
+
+## Feature highlights
+<!--TODO: link feature names to places in the github wiki-->
+*   Explorer - Jump to or peek at an experiment's class definition
+*   Experiment - Submit an experiment with custom options
+*   Arguments - Tweak experiment arguments before submission
+*   Datasets - Tweak or monitor data to and from experiments
+*   Schedule - Follow what's about to happen next on hardware
+*   Log - Evaluate results and errors as they appear
+<!--TODO: link to full feature break down in github wiki-->
+
+<!--TODO: screencast demonstrating a key feature-->
