@@ -10,12 +10,13 @@ provides rich UI for the
 *   ARTIQ: HEAD of the `master` branch (what becomes `release-9` one day).
     Clone directly from the [repository](https://github.com/m-labs/artiq), e.g.:
 
-    ```sh
+    ```
     git clone https://github.com/m-labs/artiq
     cd artiq
     nix run # obtain nix via https://nix.dev/install-nix#install-nix
     cd path/to/my/experiments
     artiq_master
+    ```
 
 ## Quick Start
 
