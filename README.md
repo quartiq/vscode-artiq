@@ -6,7 +6,7 @@ provides rich UI for the
 
 ## Requirements
 
-*   Visual Studio Code 1.98 or newer
+*   Visual Studio Code 1.98 or newer (or editors compatible with VS Code 1.98+ APIs).
 *   ARTIQ: HEAD of the `master` branch (what becomes `release-9` one day).
     Clone directly from the [repository](https://github.com/m-labs/artiq), e.g.:
 

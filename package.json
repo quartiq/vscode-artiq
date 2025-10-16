@@ -1,13 +1,38 @@
 {
   "name": "artiq",
   "displayName": "ARTIQ",
-  "description": "An ARTIQ user interface",
-  "version": "0.0.1",
+  "version": "0.0.4",
+  "publisher": "quartiq",
+  "description": "ARTIQ user interface for Visual Studio Code",
+  "license": "SEE LICENSE IN LICENSE",
+  "icon": "media/artiq.png",
   "engines": {
     "vscode": "^1.98.0"
   },
   "categories": [
+    "Programming Languages",
     "Other"
+  ],
+  "galleryBanner": {
+    "color": "#F2F2F2",
+    "theme": "light"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/quartiq/vscode-artiq"
+  },
+  "bugs": {
+    "url": "https://github.com/quartiq/vscode-artiq",
+    "email": "pk@quartiq.com"
+  },
+  "keywords": [
+    "dsl",
+    "quantum",
+    "physics",
+    "realtime",
+    "rt",
+    "m-labs",
+    "control system"
   ],
   "activationEvents": [],
   "main": "./out/extension.js",
