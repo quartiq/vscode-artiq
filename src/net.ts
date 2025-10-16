@@ -3,7 +3,7 @@ let net = require("net");
 let { once } = require("events");
 
 import * as utils from "./utils";
-import * as pyon from "./pyon";
+import * as pyon from "./pyon/pyon";
 import * as dbio from "./dbio";
 
 export type Bytes = {type: "Buffer", data: number[]};

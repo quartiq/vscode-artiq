@@ -5,7 +5,7 @@ import * as vscode from "vscode";
 import * as utils from "../utils";
 import * as units from "../units";
 import * as net from "../net";
-import * as pyon from "../pyon";
+import * as pyon from "../pyon/pyon";
 import * as syncstruct from "../syncstruct";
 
 let provider: DatasetsProvider;
@@ -16,7 +16,8 @@ type Dataset = [ persist: boolean, value: any, metadata: Metadata ];
 let sets: Record<string, Dataset> = {};
 let inputProps: { [name: string]: { path: any[], desc: string, test: Function, parse: Function } } = {
     // TODO: add tooltip messages to explain, how each metadata applies to the database
-    Value: { path: [1], desc: "PYON v2 string", test: (s: string) => pyon.isValid(s), parse: (s: string) => s },
+    // TODO: add pyon.desc and pyon.test as a function of the pyon datatype
+    Value: { path: [1], desc: "string", test: (s: string) => typeof s === "string", parse: pyon.parse },
     Unit: { path: [2, "unit"], desc: "string", test: (s: string) => typeof s === "string", parse: (s: string) => s },
     Scale: { path: [2, "scale"], desc: "number", test: (s: string) => /^-?\d+(\.\d+)?$/.test(s), parse: (s: string) => Number(s) },
     // see: https://numpy.org/doc/stable/reference/generated/numpy.format_float_positional.html
@@ -58,29 +59,30 @@ let closestParent = (keypath: string | undefined): string | undefined => {
 // TODO: maybe this will become pretty via kwargs implementation of rpc?
 let submit = async (setpath: string, set?: Dataset) => await net.rpc("dataset_db", "set", [setpath, set?.[1], set?.[0], set?.[2]]);
 
-let applyScale = (value: string, meta: Metadata, inverse?: boolean): string => {
-    let n = pyon.decode(value);
-    if (!Number.isFinite(n)) { return value; }
-
+let applyScale = (value: any, meta: Metadata, inverse?: boolean): any => {
     let scale = meta.scale ?? units.scale(meta.unit); // see: m-labs/artiq/tools:scale_from_metadata
     if (!Number.isFinite(scale)) { return value; }
 
-    if (inverse) { return pyon.encode(n / scale); }
-    return pyon.encode(n * scale);
+    if (inverse) { return value / scale; }
+    return value * scale;
 };
 
-let applyPrecision = (value: string, precision: number): string => {
-    let n = pyon.decode(value);
-    if (!Number.isFinite(n)) { return value; }
+let applyPrecision = (value: any, precision: number): any => {
     if (!Number.isFinite(precision)) { return value; }
     // see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/toPrecision#exceptions
-    return n.toPrecision(utils.clamp(precision, 1, 100));
+    return value.toPrecision(utils.clamp(precision, 1, 100));
 };
 
-let fmt = (set: pyon.Tuple) => {
+let fmtNumber = (set: Dataset): string => {
     let v = applyScale(set[1], set[2], true);
     v = applyPrecision(v, set[2].precision);
     return `${v}${set[2].unit ? " " + set[2].unit : ""}`;
+};
+
+let fmt = (set: Dataset) => {
+    if (Number.isFinite(set[1])) { return fmtNumber(set); }
+    if (pyon.isTypeTaggedObject(set[1])) { return pyon.fmt(set[1]); }
+    return set[1];
 };
 
 class DatasetTreeItem extends vscode.TreeItem {
@@ -91,7 +93,7 @@ class DatasetTreeItem extends vscode.TreeItem {
 
         let set = sets[keypath];
         if (set) {
-            this.description = fmt(set);
+            this.description = String(fmt(set));
             this.contextValue = "dataset";
             this.checkboxState = Number(set[0]);
             this.tooltip = "Checkbox: Make dataset persist ARTIQ restart";
@@ -222,7 +224,7 @@ export let edit = async (keypath: string, propname: string) => {
         return `Please enter a valid ${prop.desc}`;
     };
 
-    let value = utils.getByPath(set, prop.path);
+    let value = propname === "Value" ? fmt(set) : utils.getByPath(set, prop.path);
     let newValue = await vscode.window.showInputBox({ prompt: `Edit ${propname}:`, validateInput, value });
     if (newValue === undefined) { return; }
 

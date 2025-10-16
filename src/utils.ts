@@ -38,3 +38,5 @@ export let datetimelocal = (secs: number): string => {
 
     return `${a}-${mo}-${d}T${h}:${min}`;
 };
+
+export let range = (n: number) => [...Array(n).keys()];
