@@ -1,7 +1,10 @@
+// see sequence.plantuml
 const marker = "__jsonclass__"; // see: m-labs/sipyco/pyon
+
 type Params = any[];
-type JsonClassHint = { [ marker ]: [ constructor: string, params: Params ] }; // see: https://www.jsonrpc.org/specification_v1#a3.JSONClasshinting
-let isJsonClassHint = (v: any): boolean => {
+type JsonClass = [ name: string, params: Params ];
+type HintedJsonClass = { [ marker ]: JsonClass }; // see: https://www.jsonrpc.org/specification_v1#a3.JSONClasshinting
+let isHintedJsonClass = (v: any): boolean => {
     if (typeof v !== "object") { return false; }
     if (v === null) { return false; }
 
@@ -20,47 +23,96 @@ export let isTypeTaggedObject = (v: any): boolean => {
     return v.hasOwnProperty(marker);
 };
 
-interface Type {
-    revive: (params: Params) => any, // any := TypeTaggedObject
-    replace: (data: TypeTaggedObject) => Params,
+type ConvName = keyof TypeInterface;
+type Reviver = (params: Params) => any; // any := TypeTaggedObject
+type Replacer = (data: TypeTaggedObject) => Params;
+type Previewer = (data: TypeTaggedObject) => any;
+type TypeInterface = {
+    fromMachine: Reviver, toMachine: Replacer,
 
-    fmt: (data: TypeTaggedObject) => string,
-    parse: (formatted: string) => any, // any := TypeTaggedObject
-}
+    // TODO: for now fromHuman and toHuman return PYON v2 JSON
+    // maybe one day, the user may enjoy editing python style formatted strings
+    fromHuman: Reviver, toHuman: Replacer,
+    forPreview: Previewer, // this is one-way, so it may be very liberal
+};
+
+type IdentityConv = (v: any) => any;
+let identityConv = (v: any) => v;
+let identityType: Record<ConvName, IdentityConv> = {
+    fromMachine: identityConv, toMachine: identityConv,
+    fromHuman: identityConv, toHuman: identityConv,
+    forPreview: identityConv,
+};
+
+let conv = (t: string, c: ConvName): Reviver | Replacer | IdentityConv => {
+    let type = types[t];
+    if (!type) {
+        // TODO: distinguish between valid PYON v2 types, not yet implemented
+        // and random text
+        console.error(`PYON type not yet implemented: ${t}`);
+        return identityType[c];
+    }
+    return type[c];
+};
 
 // TODO: implement missing types
 import * as set from "./set";
+import * as dict from "./dict";
 import * as tuple from "./tuple";
 import * as nparray from "./nparray";
-const types: Record<string, Type> = { set, tuple, nparray };
+const types: Record<string, TypeInterface> = { set, dict, tuple, nparray };
 
-export let decode = (s: string) => JSON.parse(s, (k: string, v: any): any => {
-    if (!isJsonClassHint(v)) { return v; }
+let toTagged = (v: HintedJsonClass, convname: ConvName): TypeTaggedObject => {
+    let [typename, params] = v[marker];
+    let reviver = conv(typename, convname);
 
-    let revived = types[v[marker][0]]?.revive(v[marker][1]);
-    revived[marker] = v[marker][0];
+    let revived = reviver(params);
+    revived[marker] = typename;
     return revived as TypeTaggedObject;
-});
+};
 
-export let encode = (v: any) => JSON.stringify(v, (k: string, v: any): any => {
-    if (!isTypeTaggedObject(v)) { return v; }
+let toHinted = (v: TypeTaggedObject, convname: ConvName): HintedJsonClass => {
+    let typename = v[marker];
+    let replacer = conv(typename, convname);
 
-    let params = types[v[marker]].replace(v);
     let replaced: Record<string, any> = {};
-    replaced[marker] = [ v[marker], params ];
-    return replaced as JsonClassHint;
+    replaced[marker] = [ typename, replacer(v) ];
+    return replaced as HintedJsonClass;
+};
+
+export type Decoder = (hinted: string) => any; // HintedJsonClass -> TypeTaggedObject
+export type Encoder = (tagged: any) => string; // TypeTaggedObject -> HintedJsonClass
+
+export let decode: Decoder = hinted => JSON.parse(hinted, (k: string, v: any): any => {
+    if (!isHintedJsonClass(v)) { return v; }
+    return toTagged(v, "fromMachine");
 });
 
-// format: pyon.<typename>(<formatted value>)
-export let fmt = (data: TypeTaggedObject): string => `pyon.${data[marker]}(${types[data[marker]].fmt(data)})`;
-export let parse = (s: string): TypeTaggedObject | string => {
-    let match = s.match(/^pyon\.(\w+)\s*\((.*)\)$/);
-    if (!match) { return s; }
+export let encode: Encoder = tagged => JSON.stringify(tagged, (k: string, v: any): any => {
+    if (!isTypeTaggedObject(v)) { return v; }
+    return toHinted(v, "toMachine");
+});
 
-    let [_, name, formatted] = match;
-    if (!types[name]) { return s; }
+export let parse: Decoder = hinted => JSON.parse(hinted, (k: string, v: any): any => {
+    if (!isHintedJsonClass(v)) { return v; }
+    return toTagged(v, "fromHuman");
+});
 
-    let parsed = types[name].parse(formatted);
-    parsed[marker] = name;
-    return parsed as TypeTaggedObject;
+export let fmt: Encoder = tagged => JSON.stringify(tagged, (k: string, v: any): any => {
+    if (!isTypeTaggedObject(v)) { return v; }
+    return toHinted(v, "toHuman");
+});
+
+export let preview: Encoder = tagged => JSON.stringify(tagged, (k: string, v: any): any => {
+    if (!isTypeTaggedObject(v)) { return v; }
+    return toHinted(v, "forPreview");
+});
+
+export let validate = (hinted: string, decode: Decoder): boolean => {
+    try {
+        decode(hinted);
+        return true;
+    } catch (e) {
+        return false;
+    }
 };

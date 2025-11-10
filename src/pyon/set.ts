@@ -1,7 +1,10 @@
-type Set = [ set: any[] ];
+type Set = any[];
+type Params = [ set: Set ];
 
-export let revive = (params: any[]): Set => params[0] as Set;
-export let replace = (data: any): any[] => [ data ];
+export let fromMachine = (params: any[]): Set => (params as Params)[0] as Set;
+export let toMachine = (data: any): Params => [ data as Set ] as Params;
 
-export let fmt = (data: any): string => JSON.stringify(data);
-export let parse = (s: string): Set => JSON.parse(s) as Set;
+export let fromHuman = fromMachine;
+export let toHuman = toMachine;
+
+export let forPreview = (data: any): Set => data as Set;

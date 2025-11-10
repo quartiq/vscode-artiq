@@ -234,6 +234,9 @@
     "ws": "^8.18.1"
   },
   "dependencies": {
+    "cwise": "^0.4.0",
+    "dup": "^1.0.0",
+    "flat": "^6.0.1",
     "is-typed-array": "^1.1.15",
     "ndarray": "^1.0.19",
     "tabulator-tables": "^6.3.1"

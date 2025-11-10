@@ -13,11 +13,13 @@ export let view: vscode.TreeView<string>;
 
 type Metadata = { unit: string, scale: number, precision: number };
 type Dataset = [ persist: boolean, value: any, metadata: Metadata ];
-let sets: Record<string, Dataset> = {};
-let inputProps: { [name: string]: { path: any[], desc: string, test: Function, parse: Function } } = {
+type Keypath = string;
+let sets: Record<Keypath, Dataset> = {};
+
+type InputProperty = { path: any[], desc: string, test: (s: string) => boolean, parse: (s: string) => any };
+let inputProps: Record<string, InputProperty> = {
     // TODO: add tooltip messages to explain, how each metadata applies to the database
-    // TODO: add pyon.desc and pyon.test as a function of the pyon datatype
-    Value: { path: [1], desc: "string", test: (s: string) => typeof s === "string", parse: pyon.parse },
+    Value: { path: [1], desc: "PYON v2 JSON", test: (s: string) => pyon.validate(s, pyon.parse), parse: pyon.parse },
     Unit: { path: [2, "unit"], desc: "string", test: (s: string) => typeof s === "string", parse: (s: string) => s },
     Scale: { path: [2, "scale"], desc: "number", test: (s: string) => /^-?\d+(\.\d+)?$/.test(s), parse: (s: string) => Number(s) },
     // see: https://numpy.org/doc/stable/reference/generated/numpy.format_float_positional.html
@@ -79,9 +81,9 @@ let fmtNumber = (set: Dataset): string => {
     return `${v}${set[2].unit ? " " + set[2].unit : ""}`;
 };
 
-let fmt = (set: Dataset) => {
+let fmt = (set: Dataset, preview?: pyon.Encoder) => {
     if (Number.isFinite(set[1])) { return fmtNumber(set); }
-    if (pyon.isTypeTaggedObject(set[1])) { return pyon.fmt(set[1]); }
+    if (pyon.isTypeTaggedObject(set[1])) { return preview ? preview(set[1]) : pyon.fmt(set[1]); }
     return set[1];
 };
 
@@ -93,7 +95,7 @@ class DatasetTreeItem extends vscode.TreeItem {
 
         let set = sets[keypath];
         if (set) {
-            this.description = String(fmt(set));
+            this.description = String(fmt(set, pyon.preview));
             this.contextValue = "dataset";
             this.checkboxState = Number(set[0]);
             this.tooltip = "Checkbox: Make dataset persist ARTIQ restart";
@@ -178,9 +180,12 @@ export let init = async () => {
     sets = syncstruct.from({
         channel: "datasets",
         onReceive: mod => {
-            provider.refresh(mod.key);
-            if (mod.action === "setitem") {
-                view.reveal(mod.key, { focus: true, expand: true });
+            if (mod.action === "init") { return; }
+
+            let keypath = mod.path[0] ?? mod.key;
+            provider.refresh(keypath);
+            if (mod.action === "setitem" && mod.path[0] === undefined) {
+                view.reveal(keypath, { focus: true, expand: true });
             }
         },
     });

@@ -3,14 +3,16 @@
 import * as net from "./net";
 
 export type Struct = { [name: string]: any };
-type Mod = { action: string, struct: Struct, path: [], key: string, value: any };
+type Mod = { action: string, struct: Struct, path: any[], key: string, value: any };
 type Action = (target: Struct, mod: Mod) => void;
 
 // see: m-labs/artiq/frontend/artiq_master:_show_dict
 const port = 3250;
 
-let init = (target: Struct, mod: Mod) => Object.entries(mod.struct)
+let init = (target: Struct, mod: Mod) => {
+    Object.entries(mod.struct)
     .forEach(([key, value]: [string, any]) => target[key] = value);
+};
 let setitem = (target: Struct, mod: Mod) => mod.path.reduce((acc, key) => acc[key], target)[mod.key] = mod.value;
 let delitem = (target: Struct, mod: Mod) => delete mod.path.reduce((acc, key) => acc[key], target)[mod.key];
 

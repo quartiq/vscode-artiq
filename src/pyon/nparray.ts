@@ -1,13 +1,18 @@
 // see: m-labs/sipyco/pyon:_encode_nparray()
 import ndarray, { NdArray } from "ndarray";
 import isTypedArray from "is-typed-array";
+let flatten = require("flat");
+
+import { unpack } from "./ndarray-unpack";
 import * as utils from "../utils";
 
-type Params = [ shape: number[], dtype: string, data: string ];
+type Params = [shape: number[], dtype: string, data: string];
+type ParamsHuman = [shape: number[], dtype: string, data: any[]];
 
 // Mapping numpy-like dtypes to JS TypedArray subtypes
 // see: https://numpy.org/doc/stable/reference/arrays.interface.html#object.__array_interface__
 // TODO: implement float16, float128, bUcmOVS and big-endianness
+// also check ndarrays internal mapping and package ndarray-complex
 type Corresponding = { dtype: string, constructor: any };
 let dtypeDict: Corresponding[] = [
     { dtype: "|i1", constructor: Int8Array },
@@ -48,7 +53,8 @@ let base64FromBuffer = (buffer: ArrayBuffer): string => {
     return btoa(str);
 };
 
-export let revive = (params: any[]): any => {
+// TODO: Do not error on unknown data types, be liberal
+export let fromMachine = (params: any[]): NdArray => {
     let TypedArray = getConstructor(params[1]);
     if (!TypedArray) { throw new Error(`Unknown dtype: ${params[1]}`); }
 
@@ -56,33 +62,27 @@ export let revive = (params: any[]): any => {
     return ndarray(new TypedArray(buffer), params[0]);
 };
 
-export let replace = (data: any): Params => {
+export let toMachine = (data: any): Params => {
     let arr = data as NdArray;
     if (!isTypedArray(arr.data)) { throw new Error(`Invalid datatype: ${arr.data.constructor.name}`); }
 
-    return [
-        arr.shape,
-        getDtype(arr)!,
-        base64FromBuffer(arr.data.buffer as ArrayBuffer),
-    ];
+    let b64 = base64FromBuffer(arr.data.buffer as ArrayBuffer);
+    return [ arr.shape, getDtype(arr)!, b64 ];
 };
 
-export let fmt = (data: any): string => {
+// humans can not edit base64 data which
+// justifies this additional conversion
+export let fromHuman = (params: any[]): NdArray => {
+    let TypedArray = getConstructor(params[1]);
+    if (!TypedArray) { throw new Error(`Unknown dtype: ${params[1]}`); }
+
+    let arr = flatten(params[2]);
+    return ndarray(new TypedArray(arr), params[0]);
+};
+
+export let toHuman = (data: any): ParamsHuman => {
     let arr = data as NdArray;
-    // e. g. [[2, 3], "<u2", {"0": 43, "1": 3, "2": 45, "3": 8, "4": 67, "5": 90}]
-    return JSON.stringify([
-        arr.shape,
-        getDtype(arr),
-        arr.data,
-    ]);
+    return [ arr.shape, getDtype(arr)!, unpack(arr) ];
 };
 
-export let parse = (s: string): any => {
-    let [shape, dtype, data] = JSON.parse(s);
-
-    let TypedArray = getConstructor(dtype);
-    if (!TypedArray) { throw new Error(`Unknown dtype: ${dtype}`); }
-
-    let arr = utils.range(Object.keys(data).length).map(i => data[i]);
-    return ndarray(new TypedArray(arr), shape);
-};
+export let forPreview = (data: any): any[] => unpack(data as NdArray);
