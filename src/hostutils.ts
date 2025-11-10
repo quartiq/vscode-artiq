@@ -23,6 +23,8 @@ export let selectedClass = async () => {
     await vscode.extensions.getExtension("ms-python.python")!.exports.ready;
 
     let ed = vscode.window.activeTextEditor!;
+    if (!ed) { return undefined; }
+
     let symbol = (await symbols(ed.document.uri))
         .filter(s => s.kind === vscode.SymbolKind.Class)
         .find(s => s.location.range.contains(ed.selection.active));

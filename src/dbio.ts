@@ -120,10 +120,15 @@ export let createAll = async (exps: Experiment[]) => {
 	await updateHandler.locked.then(fn => fn());
 };
 
+export let dump = (): Record<string, any> => Object.fromEntries(db.keys().map( k => [k, db.get(k)] ));
 export let flush = () => db.keys().forEach(k => db.update(k, undefined));
 
-export let curr = async (): Promise<Experiment | undefined> => db.get([
-	"experiments",
-	vscode.window.activeTextEditor!.document.uri.fsPath,
-	await hostutils.selectedClass(),
-].join());
+export let curr = async (): Promise<Experiment | undefined> => {
+	if (!vscode.window.activeTextEditor) { return undefined; }
+
+	return db.get([
+		"experiments",
+		vscode.window.activeTextEditor.document.uri.fsPath,
+		await hostutils.selectedClass(),
+	].join());
+};
