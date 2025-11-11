@@ -67,6 +67,7 @@ let toTagged = (v: HintedJsonClass, convname: ConvName): TypeTaggedObject => {
     let reviver = conv(typename, convname);
 
     let revived = reviver(params);
+    console.log("REVIVED", revived instanceof Map);
     revived[marker] = typename;
     return revived as TypeTaggedObject;
 };

@@ -13,6 +13,8 @@
     <div class="table"></div>
 
     <script>
+        const vscode = acquireVsCodeApi();
+
         let table = new Tabulator(".table", {
             layout:"fitDataFill",
             columns: [
@@ -25,10 +27,26 @@
                 {title: "File", field: "expid.file"},
                 {title: "Class name", field: "expid.class_name"},
             ],
+
+            rowContextMenu: [
+                {
+                    label: "Request termination",
+                    action: (e, row) => vscode.postMessage({
+                        action: "rpc", data: {
+                            method: "request_termination",
+                            args: [row.getData().rid],
+                        },
+                    }),
+                },
+            ],
         });
 
+        // TODO: request_termination
+        // delete
+        // gracefully terminate all in pipeline: test for pipeline and request_termination for the lot
         window.addEventListener("message", ev => {
-            table.setData(Object.entries(ev.data.records).map(([rid, record]) => ({...record, rid})));
+            console.log("EV.DATA", ev.data.records);
+            table.setData(ev.data.records.map(([rid, record]) => ({...record, rid})));
         });
     </script>
 </body>
