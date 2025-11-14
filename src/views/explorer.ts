@@ -9,7 +9,7 @@ import * as entries from "../entries";
 
 let provider: ExplorerProvider;
 export let view: vscode.TreeView<string>;
-let exps: Record<string, dbio.Experiment> = {};
+let exps: { data: Record<string, dbio.Experiment> } = { data: {} };
 
 let root: Promise<string> = new Promise(resolve => {
 	net.rpc("experiment_db", "root", []).then((data: any) => resolve(data.ret));
@@ -39,7 +39,7 @@ class ExperimentTreeItem extends vscode.TreeItem {
 		name: string,
 	) {
 		super(name);
-		let exp = exps[name];
+		let exp = exps.data[name];
 
 		this.tooltip = `${exp.file}:${exp.class_name}`;
 		let color = new vscode.ThemeColor("symbolIcon.classForeground");
@@ -71,13 +71,13 @@ class ExplorerProvider implements vscode.TreeDataProvider<string> {
 	async getChildren(name?: string): Promise<string[]> {
 		if (name) { return Promise.resolve([]); }
 
-		if (Object.keys(exps).length === 0) {
+		if (Object.keys(exps.data).length === 0) {
 			view.message = "Populate the repository directory with experiment files ...";
 			return Promise.resolve([]);
 		}
 
 		view.message = "";
-		return Object.keys(exps);
+		return Object.keys(exps.data);
 	}
 }
 
@@ -93,7 +93,7 @@ export let init = async () => {
 			let basepath = await root;
 			// update "softly" to provide what is new
 			// yet to sustain what was known and customized
-			dbio.createAll(Object.entries(exps).map(([name, exp]) => ({
+			dbio.createAll(Object.entries(exps.data).map(([name, exp]) => ({
 				...exp, name,
 				path: path.posix.join(basepath, exp.file!),
 				inRepo: true,
@@ -126,7 +126,7 @@ let deselectAll = (names: string[]) => {
 };
 
 export let update = async () => {
-	let names = Object.keys(exps);
+	let names = Object.keys(exps.data);
 	let curr = await dbio.curr();
 	
 	if (!curr || !curr.inRepo) {

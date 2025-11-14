@@ -4,14 +4,17 @@ import * as views from "../views";
 import * as syncstruct from "../syncstruct";
 
 export let view: views.ArtiqViewProvider;
+let records: { data: Map<number, any> } = { data: new Map() }; // FIXME: create type for "any"
 
 export let init = async (context: vscode.ExtensionContext) => {
     view = new views.ArtiqViewProvider("schedule", context.extensionUri);
     view.set("Waiting for connection ...");
 
-    let records = syncstruct.from({
+    records = syncstruct.from({
         channel: "schedule",
         onReady: () => view.init(),
-        onReceive: () => view.post({records}),
+        // FIXME: payload should rather be pyon, but pyon is not ready
+        // for webviews at this stage due to npm deps like ndarray package
+        onReceive: () => view.post({ recordEntries: Array.from(records.data) }),
     });
 };

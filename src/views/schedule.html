@@ -28,7 +28,7 @@
         });
 
         window.addEventListener("message", ev => {
-            table.setData(Object.entries(ev.data.records).map(([rid, record]) => ({...record, rid})));
+            table.setData(ev.data.recordEntries.map(([rid, record]) => ({...record, rid})));
         });
     </script>
 </body>

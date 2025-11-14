@@ -6,6 +6,7 @@ import * as utils from "../utils";
 import * as units from "../units";
 import * as net from "../net";
 import * as pyon from "../pyon/pyon";
+import * as pyonutils from "../pyon/utils";
 import * as syncstruct from "../syncstruct";
 
 let provider: DatasetsProvider;
@@ -14,12 +15,12 @@ export let view: vscode.TreeView<string>;
 type Metadata = { unit: string, scale: number, precision: number };
 type Dataset = [ persist: boolean, value: any, metadata: Metadata ];
 type Keypath = string;
-let sets: Record<Keypath, Dataset> = {};
+let sets: { data: Record<Keypath, Dataset> } = { data: {} };
 
 type InputProperty = { path: any[], desc: string, test: (s: string) => boolean, parse: (s: string) => any };
 let inputProps: Record<string, InputProperty> = {
     // TODO: add tooltip messages to explain, how each metadata applies to the database
-    Value: { path: [1], desc: "PYON v2 JSON", test: (s: string) => pyon.validate(s, pyon.parse), parse: pyon.parse },
+    Value: { path: [1], desc: "PYON v2 JSON", test: (s: string) => pyonutils.validate(s, pyon.parse), parse: pyon.parse },
     Unit: { path: [2, "unit"], desc: "string", test: (s: string) => typeof s === "string", parse: (s: string) => s },
     Scale: { path: [2, "scale"], desc: "number", test: (s: string) => /^-?\d+(\.\d+)?$/.test(s), parse: (s: string) => Number(s) },
     // see: https://numpy.org/doc/stable/reference/generated/numpy.format_float_positional.html
@@ -38,12 +39,12 @@ let findChildren = (keypaths: string[], prefix: string[], depth?: number): strin
     .filter(keys => startsWith(keys, prefix))
     .filter(keys => keys.length >= prefix.length + (depth ?? 0));
 
-let isNode = (keypath: string): boolean => findChildren(Object.keys(sets), keypath.split(".")).length > 0;
+let isNode = (keypath: string): boolean => findChildren(Object.keys(sets.data), keypath.split(".")).length > 0;
 
 let closestParent = (keypath: string | undefined): string | undefined => {
-    if (!keypath || Object.keys(sets).length === 0) { return undefined; }
+    if (!keypath || Object.keys(sets.data).length === 0) { return undefined; }
 
-    let ancestors = Object.keys(sets).filter(path => path !== keypath); // exclude self
+    let ancestors = Object.keys(sets.data).filter(path => path !== keypath); // exclude self
     let target = keypath.split(".");
 
     while (true) {
@@ -93,7 +94,7 @@ class DatasetTreeItem extends vscode.TreeItem {
     ) {
         super(name(keypath));
 
-        let set = sets[keypath];
+        let set = sets.data[keypath];
         if (set) {
             this.description = String(fmt(set, pyon.preview));
             this.contextValue = "dataset";
@@ -114,7 +115,7 @@ class DatasetTreeItem extends vscode.TreeItem {
         // only metadata nodes (= leafs) left at this point
         let propname;
         [keypath, propname] = utils.splitOnLast(keypath, ".");
-        this.description = String(utils.getByPath(sets[keypath], inputProps[propname!].path));
+        this.description = String(utils.getByPath(sets.data[keypath], inputProps[propname!].path));
         let color = new vscode.ThemeColor("symbolIcon.variableForeground");
         this.iconPath = new vscode.ThemeIcon("edit", color);
         this.command = {
@@ -147,12 +148,12 @@ class DatasetsProvider implements vscode.TreeDataProvider<string> {
 
     async getChildren(keypath?: string): Promise<string[]> {
         let parentKeys = keypath ? keypath.split(".") : [];
-        let dups = findChildren(Object.keys(sets), parentKeys, 1)
+        let dups = findChildren(Object.keys(sets.data), parentKeys, 1)
             .map(keys => keys.slice(0, parentKeys.length + 1).join("."))
             .sort((a, b) => name(a).localeCompare(name(b)));
 
         let leafs: string[] = [];
-        if (keypath && keypath in sets) {
+        if (keypath && keypath in sets.data) {
             leafs = Object.keys(inputProps)
                 .filter(name => name !== "Value")
                 .map(name => [keypath, name].join("."));
@@ -172,7 +173,7 @@ export let init = async () => {
 
     view.onDidChangeCheckboxState(ev => ev.items.forEach(item => {
         let [keypath, checked] = item;
-        let set = sets[keypath];
+        let set = sets.data[keypath];
         set[0] = Boolean(checked);
         submit(keypath, set);
     }));
@@ -199,7 +200,7 @@ export let create = async () => {
 export let move = async (keypath: string) => {
     let newPath = await vscode.window.showInputBox({ prompt: "New path:", value: keypath });
     if (newPath && newPath !== keypath) {
-        let set = sets[keypath];
+        let set = sets.data[keypath];
         net.rpc("dataset_db", "delete", [keypath]);
         submit(newPath, set);
     }
@@ -219,7 +220,7 @@ export let del = async (keypath: string) => {
 
 // see: m-labs/artiq/dashboard/datasets:CreateEditDialog.accept
 export let edit = async (keypath: string, propname: string) => {
-    let set = structuredClone(sets[keypath]);
+    let set = structuredClone(sets.data[keypath]);
     set[1] = applyScale(set[1], set[2], true);
 
     let prop = inputProps[propname];

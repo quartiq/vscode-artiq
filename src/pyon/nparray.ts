@@ -86,3 +86,7 @@ export let toHuman = (data: any): ParamsHuman => {
 };
 
 export let forPreview = (data: any): any[] => unpack(data as NdArray);
+
+// TODO: support tuple indices like [1, [2, 3]] and such
+export let get = (tagged: any, key: any): any => (tagged as NdArray).pick(key);
+export let set = (tagged: any, key: any, value: any) => (tagged as NdArray).set(key, value);

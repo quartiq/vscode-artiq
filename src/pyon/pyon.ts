@@ -15,7 +15,7 @@ let isHintedJsonClass = (v: any): boolean => {
 // we use a marker key to tag type info, because
 // instanceof or constructor.name may be lost
 // by operations like structuredClone() in the meantime
-type TypeTaggedObject = { [ marker ]: string };
+export type TypeTaggedObject = { [ marker ]: string };
 export let isTypeTaggedObject = (v: any): boolean => {
     if (typeof v !== "object") { return false; }
     if (v === null) { return false; }
@@ -23,18 +23,25 @@ export let isTypeTaggedObject = (v: any): boolean => {
     return v.hasOwnProperty(marker);
 };
 
-type ConvName = keyof TypeInterface;
+type ConvName = keyof ConvInterface;
 type Reviver = (params: Params) => any; // any := TypeTaggedObject
 type Replacer = (data: TypeTaggedObject) => Params;
 type Previewer = (data: TypeTaggedObject) => any;
-type TypeInterface = {
+
+interface ConvInterface {
     fromMachine: Reviver, toMachine: Replacer,
 
     // TODO: for now fromHuman and toHuman return PYON v2 JSON
     // maybe one day, the user may enjoy editing python style formatted strings
     fromHuman: Reviver, toHuman: Replacer,
     forPreview: Previewer, // this is one-way, so it may be very liberal
-};
+}
+
+interface TypeInterface extends ConvInterface {
+    get?: (tagged: TypeTaggedObject, key: any) => any,
+    set?: (tagged: TypeTaggedObject, key: any, value: any) => void,
+    del?: (tagged: TypeTaggedObject, key: any) => void,
+}
 
 type IdentityConv = (v: any) => any;
 let identityConv = (v: any) => v;
@@ -60,7 +67,7 @@ import * as set from "./set";
 import * as dict from "./dict";
 import * as tuple from "./tuple";
 import * as nparray from "./nparray";
-const types: Record<string, TypeInterface> = { set, dict, tuple, nparray };
+export const types: Record<string, TypeInterface> = { set, dict, tuple, nparray };
 
 let toTagged = (v: HintedJsonClass, convname: ConvName): TypeTaggedObject => {
     let [typename, params] = v[marker];
