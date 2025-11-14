@@ -5,6 +5,7 @@ import * as net from "../net";
 import * as syncstruct from "../syncstruct";
 
 export let view: views.ArtiqViewProvider;
+let records: { data: Map<number, any> } = { data: new Map() }; // FIXME: create type for "any"
 
 export let init = async (context: vscode.ExtensionContext) => {
     view = new views.ArtiqViewProvider("schedule", context.extensionUri, {
@@ -17,9 +18,11 @@ export let init = async (context: vscode.ExtensionContext) => {
     // TODO: sometimes on UI startup artiq_master wants to update
     // a particular element in records, but records is empty initially
     // check for that bug
-    let records = syncstruct.from({
+    records = syncstruct.from({
         channel: "schedule",
         onReady: () => view.init(),
-        onReceive: (mod) => { view.post({ records }); console.log("RECORDS", records instanceof Map); },
+        // FIXME: payload should rather be pyon, but pyon is not ready
+        // for webviews at this stage due to npm deps like ndarray package
+        onReceive: () => view.post({ recordEntries: Array.from(records.data) }),
     });
 };

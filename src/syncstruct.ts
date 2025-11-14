@@ -2,18 +2,31 @@
 
 import * as net from "./net";
 import * as pyon from "./pyon/pyon";
+import * as pyonutils from "./pyon/utils";
 
-export type Struct = Map<any, any>;
+type Struct = { data: any }; // we need to operate on "data" property singleton to utilize the mutable object pattern
 type Mod = { action: string, struct: Struct, path: any[], key: any, value: any };
 type Action = (target: Struct, mod: Mod) => void;
 
 // see: m-labs/artiq/frontend/artiq_master:_show_dict
 const port = 3250;
 
-let init = (target: Struct, mod: Mod) => { console.log("STRUCT", mod.struct); target = mod.struct; };
+let traverse = (tree: any, path: any[]): any => path.reduce((node, key) => {
+    if (pyon.isTypeTaggedObject(node)) { return pyonutils.get(node, key); }
+    return node[key];
+}, tree);
 
-let setitem = (target: Struct, mod: Mod) => mod.path.reduce((acc, key) => acc[key], target)[mod.key] = mod.value;
-let delitem = (target: Struct, mod: Mod) => delete mod.path.reduce((acc, key) => acc[key], target)[mod.key];
+let init = (struct: Struct, mod: Mod): Struct => struct.data = mod.struct;
+let setitem = (struct: Struct, mod: Mod) => {
+    let penultimate = traverse(struct.data, mod.path);
+    if (pyon.isTypeTaggedObject(penultimate)) { return pyonutils.set(penultimate, mod.key, mod.value); }
+    penultimate[mod.key] = mod.value;
+};
+let delitem = (struct: Struct, mod: Mod) => {
+    let penultimate = traverse(struct.data, mod.path);
+    if (pyon.isTypeTaggedObject(penultimate)) { return pyonutils.del(penultimate, mod.key); }
+    delete penultimate[mod.key];
+};
 
 let actions: { [name: string]: Action } = { init, setitem, delitem };
 
@@ -22,20 +35,18 @@ export let from = (params: {
     onReady?: () => void,
     onReceive: (mod: Mod) => void,
 }) => {
-    let struct: Struct;
+    let struct: Struct = { data: undefined };
 
     let r = net.receiver(port, "sync_struct", params.channel);
     if (params.onReady) { r.on("ready", params.onReady); }
 
     r.on("data", async (data: net.Bytes) => {
         let mods = net.parseLines(data);
-        console.log("DATA", pyon.decode(data.toString()));
-        console.log("MODS", mods[0].struct instanceof Map);
         mods.map(async (mod: Mod) => {
-            actions[mod.action](struct!, mod);
+            actions[mod.action](struct, mod);
             params.onReceive(mod);
         });
     });
 
-    return struct!;
+    return struct;
 };

@@ -45,8 +45,7 @@
         // delete
         // gracefully terminate all in pipeline: test for pipeline and request_termination for the lot
         window.addEventListener("message", ev => {
-            console.log("EV.DATA", ev.data.records);
-            table.setData(ev.data.records.map(([rid, record]) => ({...record, rid})));
+            table.setData(ev.data.recordEntries.map(([rid, record]) => ({...record, rid})));
         });
     </script>
 </body>
