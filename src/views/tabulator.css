@@ -81,3 +81,16 @@ body {
 .tabulator-row.tabulator-group .tabulator-arrow {
     border-left-color: var(--vscode-list-foreground);
 }
+
+/* Context menu */
+
+.tabulator-popup-container {
+    background-color: var(--vscode-editor-background);
+    height: auto !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .tabulator-menu .tabulator-menu-item:not(.tabulator-menu-item-disabled):hover {
+        background-color: var(--vscode-list-activeSelectionBackground);
+    }
+}

@@ -13,6 +13,17 @@
     <div class="table"></div>
 
     <script>
+        const vscode = acquireVsCodeApi();
+
+        let runs = [];
+
+        let deleteRun = (rid, graceful) => vscode.postMessage({
+            action: "rpc", data: {
+                method: graceful ? "request_termination" : "delete",
+                args: [rid],
+            },
+        });
+
         let table = new Tabulator(".table", {
             layout:"fitDataFill",
             columns: [
@@ -25,10 +36,26 @@
                 {title: "File", field: "expid.file"},
                 {title: "Class name", field: "expid.class_name"},
             ],
+
+            rowContextMenu: [
+                {
+                    label: "Request termination",
+                    action: (ev, row) => deleteRun(row.getData().rid, true),
+                }, {
+                    label: "Delete",
+                    action: (ev, row) => deleteRun(row.getData().rid),
+                }, {
+                    label: "Gracefully terminate all in pipeline",
+                    action: (ev, row) => runs
+                        .filter(r => r.pipeline === row.getData().pipeline)
+                        .forEach(r => deleteRun(r.rid, true)),
+                },
+            ],
         });
 
         window.addEventListener("message", ev => {
-            table.setData(ev.data.recordEntries.map(([rid, record]) => ({...record, rid})));
+            runs = ev.data.recordEntries.map(([rid, record]) => ({...record, rid}));
+            table.replaceData(runs);
         });
     </script>
 </body>

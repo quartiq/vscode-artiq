@@ -45,6 +45,7 @@ class ExperimentTreeItem extends vscode.TreeItem {
 		let color = new vscode.ThemeColor("symbolIcon.classForeground");
 		this.iconPath = new vscode.ThemeIcon("package", color);
 		this.command = {
+			// TODO: fix editor tab on double click
 			command: "artiq.openExperiment",
 			title: "",
 			arguments: [exp.file, exp.class_name],
