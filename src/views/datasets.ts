@@ -136,7 +136,7 @@ class DatasetsProvider implements vscode.TreeDataProvider<string> {
         vscode.window.showInformationMessage("Updated Datasets");
     }
 
-    constructor() { }
+    constructor() {}
 
     getTreeItem(keypath: string): vscode.TreeItem {
         return new DatasetTreeItem(keypath);
@@ -178,7 +178,7 @@ export let init = async () => {
         submit(keypath, set);
     }));
 
-    sets = syncstruct.from({
+    sets = await syncstruct.from({
         channel: "datasets",
         onReceive: mod => {
             if (mod.action === "init") { return; }

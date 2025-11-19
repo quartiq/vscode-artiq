@@ -15,7 +15,7 @@ export let init = async (context: vscode.ExtensionContext) => {
     });
     view.set("Waiting for connection ...");
 
-    records = syncstruct.from({
+    records = await syncstruct.from({
         channel: "schedule",
         onReady: () => view.init(),
         // FIXME: payload should rather be pyon, but pyon is not ready

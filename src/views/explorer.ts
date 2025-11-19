@@ -88,7 +88,7 @@ export let init = async () => {
 		treeDataProvider: provider,
 	});
 
-	exps = syncstruct.from({
+	exps = await syncstruct.from({
 		channel: "explist",
 		onReceive: async () => {
 			let basepath = await root;
