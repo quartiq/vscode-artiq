@@ -54,7 +54,7 @@
         });
 
         window.addEventListener("message", ev => {
-            runs = ev.data.recordEntries.map(([rid, record]) => ({...record, rid}));
+            runs = ev.data.runEntries.map(([rid, runinfo]) => ({rid, ...runinfo}));
             table.replaceData(runs);
         });
     </script>

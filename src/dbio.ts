@@ -28,14 +28,18 @@ export let defaults = {
 	},
 };
 
-// TODO do we really want to store this or the structure
+export type Argument = [procdesc: Procdesc, group: any, tooltip: string, state: any];
+
+// TODO: do we really want to store this or the structure
 // adequate for net.submit, or in other words:
 // is net.submit the only consumer of dbio?
 // if so, use net.submit structure instead
 export type Experiment = {
+	// see "entry" in artiq/master/experiments:_RepoScanner.process_file()
+	// TODO: tell apart ExperimentInfo from sync_struct and what we store in db!!!
 	path: string,
 	class_name: string,
-	arginfo: { [key: string]: Argument },
+	arginfo: { [name: string]: Argument },
 
 	name: string,
 	inRepo: boolean,
@@ -43,8 +47,6 @@ export type Experiment = {
 	scheduler_defaults: SchedulerDefaults,
 	submission_options: SubmissionOptions,
 };
-
-export type Argument = [procdesc: Procdesc, group: any, tooltip: string, state: any];
 
 export interface Procdesc {
 	ty: string,

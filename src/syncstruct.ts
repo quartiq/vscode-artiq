@@ -6,8 +6,8 @@ import * as pyon from "./pyon/pyon";
 import * as pyonutils from "./pyon/utils";
 
 type Struct = { data: any }; // we need to operate on "data" property singleton to utilize the mutable object pattern
-type Mod = { action: string, struct: Struct, path: any[], key: any, value: any };
-type Action = (target: Struct, mod: Mod, lock: mutex.Lock) => void;
+export type Mod = { action: string, struct: Struct, path: any[], key: any, value: any };
+type Action = (target: Struct, mod: Mod, initDone: mutex.Lock) => void;
 
 // see: m-labs/artiq/frontend/artiq_master:_show_dict
 const port = 3250;
@@ -39,10 +39,10 @@ let actions: { [name: string]: Action } = { init, setitem, delitem };
 export let from = async (params: {
     channel: string,
     onReady?: () => void,
-    onReceive: (mod: Mod) => void,
+    onReceive: (struct: Struct, mod: Mod) => void, // work on struct directly, since onReceive's first run does not wait for init lock and local reference may be empty
 }): Promise<Struct> => {
     let struct: Struct = { data: undefined };
-    let lock: mutex.Lock = mutex.lock();
+    let initDone: mutex.Lock = mutex.lock();
 
     let r = net.receiver(port, "sync_struct", params.channel);
     if (params.onReady) { r.on("ready", params.onReady); }
@@ -50,11 +50,11 @@ export let from = async (params: {
     r.on("data", async (data: net.Bytes) => {
         let mods = net.parseLines(data);
         mods.map(async (mod: Mod) => {
-            actions[mod.action](struct, mod, lock);
-            params.onReceive(mod);
+            actions[mod.action](struct, mod, initDone);
+            params.onReceive(struct, mod);
         });
     });
 
-    await lock.locked; // struct.data = undefined sadly breaks TreeView.getChildren in obscure fashion
+    await initDone.locked; // struct.data = undefined sadly breaks TreeView.getChildren in obscure fashion
     return struct;
 };

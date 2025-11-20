@@ -12,10 +12,11 @@ import * as syncstruct from "../syncstruct";
 let provider: DatasetsProvider;
 export let view: vscode.TreeView<string>;
 
+type Keypath = string;
 type Metadata = { unit: string, scale: number, precision: number };
 type Dataset = [ persist: boolean, value: any, metadata: Metadata ];
-type Keypath = string;
-let sets: { data: Record<Keypath, Dataset> } = { data: {} };
+type Struct = { data: Record<Keypath, Dataset> };
+let sets: Struct = { data: {} };
 
 type InputProperty = { path: any[], desc: string, test: (s: string) => boolean, parse: (s: string) => any };
 let inputProps: Record<string, InputProperty> = {
@@ -180,7 +181,7 @@ export let init = async () => {
 
     sets = await syncstruct.from({
         channel: "datasets",
-        onReceive: mod => {
+        onReceive: (struct: Struct, mod: syncstruct.Mod) => {
             if (mod.action === "init") { return; }
 
             let keypath = mod.path[0] ?? mod.key;

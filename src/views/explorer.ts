@@ -9,7 +9,9 @@ import * as entries from "../entries";
 
 let provider: ExplorerProvider;
 export let view: vscode.TreeView<string>;
-let exps: { data: Record<string, dbio.Experiment> } = { data: {} };
+
+type Struct = { data: Record<string, dbio.Experiment> };
+let exps: Struct = { data: {} };
 
 let root: Promise<string> = new Promise(resolve => {
 	net.rpc("experiment_db", "root", []).then((data: any) => resolve(data.ret));
@@ -90,11 +92,11 @@ export let init = async () => {
 
 	exps = await syncstruct.from({
 		channel: "explist",
-		onReceive: async () => {
+		onReceive: async (struct: Struct) => {
 			let basepath = await root;
 			// update "softly" to provide what is new
 			// yet to sustain what was known and customized
-			dbio.createAll(Object.entries(exps.data).map(([name, exp]) => ({
+			dbio.createAll(Object.entries(struct.data).map(([name, exp]) => ({
 				...exp, name,
 				path: path.posix.join(basepath, exp.file!),
 				inRepo: true,
