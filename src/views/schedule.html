@@ -17,11 +17,9 @@
 
         let runs = [];
 
-        let deleteRun = (rid, graceful) => vscode.postMessage({
-            action: "rpc", data: {
-                method: graceful ? "request_termination" : "delete",
-                args: [rid],
-            },
+        let rpc = (method, rid) => vscode.postMessage({
+            action: "rpc",
+            data: {method, rid},
         });
 
         let table = new Tabulator(".table", {
@@ -40,15 +38,15 @@
             rowContextMenu: [
                 {
                     label: "Request termination",
-                    action: (ev, row) => deleteRun(row.getData().rid, true),
+                    action: (ev, row) => rpc("request_termination", row.getData().rid),
                 }, {
                     label: "Delete",
-                    action: (ev, row) => deleteRun(row.getData().rid),
+                    action: (ev, row) => rpc("delete", row.getData().rid),
                 }, {
                     label: "Gracefully terminate all in pipeline",
                     action: (ev, row) => runs
                         .filter(r => r.pipeline === row.getData().pipeline)
-                        .forEach(r => deleteRun(r.rid, true)),
+                        .forEach(r => rpc("request_termination", r.rid)),
                 },
             ],
         });

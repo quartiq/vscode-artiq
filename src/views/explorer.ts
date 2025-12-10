@@ -1,24 +1,15 @@
 import * as vscode from "vscode";
 import * as path from "path";
 
-import * as hostutils from "../hostutils";
-import * as net from "../net";
-import * as dbio from "../dbio";
-import * as syncstruct from "../syncstruct";
-import * as entries from "../entries";
+import * as hostutils from "../hostutils.js";
+import * as net from "../net.js";
+import * as experiment from "../experiment.js";
 
 let provider: ExplorerProvider;
 export let view: vscode.TreeView<string>;
 
-type Struct = { data: Record<string, dbio.Experiment> };
-let exps: Struct = { data: {} };
-
-let root: Promise<string> = new Promise(resolve => {
-	net.rpc("experiment_db", "root", []).then((data: any) => resolve(data.ret));
-});
-
 export let open = async (filename: string, classname: string) => {
-	let p = path.posix.join(await root, filename);
+	let p = path.posix.join(await experiment.repoRoot, filename);
 	let uri = vscode.Uri.parse(p);
 	try { await vscode.workspace.fs.stat(uri); } catch {
 		vscode.window.showErrorMessage("No such file, consider rescanning ARTIQ repository");
@@ -41,7 +32,7 @@ class ExperimentTreeItem extends vscode.TreeItem {
 		name: string,
 	) {
 		super(name);
-		let exp = exps.data[name];
+		let exp = experiment.repo.data[name];
 
 		this.tooltip = `${exp.file}:${exp.class_name}`;
 		let color = new vscode.ThemeColor("symbolIcon.classForeground");
@@ -69,18 +60,18 @@ class ExplorerProvider implements vscode.TreeDataProvider<string> {
 		return new ExperimentTreeItem(name);
 	}
 
-	getParent(): undefined {} // no-op must be implemented to access TreeView.reveal()
+	getParent(): undefined {} // no-op; must be implemented to access TreeView.reveal()
 
 	async getChildren(name?: string): Promise<string[]> {
 		if (name) { return Promise.resolve([]); }
 
-		if (Object.keys(exps.data).length === 0) {
+		if (Object.keys(experiment.repo.data).length === 0) {
 			view.message = "Populate the repository directory with experiment files ...";
 			return Promise.resolve([]);
 		}
 
 		view.message = "";
-		return Object.keys(exps.data);
+		return Object.keys(experiment.repo.data);
 	}
 }
 
@@ -88,29 +79,6 @@ export let init = async () => {
 	provider = new ExplorerProvider();
 	view = vscode.window.createTreeView("explorer", {
 		treeDataProvider: provider,
-	});
-
-	exps = await syncstruct.from({
-		channel: "explist",
-		onReceive: async (struct: Struct) => {
-			let basepath = await root;
-			// update "softly" to provide what is new
-			// yet to sustain what was known and customized
-			dbio.createAll(Object.entries(struct.data).map(([name, exp]) => ({
-				...exp, name,
-				path: path.posix.join(basepath, exp.file!),
-				inRepo: true,
-				arginfo: Object.fromEntries(Object.entries(exp.arginfo).map(([name, arg]) => {
-					// see: artiq/dashboard/experiments:ExperimentManager.initialize_submission_arguments
-					arg[3] = entries.entry(arg[0].ty)?.getDefault(arg[0]);
-					return [name, arg];
-				})),
-				// TODO: can this be simplified? are these structures really mandatory from server side?
-				scheduler_defaults: {...dbio.defaults.scheduler_defaults, ...exp.scheduler_defaults},
-				submission_options: {...dbio.defaults.submission_options, ...exp.submission_options},
-			})));
-			provider.refresh();
-		},
 	});
 
 	if (vscode.workspace.getConfiguration("artiq").get("initialScan")) {
@@ -129,13 +97,14 @@ let deselectAll = (names: string[]) => {
 };
 
 export let update = async () => {
-	let names = Object.keys(exps.data);
-	let curr = await dbio.curr();
-	
-	if (!curr || !curr.inRepo) {
+	provider.refresh();
+
+	let names = Object.keys(experiment.repo.data);
+	let curr = await experiment.curr();
+	if (!curr) {
 		deselectAll(names);
 		return;
 	}
 
-	names.includes(curr.name) ? view.reveal(curr.name) : deselectAll(names);
+	experiment.inRepo(curr) ? view.reveal(curr.name) : deselectAll(names);
 };

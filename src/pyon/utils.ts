@@ -1,4 +1,4 @@
-import * as pyon from "./pyon";
+import * as pyon from "./pyon.js";
 
 export let validate = (hinted: string, decode: pyon.Decoder): boolean => {
     try {

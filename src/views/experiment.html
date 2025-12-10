@@ -26,7 +26,7 @@
 
     <script type="module">
         // TODO: unify experiments and arguments
-        import {getByPath, logging, nowsecs} from "{SHARED_URI}/utils.js";
+        import {logging, nowsecs} from "{SHARED_URI}/utils.js";
         import {entry} from "{SHARED_URI}/entries.js";
         const vscode = acquireVsCodeApi();
         let table;
@@ -36,11 +36,11 @@
         let tableel = document.querySelector(".table");
 
         let fields = {
-            "Priority": { path: ["scheduler_defaults", "priority"], procdesc: { ty: "StringValue" }},
-            "Log level": { path: ["submission_options", "log_level"], procdesc: { ty: "EnumerationValue", choices: Object.keys(logging) }},
-            "Pipeline": { path: ["scheduler_defaults", "pipeline_name"], procdesc: { ty: "StringValue" }},
-            "Due date": { path: ["scheduler_defaults", "due_date"], procdesc: { ty: "UnixtimeValue" }},
-            "Flush": { path: ["scheduler_defaults", "flush"], procdesc: { ty: "BooleanValue" }},
+            "Priority": { key: "priority", procdesc: { ty: "StringValue" }},
+            "Log level": { key: "log_level", procdesc: { ty: "EnumerationValue", choices: Object.keys(logging) }},
+            "Pipeline": { key: "pipeline_name", procdesc: { ty: "StringValue" }},
+            "Due date": { key: "due_date", procdesc: { ty: "UnixtimeValue" }},
+            "Flush": { key: "flush", procdesc: { ty: "BooleanValue" }},
         };
 
         let editor = (cell, onRendered, success, cancel) => {
@@ -52,7 +52,7 @@
             let raw = cell.getRow().getData();
             vscode.postMessage({
                 action: "change", data: {
-                    path: fields[raw.name].path,
+                    key: fields[raw.name].key,
                     value: raw.state,
                 },
             });
@@ -68,7 +68,7 @@
 
         let updateTable = exp => {
             let data = Object.entries(fields)
-                .map(([name, meta]) => ({ name, procdesc: meta.procdesc, state: getByPath(exp, meta.path) }));
+                .map(([name, field]) => ({ name, procdesc: field.procdesc, state: exp[field.key] }));
 
             table?.destroy?.();
             table = new Tabulator(".table", {

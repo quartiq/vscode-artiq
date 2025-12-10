@@ -1,9 +1,9 @@
 // see: m-labs/sipyco/sync_struct
 
-import * as net from "./net";
-import * as mutex from "./mutex";
-import * as pyon from "./pyon/pyon";
-import * as pyonutils from "./pyon/utils";
+import * as net from "./net.js";
+import * as mutex from "./mutex.js";
+import * as pyon from "./pyon/pyon.js";
+import * as pyonutils from "./pyon/utils.js";
 
 type Struct = { data: any }; // we need to operate on "data" property singleton to utilize the mutable object pattern
 export type Mod = { action: string, struct: Struct, path: any[], key: any, value: any };

@@ -1,10 +1,10 @@
 // see: m-labs/sipyco/pyon:_encode_nparray()
 import ndarray, { NdArray } from "ndarray";
 import isTypedArray from "is-typed-array";
-let flatten = require("flat");
+import { flatten } from "flat";
 
-import { unpack } from "./ndarray-unpack";
-import * as utils from "../utils";
+import { unpack } from "./ndarray-unpack.js";
+import * as utils from "../utils.js";
 
 type Params = [shape: number[], dtype: string, data: string];
 type ParamsHuman = [shape: number[], dtype: string, data: any[]];

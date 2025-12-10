@@ -2,12 +2,12 @@
 
 import * as vscode from "vscode";
 
-import * as utils from "../utils";
-import * as units from "../units";
-import * as net from "../net";
-import * as pyon from "../pyon/pyon";
-import * as pyonutils from "../pyon/utils";
-import * as syncstruct from "../syncstruct";
+import * as utils from "../utils.js";
+import * as units from "../units.js";
+import * as net from "../net.js";
+import * as pyon from "../pyon/pyon.js";
+import * as pyonutils from "../pyon/utils.js";
+import * as syncstruct from "../syncstruct.js";
 
 let provider: DatasetsProvider;
 export let view: vscode.TreeView<string>;

@@ -10,7 +10,10 @@
 // npm package is safe to use again
 
 import { NdArray } from "ndarray";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
 
+// FIXME: patch dup and cwise to use ESM
 let dup = require("dup");
 let cwise = require("cwise");
 

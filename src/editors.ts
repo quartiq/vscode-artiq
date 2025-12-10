@@ -1,6 +1,6 @@
-import * as dbio from "./dbio";
+import * as argument from "./argument.js";
 
-export type Args<P extends dbio.Procdesc> = {
+export type Args<P extends argument.Procdesc> = {
     procdesc: P,
     parse: (el: HTMLElement) => any,
     post: Function, // TODO: make "acquireVsCodeApi()" accessable in webview ts
@@ -11,9 +11,9 @@ export type Args<P extends dbio.Procdesc> = {
     cancel: any,
 };
 
-export type Editor<P extends dbio.Procdesc> = (args: Args<P>) => HTMLElement;
+export type Editor<P extends argument.Procdesc> = (args: Args<P>) => HTMLElement;
 
-export let buttons = (args: Args<dbio.Enum>) => {
+export let buttons = (args: Args<argument.Enum>) => {
     let el = document.createElement("div");
 
     args.procdesc.choices.forEach((c: string) => {
@@ -33,7 +33,7 @@ export let buttons = (args: Args<dbio.Enum>) => {
     return el;
 };
 
-export let select = (args: Args<dbio.Enum>) => {
+export let select = (args: Args<argument.Enum>) => {
     let el = document.createElement("select");
 
     args.procdesc.choices.forEach((c: string) => {
@@ -51,7 +51,7 @@ export let select = (args: Args<dbio.Enum>) => {
     return el;
 };
 
-export let input = (args: Args<dbio.Procdesc>) => {
+export let input = (args: Args<argument.Procdesc>) => {
     let el = document.createElement("input");
     el.value = args.cell.getValue();
 

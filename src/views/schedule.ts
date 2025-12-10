@@ -1,19 +1,20 @@
 import * as vscode from "vscode";
 
-import * as views from "../views";
-import * as net from "../net";
-import * as syncstruct from "../syncstruct";
+import * as run from "../run.js";
+import * as views from "../views.js";
+import * as net from "../net.js";
+import * as syncstruct from "../syncstruct.js";
 
 export let view: views.ArtiqViewProvider;
 
-type Runs = Map<number, net.RunInfo>; // FIXME: data type should rather be pyon.Dict than Map
+type Runs = Map<number, run.SyncInfo>; // FIXME: data type should rather be pyon.Dict than Map
 type Struct = { data: Runs };
 let runs: Struct = { data: new Map() };
 
 export let init = async (context: vscode.ExtensionContext) => {
     view = new views.ArtiqViewProvider("schedule", context.extensionUri, {
-        rpc: (data: {method: string, args: any[]}) => {
-            net.rpc("schedule", data.method, data.args);
+        rpc: (data: {method: string, rid: number}) => {
+            net.rpc("schedule", data.method, [data.rid]);
         },
     });
     view.set("Waiting for connection ...");

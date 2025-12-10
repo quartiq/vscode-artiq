@@ -63,10 +63,10 @@ let conv = (t: string, c: ConvName): Reviver | Replacer | IdentityConv => {
 };
 
 // TODO: implement missing types
-import * as set from "./set";
-import * as dict from "./dict";
-import * as tuple from "./tuple";
-import * as nparray from "./nparray";
+import * as set from "./set.js";
+import * as dict from "./dict.js";
+import * as tuple from "./tuple.js";
+import * as nparray from "./nparray.js";
 export const types: Record<string, TypeInterface> = { set, dict, tuple, nparray };
 
 let toTagged = (v: HintedJsonClass, convname: ConvName): TypeTaggedObject => {

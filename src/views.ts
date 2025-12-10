@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
-import * as mutex from "./mutex";
-import * as hostutils from "./hostutils";
+
+import * as mutex from "./mutex.js";
+import * as hostutils from "./hostutils.js";
 
 export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 
@@ -11,7 +12,7 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 	constructor(
 		private readonly _viewType: string,
 		private readonly _extensionUri: vscode.Uri,
-		private readonly _actions?: any,
+		private readonly _actions?: Record<string, ((data: any) => void)>,
 	) {
 		this.ready = mutex.lock();
 		this.html = "";
@@ -34,7 +35,7 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 			]
 		};
 
-		webviewView.webview.onDidReceiveMessage(msg => this._actions[msg.action](msg.data));
+		webviewView.webview.onDidReceiveMessage(msg => this._actions?.[msg.action](msg.data));
 	}
 
 	public register(): vscode.Disposable {

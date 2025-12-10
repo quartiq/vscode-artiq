@@ -2,6 +2,7 @@
   "name": "artiq",
   "displayName": "ARTIQ",
   "version": "0.0.4",
+  "type": "module",
   "publisher": "quartiq",
   "description": "ARTIQ user interface for Visual Studio Code",
   "license": "SEE LICENSE IN LICENSE",

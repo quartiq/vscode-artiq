@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
-import * as views from "../views";
-import * as net from "../net";
+import * as views from "../views.js";
+import * as net from "../net.js";
 
 export let view: views.ArtiqViewProvider;
 let receiver;

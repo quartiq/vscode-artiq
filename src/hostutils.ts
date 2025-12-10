@@ -19,15 +19,15 @@ export let html = (name: string, root: string) => {
     return fs.readFileSync(filePath, "utf-8");
 };
 
-export let selectedClass = async () => {
+export let selectedClass: () => Promise<string> = async () => {
     await vscode.extensions.getExtension("ms-python.python")!.exports.ready;
 
-    let ed = vscode.window.activeTextEditor!;
-    if (!ed) { return undefined; }
+    let ed = vscode.window.activeTextEditor;
+    if (!ed) { return ""; }
 
     let symbol = (await symbols(ed.document.uri))
         .filter(s => s.kind === vscode.SymbolKind.Class)
         .find(s => s.location.range.contains(ed.selection.active));
 
-    return symbol?.name;
+    return symbol ? symbol.name : "";
 };

@@ -2,15 +2,16 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 
-import * as dbio from "./dbio";
-import * as netutils from "./netutils";
+import * as dbio from "./dbio.js";
+import * as run from "./run.js";
+import * as experiment from "./experiment.js";
 
-import * as viewLog from "./views/log";
-import * as viewSchedule from "./views/schedule";
-import * as viewExperiment from "./views/experiment";
-import * as viewArguments from "./views/arguments";
-import * as viewExplorer from "./views/explorer";
-import * as viewDatasets from "./views/datasets";
+import * as viewLog from "./views/log.js";
+import * as viewSchedule from "./views/schedule.js";
+import * as viewExperiment from "./views/experiment.js";
+import * as viewArguments from "./views/arguments.js";
+import * as viewExplorer from "./views/explorer.js";
+import * as viewDatasets from "./views/datasets.js";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -32,8 +33,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		viewExplorer.view,
 		viewDatasets.view,
 
-		vscode.commands.registerCommand("artiq.submitExperiment", netutils.submitCurr),
-		vscode.commands.registerCommand("artiq.examineFile", netutils.examineFile),
+		vscode.commands.registerCommand("artiq.submitExperiment", run.submitCurr),
+		vscode.commands.registerCommand("artiq.examineFile", experiment.examineFile),
 		// TODO: maybe all of these functions should live in netutils?
 		vscode.commands.registerCommand("artiq.scanRepository", viewExplorer.scan),
 		vscode.commands.registerCommand("artiq.openExperiment", viewExplorer.open),

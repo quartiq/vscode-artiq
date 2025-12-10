@@ -1,20 +1,19 @@
 import * as vscode from "vscode";
 
-import * as views from "../views";
-import * as dbio from "../dbio";
-import * as utils from "../utils";
-import * as hostutils from "../hostutils";
+import * as views from "../views.js";
+import * as experiment from "../experiment.js";
+import * as hostutils from "../hostutils.js";
 
 export let view: views.ArtiqViewProvider;
 
 export let init = async (context: vscode.ExtensionContext) => {
     view = new views.ArtiqViewProvider("experiment", context.extensionUri, {
-        change: async (data: {path: string[], value: any}) => {
-            let exp = await dbio.curr();
+        change: async <K extends keyof experiment.DbInfo>(data: {key: K, value: experiment.DbInfo[K]}) => {
+            let exp = await experiment.curr();
             if (!exp) { return; }
 
-            utils.setByPath(exp, data.path, data.value);
-            dbio.update(exp);
+            exp[data.key] = data.value;
+            experiment.updateDb(exp);
         },
     });
 
@@ -23,6 +22,7 @@ export let init = async (context: vscode.ExtensionContext) => {
 
 export let update = async () => {
     let selectedClass = await hostutils.selectedClass();
-    let exp = await dbio.curr();
-    view.post( {action: "update", data: {selectedClass, exp}} );
+    let exp = await experiment.curr();
+    let inRepo = exp ? experiment.inRepo(exp) : false;
+    view.post( {action: "update", data: {selectedClass, inRepo, exp}} );
 };
