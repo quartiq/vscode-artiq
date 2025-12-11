@@ -4,8 +4,7 @@ import * as editors from "./editors.js";
 
 type Entry<P extends argument.Procdesc> = {
     editor: editors.Editor<P>,
-    // TODO: replace all (project wide) implicit "Function" types with explicit type aliases
-    getDefault: Function,
+    getDefault: (procdesc: P) => P["default"],
 };
 
 export let entry = (ty: argument.Ty) => ({
@@ -83,5 +82,5 @@ let EnumerationEntry: Entry<argument.Enum> = {
 let ScanEntry: Entry<argument.Scan> = {
     // TODO: see artiq/gui/entries:ScanEntry.default_state
     editor: (): HTMLElement => document.createElement("div"),
-    getDefault: (procdesc: argument.Scan): object => ({}),
+    getDefault: (procdesc: argument.Scan): any[] => ([]),
 };

@@ -7,6 +7,11 @@ type DbValue = any
 type DbEntry = [DbKey, DbValue]
 
 let db: vscode.Memento;
+
+// somewhere in code, the db gets updated
+// but the the update callback singleton
+// (dbio.onUpdate) is not yet initialized
+// hence we want to wait for it to be ready
 let updateHandler = mutex.lock();
 
 export let init = (ctx: vscode.ExtensionContext) => db = ctx.globalState;
@@ -16,18 +21,18 @@ export let onUpdate = (fn: () => void) => updateHandler.unlock(fn);
 
 export let update = async (k: DbKey, v: DbValue) => {
 	db.update(k, v);
-	await updateHandler.locked.then(fn => fn());
+	await updateHandler.locked.then(fn => fn?.());
 };
 
 export let updateAll = async (entries: DbEntry[]) => {
 	entries.forEach(([k, v]) => db.update(k, v));
-	await updateHandler.locked.then(fn => fn());
+	await updateHandler.locked.then(fn => fn?.());
 };
 
 export let createAll = async (entries: DbEntry[]) => {
 	// only write if key is not yet occupied
 	entries.forEach(([k, v]) => !db.get(k) && db.update(k, v));
-	await updateHandler.locked.then(fn => fn());
+	await updateHandler.locked.then(fn => fn?.());
 };
 
 export let get = (...keypath: string[]): DbValue => db.get(keypath.join());

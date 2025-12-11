@@ -3,7 +3,9 @@ import * as argument from "./argument.js";
 export type Args<P extends argument.Procdesc> = {
     procdesc: P,
     parse: (el: HTMLElement) => any,
-    post: Function, // TODO: make "acquireVsCodeApi()" accessable in webview ts
+    // type refers to: acquireVsCodeApi().postMessage
+    // TODO: make "acquireVsCodeApi()" accessable in webview ts
+    post: (message: any) => void,
     // TODO: use actual types for Tabulator specific args, not "any"
     cell: any,
     onRendered: any,
