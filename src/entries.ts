@@ -1,4 +1,3 @@
-import * as argument from "./argument.js";
 import * as utils from "./utils.js";
 import * as editors from "./editors.js";
 
@@ -6,16 +5,6 @@ type Entry<P extends argument.Procdesc> = {
     editor: editors.Editor<P>,
     getDefault: (procdesc: P) => P["default"],
 };
-
-export let entry = (ty: argument.Ty) => ({
-    NumberValue: NumberEntry,
-    PYONValue: StringEntry,
-    BooleanValue: BooleanEntry,
-    EnumerationValue: EnumerationEntry,
-    StringValue: StringEntry,
-    UnixtimeValue: DatetimeEntry,
-    Scannable: ScanEntry,
-})[ty];
 
 let NumberEntry: Entry<argument.Number> = {
     editor: (args: editors.Args<argument.Number>): HTMLElement => {
@@ -79,8 +68,23 @@ let EnumerationEntry: Entry<argument.Enum> = {
     getDefault: (procdesc: argument.Enum): string => procdesc.default ?? procdesc.choices[0],
 };
 
-let ScanEntry: Entry<argument.Scan> = {
+let ScanEntry: Entry<argument.Scannable> = {
     // TODO: see artiq/gui/entries:ScanEntry.default_state
-    editor: (): HTMLElement => document.createElement("div"),
-    getDefault: (procdesc: argument.Scan): any[] => ([]),
+    editor: (args): HTMLElement => {
+        console.log(args);
+        return document.createElement("div");
+    },
+    getDefault: (procdesc: argument.Scannable): any[] => ([]),
 };
+
+let entryMap: Record<argument.Ty, Entry<any>> = {
+    NumberValue: NumberEntry,
+    PYONValue: StringEntry,
+    BooleanValue: BooleanEntry,
+    EnumerationValue: EnumerationEntry,
+    StringValue: StringEntry,
+    UnixtimeValue: DatetimeEntry,
+    Scannable: ScanEntry,
+};
+
+export let entry = (ty: argument.Ty): Entry<any> => entryMap[ty];

@@ -1,3 +1,5 @@
+import * as scan from "./scan.js";
+
 export type Ty = string
 type Name = string
 type State = any
@@ -48,15 +50,15 @@ export interface PYON extends Procdesc {
 	ty: "PYONValue",
 }
 
-export interface Scan extends Procdesc {
+export interface Scannable extends Procdesc {
 	ty: "Scannable",
-	default: any[], // TODO: any = NoScan | RangeScan | CenterScan | ExplicitScan
+	default: scan.ScanObject[],
 	global_max: number,
 	global_min: number,
 	global_step: number,
 	precision: number,
 	scale: number,
-	unit: number,
+	unit: string,
 }
 
 export interface String extends Procdesc {
