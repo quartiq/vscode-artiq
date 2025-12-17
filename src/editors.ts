@@ -66,3 +66,17 @@ export let input = (args: Args<argument.Procdesc>) => {
 
     return el;
 };
+
+export let scan = (args: Args<argument.Procdesc>) => {
+    let el = document.createElement("input");
+    el.value = JSON.stringify(args.cell.getValue());
+
+    args.onRendered(() => el.focus());
+    el.addEventListener("blur", () => args.success(args.parse(el)));
+    el.addEventListener("keydown", ev => {
+        if (ev.key === "Enter") { args.success(args.parse(el)); }
+        if (ev.key === "Escape") { args.cancel(); }
+    });
+
+    return el;
+};

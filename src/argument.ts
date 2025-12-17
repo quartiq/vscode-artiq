@@ -1,15 +1,18 @@
-export type Ty = string
-type Name = string
-type State = any
+import * as scan from "./scan.js";
 
-export type Argument = [procdesc: Procdesc, group: any, tooltip: string, state: State]
-export type SyncInfo = Record<Name, Argument>
-export type SubmitInfo = Record<Name, State>
+type Name = string;
+export type State<P extends Procdesc> = P extends Scannable ? scan.ScanState : P["default"];
 
-export let toSubmitInfo = (syncinfo: SyncInfo): SubmitInfo => {
+export type Argument<P extends Procdesc> = [procdesc: P, group: any, tooltip: string, state: State<P>];
+export type SyncInfo<P extends Procdesc> = Record<Name, Argument<P>>;
+export type SubmitInfo<P extends Procdesc> = Record<Name, State<P>>;
+
+export let toSubmitInfo = <P extends Procdesc>(syncinfo: SyncInfo<P>): SubmitInfo<P> => {
     let entries = Object.entries(syncinfo).map(([k, v]) => [k, v[3]]);
     return Object.fromEntries(entries);
 };
+
+export type Ty = string;
 
 export interface Procdesc {
 	ty: Ty,
@@ -48,15 +51,15 @@ export interface PYON extends Procdesc {
 	ty: "PYONValue",
 }
 
-export interface Scan extends Procdesc {
+export interface Scannable extends Procdesc {
 	ty: "Scannable",
-	default: any[], // TODO: any = NoScan | RangeScan | CenterScan | ExplicitScan
+	default: scan.ScanObject[],
 	global_max: number,
 	global_min: number,
 	global_step: number,
 	precision: number,
 	scale: number,
-	unit: number,
+	unit: string,
 }
 
 export interface String extends Procdesc {

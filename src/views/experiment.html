@@ -60,8 +60,7 @@
 
         let formatter = cell => {
             let data = cell.getRow().getData();
-            if (data.name !== "Due date") return data.state;
-            return (new Date(data.state * 1000)).toLocaleString();
+            return entry(data.procdesc.ty)?.formatter(data.state);
         };
 
         let mutator = (value, data) => data.name === "Due date" && value === null ? nowsecs() : value;

@@ -25,6 +25,7 @@ export let logging: { [name: string]: number } = {
     CRITICAL: 50,
 };
 
+export let unixsecs = (date: Date): number => Math.floor(date.getTime() / 1000);
 export let nowsecs = (): number => Math.floor(Date.now() / 1000);
 
 export let datetimelocal = (secs: number): string => {
