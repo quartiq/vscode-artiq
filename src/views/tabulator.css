@@ -44,11 +44,14 @@ body {
     border-color: var(--vscode-editorWidget-border);
 }
 
-.tabulator .tabulator-tableholder .tabulator-table {
+.tabulator .tabulator-tableholder .tabulator-table,
+.tabulator .tabulator-tableholder .tabulator-table input,
+.tabulator .tabulator-tableholder .tabulator-table select {
     color: var(--vscode-editor-foreground);
 }
 
-.tabulator-row {
+.tabulator-row,
+.tabulator .tabulator-tableholder .tabulator-table select {
     background-color: var(--vscode-editor-background);
 }
 
@@ -61,6 +64,15 @@ body {
         background-color: var(--vscode-list-activeSelectionBackground);
         color: var(--vscode-list-activeSelectionForeground);
     }
+}
+
+/* Editors */
+
+.tabulator .tabulator-tableholder .tabulator-table input,
+.tabulator .tabulator-tableholder .tabulator-table select {
+    width: 100%;
+    height: 100%;
+    font-family: var(--vscode-font-family);
 }
 
 /* Group header */
