@@ -11,7 +11,8 @@
     <script type="text/javascript" src="{TABULATOR_SCRIPT_URI}"></script>
 
     <style>
-        .hidden { display: none }
+        .hidden { display: none !important; }
+        .noscroll { overflow: hidden !important; }
     </style>
 </head>
 
@@ -33,8 +34,12 @@
         };
 
         let editor = (cell, onRendered, success, cancel) => {
-            let procdesc = cell.getRow().getData().procdesc;
-            return entry(procdesc.ty)?.editor({procdesc, cell, onRendered, success, cancel, post: vscode.postMessage});
+            let raw = cell.getRow().getData();
+            return entry(raw.procdesc.ty)?.editor({
+                arg: [ raw.procdesc, raw.group, raw.tooltip, raw.state ],
+                post: vscode.postMessage,
+                cell, onRendered, success, cancel,
+            });
         };
 
         let cellEdited = cell => {
@@ -42,7 +47,7 @@
             vscode.postMessage({
                 action: "change", data: {
                     name: raw.name,
-                    arg: [raw.procdesc, raw.group, raw.tooltip, raw.state],
+                    arg: [ raw.procdesc, raw.group, raw.tooltip, raw.state ],
                 },
             });
         };

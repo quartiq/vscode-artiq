@@ -44,8 +44,12 @@
         };
 
         let editor = (cell, onRendered, success, cancel) => {
-            let procdesc = cell.getRow().getData().procdesc;
-            return entry(procdesc.ty)?.editor({procdesc, cell, onRendered, success, cancel, post: vscode.postMessage});
+            let raw = cell.getRow().getData();
+            return entry(raw.procdesc.ty)?.editor({
+                arg: [ raw.procdesc ],
+                post: vscode.postMessage,
+                cell, onRendered, success, cancel,
+            });
         };
 
         let cellEdited = cell => {

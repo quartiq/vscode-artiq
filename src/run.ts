@@ -9,7 +9,7 @@ type Expid = {
     log_level: number,
     file: string,
     class_name: string,
-    arguments: argument.SubmitInfo,
+    arguments: argument.SubmitInfo<argument.Procdesc>,
 
     devarg_override?: string,
     repo_rev?: string,

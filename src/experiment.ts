@@ -32,7 +32,7 @@ export interface DbInfo extends SchedulerInfo {
 	class_name: string,
 
     name: string, // unique name derived from class_name by server
-	arginfo: argument.SyncInfo,
+	arginfo: argument.SyncInfo<argument.Procdesc>,
 
 	log_level: string, // see utils.logging()
 };
@@ -41,7 +41,7 @@ type SyncInfo = {
     file: string,
     class_name: ClassName,
 
-	arginfo: argument.SyncInfo,
+	arginfo: argument.SyncInfo<argument.Procdesc>,
     argument_ui: string,
     scheduler_defaults: SchedulerInfo,
 }
@@ -55,7 +55,7 @@ export let repoRoot: Promise<string> = new Promise(resolve => {
 	net.rpc("experiment_db", "root", []).then((data: any) => resolve(data.ret));
 });
 
-let initArgstates: (arginfo: argument.SyncInfo) => argument.SyncInfo = arginfo => Object
+let initArgstates: (arginfo: argument.SyncInfo<argument.Procdesc>) => argument.SyncInfo<argument.Procdesc> = arginfo => Object
     .fromEntries(Object.entries(arginfo).map(([name, arg]) => {
         // see: artiq/dashboard/experiments:ExperimentManager.initialize_submission_arguments
         arg[3] = entries.entry(arg[0].ty)!.getDefault(arg[0]);
@@ -77,7 +77,7 @@ repo = await syncstruct.from({
             name,
             arginfo: initArgstates(syncinfo.arginfo),
 
-		    log_level: "WARNING", // see: artiq/dashboard/experiments.py:ExperimentManager.get_submission_options
+            log_level: "WARNING", // see: artiq/dashboard/experiments.py:ExperimentManager.get_submission_options
         })));
     },
 });
@@ -87,7 +87,7 @@ export let inRepo: (exp: DbInfo) => Boolean = exp => exp.name in repo.data;
 type ExamineInfo = {
     name: Name,
 
-    arginfo: argument.SyncInfo,
+    arginfo: argument.SyncInfo<argument.Procdesc>,
     argument_ui: string,
     scheduler_defaults: SchedulerInfo,
 }

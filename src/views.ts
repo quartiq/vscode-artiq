@@ -64,7 +64,7 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 		);
 
 		let customStylesUri = this._view!.webview.asWebviewUri(
-			vscode.Uri.joinPath(this._extensionUri, "src", "views", "tabulator.css")
+			vscode.Uri.joinPath(this._extensionUri, "src", "views", "main.css")
 		);
 
 		let sharedUri = this._view!.webview.asWebviewUri(

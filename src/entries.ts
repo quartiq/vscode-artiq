@@ -12,14 +12,14 @@ type Entry<P extends argument.Procdesc> = {
 let NumberEntry: Entry<argument.Number> = {
     formatter: (state: argument.State<argument.Number>) => state.toString(),
 
-    editor: (args: editors.Args<argument.Number>): HTMLElement => {
+    editor: (info: editors.Info<argument.Number>): HTMLElement => {
         let parse = (el: HTMLElement): number => Number((el as HTMLInputElement).value);
-        let el = editors.input({ ...args, parse });
+        let el = editors.input({ ...info, parse });
 
         el.setAttribute("type", "text");
-        el.setAttribute("max", String(args.procdesc.max));
-        el.setAttribute("min", String(args.procdesc.min));
-        el.setAttribute("step", String(args.procdesc.step));
+        el.setAttribute("max", String(info.arg[0].max));
+        el.setAttribute("min", String(info.arg[0].min));
+        el.setAttribute("step", String(info.arg[0].step));
         // TODO: add unit suffix and scaling, see datasets:applyScale()
         return el;
     },
@@ -30,9 +30,9 @@ let NumberEntry: Entry<argument.Number> = {
 let StringEntry: Entry<argument.String> = {
     formatter: (state: argument.State<argument.String>) => state as string,
 
-    editor: (args: editors.Args<argument.String>): HTMLElement => {
+    editor: (info: editors.Info<argument.String>): HTMLElement => {
         let parse = (el: HTMLElement): string => (el as HTMLInputElement).value;
-        let el = editors.input({ ...args, parse });
+        let el = editors.input({ ...info, parse });
         el.setAttribute("type", "text");
         return el;
     },
@@ -43,16 +43,16 @@ let StringEntry: Entry<argument.String> = {
 let DatetimeEntry: Entry<argument.Unixtime> = {
     formatter: (state: argument.State<argument.Unixtime>) => (new Date((state as number) * 1000)).toLocaleString(),
 
-    editor: (args: editors.Args<argument.Unixtime>): HTMLElement => {
+    editor: (info: editors.Info<argument.Unixtime>): HTMLElement => {
         let parse = (el: HTMLElement): number => {
             let d = new Date((el as HTMLInputElement).value);
             let v = isNaN(d.getTime()) ? utils.nowsecs() : utils.unixsecs(d);
             return v;
         };
 
-        let el = editors.input({ ...args, parse });
+        let el = editors.input({ ...info, parse }) as HTMLInputElement;
         el.setAttribute("type", "datetime-local");
-        el.value = utils.datetimelocal(args.cell.getValue());
+        el.value = utils.datetimelocal(info.cell.getValue());
         return el;
     },
 
@@ -62,11 +62,11 @@ let DatetimeEntry: Entry<argument.Unixtime> = {
 let BooleanEntry: Entry<argument.Boolean> = {
     formatter: (state: argument.State<argument.Boolean>) => state ? "\u2714" : "\u2718",
 
-    editor: (args: editors.Args<argument.Boolean>): HTMLElement => {
+    editor: (info: editors.Info<argument.Boolean>): HTMLElement => {
         let parse = (el: HTMLElement): boolean => (el as HTMLInputElement).checked;
-        let el = editors.input({ ...args, parse });
+        let el = editors.input({ ...info, parse }) as HTMLInputElement;
         el.setAttribute("type", "checkbox");
-        el.checked = args.cell.getValue();
+        el.checked = info.cell.getValue();
         return el;
     },
 
@@ -76,22 +76,25 @@ let BooleanEntry: Entry<argument.Boolean> = {
 let EnumerationEntry: Entry<argument.Enum> = {
     formatter: (state: argument.State<argument.Enum>) => state,
 
-    editor: (args: editors.Args<argument.Enum>): HTMLElement => {
-        if (args.procdesc?.quickstyle) { return editors.buttons(args); }
-        return editors.select(args);
+    editor: (info: editors.Info<argument.Enum>): HTMLElement => {
+        if (info.arg[0]?.quickstyle) { return editors.buttons(info); }
+        return editors.select(info);
     },
 
     getDefault: (procdesc: argument.Enum): string => procdesc.default ?? procdesc.choices[0],
 };
 
 let ScanEntry: Entry<argument.Scannable> = {
-    formatter: (state: scan.ScanState) => JSON.stringify(state),
+    formatter: (state: scan.ScanState) => {
+        let props = Object.entries(state[state.selected])
+            .filter(([k, v]) => k !== "ty")
+            .map(([k, v]) => `${k}: ${v}`).join(", ");
+        return `[${state.selected}] ${props}`;
+    },
 
-    editor: (args: editors.Args<argument.Scannable>): HTMLElement => {
+    editor: (info: editors.Info<argument.Scannable>): HTMLElement => {
         // TODO: create lovely graphical editor like in artiq_dashboard
-        let parse = (el: HTMLElement): scan.ScanState => JSON.parse((el as HTMLInputElement).value);
-        let el = editors.scan({ ...args, parse });
-        el.setAttribute("type", "text");
+        let el = editors.scanform(info);
         return el;
     },
 

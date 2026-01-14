@@ -10,7 +10,7 @@ export let view: views.ArtiqViewProvider;
 export let init = async (context: vscode.ExtensionContext) => {
     view = new views.ArtiqViewProvider("arguments", context.extensionUri, {
         submit: run.submitCurr,
-        change: async (data: {name: string, arg: argument.Argument}) => {
+        change: async (data: {name: string, arg: argument.Argument<argument.Procdesc>}) => {
             let exp = await experiment.curr();
             if (!exp) { return; }
 
