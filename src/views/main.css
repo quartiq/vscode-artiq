@@ -169,7 +169,8 @@ body {
     color: var(--vscode-list-activeSelectionForeground);
 }
 
-.scan section input {
+.scan section input,
+.scan section .unit-prefix {
     background-color: var(--vscode-input-background);
     border: 1px solid var(--vscode-input-border);
     color: var(--vscode-input-foreground);
@@ -241,4 +242,24 @@ body {
     border-color: var(--vscode-inputOption-activeBorder);
     color: var(--vscode-inputOption-activeForeground);
     box-shadow: 0 0 0 1px var(--vscode-inputOption-activeBorder);
+}
+
+.scan .input {
+    display: flex;
+}
+
+.scan .input .unit-prefix {
+    background: var(--vscode-editorGroupHeader-tabsBackground);
+    color: var(--vscode-descriptionForeground);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: none;
+    border-radius: 2px 0 0 2px;
+    width: auto;
+    min-width: 40px;
+}
+
+.scan section .input .unit-prefix:not(.hidden) + input {
+    border-radius: 0 2px 2px 0;
 }

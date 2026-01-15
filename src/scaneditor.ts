@@ -16,7 +16,10 @@ let html = `
 
 	<section class="NoScan">
 		<label for="NoScan__value">Value:</label>
-		<input id="NoScan__value" type="number">
+        <div class="input">
+            <div class="unit-prefix hidden"></div>
+            <input id="NoScan__value" type="number">
+        </div>
 
 		<label for="NoScan__repetitions">Repetitions:</label>
 		<input id="NoScan__repetitions" type="number">
@@ -24,10 +27,16 @@ let html = `
 
 	<section class="RangeScan">
 		<label for="RangeScan__start">Start:</label>
-		<input id="RangeScan__start" type="number">
+        <div class="input">
+            <div class="unit-prefix hidden"></div>
+            <input id="RangeScan__start" type="number">
+        </div>
 
 		<label for="RangeScan__stop">Stop:</label>
-		<input id="RangeScan__stop" type="number">
+        <div class="input">
+            <div class="unit-prefix hidden"></div>
+            <input id="RangeScan__stop" type="number">
+        </div>
 
 		<label for="RangeScan__npoints">Npoints:</label>
 		<input id="RangeScan__npoints" type="number">
@@ -39,13 +48,22 @@ let html = `
 
 	<section class="CenterScan">
 		<label for="CenterScan__center">Center:</label>
-		<input id="CenterScan__center" type="number">
+        <div class="input">
+            <div class="unit-prefix hidden"></div>
+            <input id="CenterScan__center" type="number">
+        </div>
 
 		<label for="CenterScan__span">Span:</label>
-		<input id="CenterScan__span" type="number">
+        <div class="input">
+            <div class="unit-prefix hidden"></div>
+            <input id="CenterScan__span" type="number">
+        </div>
 
 		<label for="CenterScan__step">Step:</label>
-		<input id="CenterScan__step" type="number">
+        <div class="input">
+            <div class="unit-prefix hidden"></div>
+            <input id="CenterScan__step" type="number">
+        </div>
 
 		<label for="CenterScan__randomize">Randomize:</label>
 		<input id="CenterScan__randomize" type="checkbox">
@@ -75,15 +93,19 @@ let initSwitch = (el: HTMLSelectElement, sections: NodeListOf<Element>, type: st
 };
 
 let initNumberConstraints = (els: NodeListOf<HTMLInputElement>, procdesc: argument.Scannable) => {
-    console.log(procdesc);
     els.forEach(el => {
         procdesc.global_min && el.setAttribute("min", String(procdesc.global_min / procdesc.scale));
         procdesc.global_max && el.setAttribute("max", String(procdesc.global_max / procdesc.scale));
         procdesc.global_step && el.setAttribute("step", String(procdesc.global_step / procdesc.scale));
     });
-    // TODO: What about unit and precision though?
+    // TODO: What about precision though?
     // see: artiq/gui/entries:_*Scan
 };
+
+let initUnitIndicator = (els: NodeListOf<HTMLElement>, unit: string) => unit && els.forEach(el => {
+    el.classList.remove("hidden");
+    el.innerText = unit;
+});
 
 let initSequenceConstraints = (el: HTMLInputElement) => {
 	let sequence = String.raw`[+\-]?\d+(?:[.]\d*)?(?:[eE][+\-]?\d+)?(?:\s+[+\-]?\d+(?:[.]\d*)?(?:[eE][+\-]?\d+)?)*\s*`; // see: artiq/gui/entries:_ExplicitScan
@@ -166,6 +188,7 @@ export let from: editors.Editor<argument.Scannable> = info => {
 
 	initSwitch(el.querySelector(".scan header select") as HTMLSelectElement, el.querySelectorAll("section"), info.arg[3].selected);
     initNumberConstraints(el.querySelectorAll(`input[type="number"]`), info.arg[0]);
+    initUnitIndicator(el.querySelectorAll(".unit-prefix"), info.arg[0].unit);
     initSequenceConstraints(el.querySelector("#ExplicitScan__sequence") as HTMLInputElement);
 
     populateAll(el.querySelectorAll("input"), info.arg[3]);
