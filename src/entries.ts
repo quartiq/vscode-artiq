@@ -2,6 +2,7 @@ import * as argument from "./argument.js";
 import * as utils from "./utils.js";
 import * as editors from "./editors.js";
 import * as scan from "./scan.js";
+import * as scaneditor from "./scaneditor.js";
 
 type Entry<P extends argument.Procdesc> = {
     formatter: (state: argument.State<P>) => string,
@@ -93,9 +94,9 @@ let ScanEntry: Entry<argument.Scannable> = {
     },
 
     editor: (info: editors.Info<argument.Scannable>): HTMLElement => {
-        // TODO: create lovely graphical editor like in artiq_dashboard
-        let el = editors.scanform(info);
-        return el;
+        scaneditor.from(info);
+        // no-op to satisfy return type (see: tabulator.js Editor)
+        return document.createElement("div");
     },
 
     getDefault: (procdesc: argument.Scannable): scan.ScanState => {
@@ -104,8 +105,8 @@ let ScanEntry: Entry<argument.Scannable> = {
         return {
             selected: "NoScan",
             NoScan: { value: 0, repetitions: 1 },
-            RangeScan: { start: 0, stop: 100 * scale, npoints: 10, randomize: false, seed: undefined },
-            CenterScan: { center: 0, span: 100 * scale, step: 10 * scale, randomize: false, seed: undefined },
+            RangeScan: { start: 0, stop: 100 * scale, npoints: 10, randomize: false, seed: null },
+            CenterScan: { center: 0, span: 100 * scale, step: 10 * scale, randomize: false, seed: null },
             ExplicitScan: { sequence: [] },
 
             ...Object.fromEntries(procdesc.default.map((o: scan.ScanObject) => [o.ty, o])),

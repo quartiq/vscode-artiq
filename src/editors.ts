@@ -1,5 +1,4 @@
 import * as argument from "./argument.js";
-import * as scan from "./scan.js";
 
 export type Info<P extends argument.Procdesc> = {
     arg: argument.Argument<P>,
@@ -66,52 +65,4 @@ export let input: Editor<argument.Procdesc> = info => {
     });
 
     return el;
-};
-
-export let scanform: Editor<argument.Scannable> = info => {
-    let el = scan.editor();
-
-    let type = info.arg[3].selected;
-    el.querySelector("select")!.value = type;
-    el.querySelectorAll("section").forEach(section => {
-        section.classList.add("hidden");
-        if (section.classList.contains(type)) {
-            section.classList.remove("hidden");
-        }
-    });
-
-    Object.entries(info.arg[3])
-        .filter(([ key ]) => key !== "selected")
-        .forEach(([ ty, scanobject ]) => {
-            Object.entries(scanobject)
-                .filter(([ key ]) => key !== "ty")
-                .forEach(([ prop, val ]) => {
-                    let input = el.querySelector(`input#${ty}__${prop}`) as HTMLInputElement;
-                    scan.populate(input, val as scan.Value);
-                });
-        });
-
-    el.querySelector(".button.save")!.addEventListener("click", ev => {
-        let state: scan.ScanState = {} as scan.ScanState;
-        state.selected = el.querySelector("select")!.value;
-
-        el.querySelectorAll("input").forEach(input => {
-		    let [ty, prop] = input.id.split("__");
-            (state[ty] ??= {})[prop] = scan.parse(input);
-        });
-
-        info.success(state);
-        el.remove();
-        document.body.classList.remove("noscroll");
-    });
-
-    el.querySelector(".button.discard")!.addEventListener("click", ev => {
-        info.cancel();
-        el.remove();
-        document.body.classList.remove("noscroll");
-    });
-
-    document.body.appendChild(el);
-    document.body.classList.add("noscroll");
-    return document.createElement("div"); // no-op to satisfy return type;
 };
