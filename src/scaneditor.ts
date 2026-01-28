@@ -1,10 +1,11 @@
 import * as argument from "./argument.js";
 import * as editors from "./editors.js";
 import * as scan from "./scan.js";
+import * as scanwidget from "./scanwidget.js";
 
 // TODO: create lovely graphical editor for rangescan like in artiq_dashboard
 
-let html = `
+const html = `
 	<header>
 		<select>
 			<option>NoScan</option>
@@ -26,6 +27,8 @@ let html = `
 	</section>
 
 	<section class="RangeScan">
+        <div class="scan-widget"></div>
+
 		<label for="RangeScan__start">Start:</label>
         <div class="input">
             <div class="unit-prefix hidden"></div>
@@ -83,23 +86,27 @@ let html = `
 
 type Value = number | number[] | boolean
 
-let switchSections = (sections: NodeListOf<Element>, type: string) => sections
-    .forEach(s => s.classList.contains(type) ? s.classList.remove("hidden") : s.classList.add("hidden"));
+let switchSections = (sections: NodeListOf<Element>, type: string, widget: scanwidget.ScanWidget) => sections.forEach(s => {
+    s.classList.contains(type) ? s.classList.remove("hidden") : s.classList.add("hidden");
+    if (s.classList.contains("RangeScan")) { widget.updateLayout(); }
+});
 
-let initSwitch = (el: HTMLSelectElement, sections: NodeListOf<Element>, type: string) => {
+let initSwitch = (el: HTMLSelectElement, sections: NodeListOf<Element>, type: string, widget: scanwidget.ScanWidget) => {
     el.value = type;
-    switchSections(sections, type);
-    el.addEventListener("change", () => switchSections(sections, el.value));
+    switchSections(sections, type, widget);
+    el.addEventListener("change", () => switchSections(sections, el.value, widget));
 };
 
 let initNumberConstraints = (els: NodeListOf<HTMLInputElement>, procdesc: argument.Scannable) => {
     els.forEach(el => {
         procdesc.global_min && el.setAttribute("min", String(procdesc.global_min / procdesc.scale));
         procdesc.global_max && el.setAttribute("max", String(procdesc.global_max / procdesc.scale));
-        procdesc.global_step && el.setAttribute("step", String(procdesc.global_step / procdesc.scale));
+        // FIXME ignore "global_step" for now, because setting
+        // input attribute "step" creates "invalid" events for values in between steps
+        // this is impossible to suppress by code and it interferes with "precision"
+        el.setAttribute("step", "any");
+        el.addEventListener("change", () => el.value = Number(el.value).toPrecision(procdesc.precision));
     });
-    // TODO: What about precision though?
-    // see: artiq/gui/entries:_*Scan
 };
 
 let initUnitIndicator = (els: NodeListOf<HTMLElement>, unit: string) => unit && els.forEach(el => {
@@ -119,26 +126,24 @@ let initSequenceConstraints = (el: HTMLInputElement) => {
 		el.reportValidity();
 	});
 
-	el.addEventListener("input", () => {
-		el.setCustomValidity("");
-	});
+	el.addEventListener("input", () => el.setCustomValidity(""));
 };
 
-let populate = (el: HTMLInputElement, val: Value) => {
+let populate = (el: HTMLInputElement, val: Value, precision: number) => {
 	let handlers: Record<string, Function> = {
 		"checkbox": () => el.checked = val as boolean,
 		"text": () => el.value = (val as number[]).join(" "),
-		"number": () => el.value = JSON.stringify(val),
+		"number": () => el.value = el.matches(".unit-prefix + *") ? (val as number).toPrecision(precision) : JSON.stringify(val),
 		"hidden": () => el.value = val === null ? "" : JSON.stringify(val),
 	};
 
 	handlers[el.type]();
 };
 
-let populateAll = (els: NodeListOf<HTMLInputElement>, state: scan.ScanState) => {
+let populateAll = (els: NodeListOf<HTMLInputElement>, state: scan.ScanState, precision: number) => {
     els.forEach(el => {
         let [ty, prop] = el.id.split("__");
-        populate(el, state[ty][prop]);
+        populate(el, state[ty][prop], precision);
     });
 };
 
@@ -181,21 +186,41 @@ let initDiscardButton = (el: HTMLElement, info: editors.Info<argument.Scannable>
     });
 };
 
-export let from: editors.Editor<argument.Scannable> = info => {
-	let el = document!.createElement("div");
-	el.classList.add("scan");
-	el.innerHTML = html;
+let initWidget = (el: HTMLElement, info: editors.Info<argument.Scannable>) => {
+    let widget = new scanwidget.ScanWidget(el.querySelector(".scan-widget")!);
 
-	initSwitch(el.querySelector(".scan header select") as HTMLSelectElement, el.querySelectorAll("section"), info.arg[3].selected);
-    initNumberConstraints(el.querySelectorAll(`input[type="number"]`), info.arg[0]);
+    widget.setStart(info.arg[3].RangeScan.start);
+    widget.setStop(info.arg[3].RangeScan.stop);
+    widget.setNpoints(info.arg[3].RangeScan.npoints);
+
+    ["Start", "Stop", "Npoints"].forEach(bound => {
+        let input = el.querySelector(`#RangeScan__${bound.toLowerCase()}`) as HTMLInputElement;
+        widget[`on${bound}Changed`] = (v: number) => populate(input, v, info.arg[0].precision);
+        input.addEventListener("change", () => widget[`set${bound}`](parse(input)));
+    });
+
+    return widget;
+};
+
+export let from: editors.Editor<argument.Scannable> = info => {
+    let el = document!.createElement("div");
+    el.classList.add("scan");
+    el.innerHTML = html;
+
+    initNumberConstraints(el.querySelectorAll(`.unit-prefix + input[type="number"]`), info.arg[0]);
     initUnitIndicator(el.querySelectorAll(".unit-prefix"), info.arg[0].unit);
     initSequenceConstraints(el.querySelector("#ExplicitScan__sequence") as HTMLInputElement);
 
-    populateAll(el.querySelectorAll("input"), info.arg[3]);
+    populateAll(el.querySelectorAll("input"), info.arg[3], info.arg[0].precision);
     initSaveButton(el, info);
     initDiscardButton(el, info);
+    // TODO: improve drag areas
+    // TODO: context menus: "view range", "snap range"
+    let widget = initWidget(el, info);
+
+    initSwitch(el.querySelector(".scan header select") as HTMLSelectElement, el.querySelectorAll("section"), info.arg[3].selected, widget);
 
     document.body.appendChild(el);
     document.body.classList.add("noscroll");
-	return el;
+    return el;
 };

@@ -263,3 +263,28 @@ body {
 .scan section .input .unit-prefix:not(.hidden) + input {
     border-radius: 0 2px 2px 0;
 }
+
+/* Scan Widget */
+:root {
+  --scanwidget-start-color: #4472c4;
+  --scanwidget-stop-color: #c44444;
+}
+
+.scan section .scan-widget {
+    grid-column: 1 / -1;
+}
+
+.scan section label[for="RangeScan__start"] + .input .unit-prefix.hidden,
+.scan section label[for="RangeScan__stop"] + .input .unit-prefix.hidden {
+    min-width: 0;
+}
+
+.scan section label[for="RangeScan__start"] + .input .unit-prefix {
+    background: color-mix(in srgb, var(--scanwidget-start-color), black 50%);
+    display: block !important;
+}
+
+.scan section label[for="RangeScan__stop"] + .input .unit-prefix {
+    background: color-mix(in srgb, var(--scanwidget-stop-color), black 50%);
+    display: block !important;
+}
