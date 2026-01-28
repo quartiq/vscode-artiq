@@ -1,7 +1,7 @@
 /**
  * ARTIQ Ticker - TypeScript Port
  * Original: Robert Jordens <rj@m-labs.hk>, 2016
- * Ported to TypeScript: 2026
+ * Ported to TypeScript: 2026 by Claude LLM
  * 
  * Generates optimal tick positions and labels for numeric axes
  */

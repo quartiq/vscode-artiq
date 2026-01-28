@@ -172,6 +172,7 @@ let parseAll = (el: HTMLElement): scan.ScanState => {
 
 let initSaveButton = (el: HTMLElement, info: editors.Info<argument.Scannable>) => {
     el.querySelector(".button.save")!.addEventListener("click", () => {
+        // TODO check and report invalid input fields
         info.success(parseAll(el));
         el.remove();
         document.body.classList.remove("noscroll");
@@ -214,7 +215,6 @@ export let from: editors.Editor<argument.Scannable> = info => {
     populateAll(el.querySelectorAll("input"), info.arg[3], info.arg[0].precision);
     initSaveButton(el, info);
     initDiscardButton(el, info);
-    // TODO: improve drag areas
     // TODO: context menus: "view range", "snap range"
     let widget = initWidget(el, info);
 

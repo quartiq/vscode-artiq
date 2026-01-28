@@ -20,7 +20,6 @@ export class ScanWidget {
     [key: string]: any;
 
     private container: HTMLElement;
-    private scaleArea!: HTMLElement;
     private ticksContainer!: HTMLElement;
     private axisLine!: HTMLElement;
     private scanPointsContainer!: HTMLElement;
@@ -114,24 +113,20 @@ export class ScanWidget {
         this.ticksContainer.className = "scan-ticks";
         this.container.appendChild(this.ticksContainer);
         
-        // Scale area (draggable axis)
-        this.scaleArea = document.createElement("div");
-        this.scaleArea.className = "scan-scale-area";
-        
         // Tick marks
         const tickMarksContainer = document.createElement("div");
         tickMarksContainer.className = "scan-tick-marks";
-        this.scaleArea.appendChild(tickMarksContainer);
+        this.container.appendChild(tickMarksContainer);
         
         // Main axis line
         this.axisLine = document.createElement("div");
         this.axisLine.className = "scan-axis-line";
-        this.scaleArea.appendChild(this.axisLine);
+        this.container.appendChild(this.axisLine);
         
         // Scan points
         this.scanPointsContainer = document.createElement("div");
         this.scanPointsContainer.className = "scan-points";
-        this.scaleArea.appendChild(this.scanPointsContainer);
+        this.container.appendChild(this.scanPointsContainer);
         
         // Markers (in same container as scan points)
         this.markersContainer = document.createElement("div");
@@ -147,9 +142,7 @@ export class ScanWidget {
         
         this.markersContainer.appendChild(this.startMarker);
         this.markersContainer.appendChild(this.stopMarker);
-        this.scaleArea.appendChild(this.markersContainer);
-        
-        this.container.appendChild(this.scaleArea);
+        this.container.appendChild(this.markersContainer);
         
         // Add styles
         this.addStyles();
@@ -168,12 +161,21 @@ export class ScanWidget {
                 background: var(--vscode-input-background);
                 border: 1px solid var(--vscode-input-border);
                 border-radius: 4px;
+                padding: 5px 0;
+
+                position: relative;
+                overflow: hidden;
+                cursor: grab;
             }
-            
+
+            .scan-widget:active {
+                cursor: grabbing;
+            }
+
             .scan-header {
                 display: flex;
                 justify-content: space-between;
-                margin: 5px;
+                margin: 0 5px 5px 5px;
             }
             
             .scan-prefix, .scan-suffix {
@@ -181,9 +183,7 @@ export class ScanWidget {
             }
             
             .scan-ticks {
-                position: relative;
                 height: 20px;
-                overflow: hidden;
             }
             
             .scan-tick {
@@ -191,19 +191,8 @@ export class ScanWidget {
                 transform: translateX(-50%);
             }
             
-            .scan-scale-area {
-                position: relative;
-                height: 50px;
-                cursor: grab;
-                overflow: hidden;
-            }
-            
-            .scan-scale-area:active {
-                cursor: grabbing;
-            }
-            
             .scan-tick-marks {
-                position: relative;
+                height: 10px;
             }
             
             .scan-tick-mark, .scan-point {
@@ -215,36 +204,21 @@ export class ScanWidget {
             }
             
             .scan-axis-line {
-                position: absolute;
-                top: 10px;
-                left: 0;
-                right: 0;
                 height: 1px;
                 background: var(--vscode-foreground);
             }
             
             .scan-points {
-                position: absolute;
-                top: 11px;
-                left: 0;
-                right: 0;
                 height: 10px;
             }
-            
+
             .scan-markers {
-                position: absolute;
-                top: 21px;
-                cursor: move;
+                height: 20px;
             }
             
             .scan-marker {
                 position: absolute;
                 transform: translateX(-50%);
-                cursor: grab;
-            }
-            
-            .scan-marker:active {
-                cursor: grabbing;
             }
             
             .scan-marker-triangle {
@@ -295,7 +269,7 @@ export class ScanWidget {
         if (center) {
             scale = Math.min(scale, this.dynamicRange / Math.abs(center));
         }
-        const width = this.scaleArea.offsetWidth;
+        const width = this.container.offsetWidth;
         const left = width / 2 - center * scale;
         this.setView(left, scale);
     }
@@ -316,7 +290,7 @@ export class ScanWidget {
         this._start = val;
         
         // Ensure we have a valid view
-        if (!this._axisView || this.scaleArea.offsetWidth === 0) {
+        if (!this._axisView || this.container.offsetWidth === 0) {
             requestAnimationFrame(() => {
                 this.viewRange();
                 this.render();
@@ -338,7 +312,7 @@ export class ScanWidget {
         this._stop = val;
         
         // Ensure we have a valid view
-        if (!this._axisView || this.scaleArea.offsetWidth === 0) {
+        if (!this._axisView || this.container.offsetWidth === 0) {
             requestAnimationFrame(() => {
                 this.viewRange();
                 this.render();
@@ -396,13 +370,13 @@ export class ScanWidget {
     viewRange(): void {
         if (this._start === null || this._stop === null) {
             // Set a default view if no range is set
-            const width = this.scaleArea.offsetWidth || 800;
+            const width = this.container.offsetWidth || 800;
             this.setView(0, width / 10); // Default: show -5 to 5
             return;
         }
         
         const center = (this._stop + this._start) / 2;
-        const width = this.scaleArea.offsetWidth;
+        const width = this.container.offsetWidth;
         let scale = width * (1 - 2 * this.zoomMargin);
         
         if (this._stop !== this._start) {
@@ -415,7 +389,7 @@ export class ScanWidget {
     }
     
     snapRange(): void {
-        const width = this.scaleArea.offsetWidth;
+        const width = this.container.offsetWidth;
         this.setStart(this.pixelToAxis(this.zoomMargin * width));
         this.setStop(this.pixelToAxis((1 - this.zoomMargin) * width));
     }
@@ -426,7 +400,7 @@ export class ScanWidget {
         const scale = z * b;
         const left = x + z * (a - x);
         
-        const width = this.scaleArea.offsetWidth;
+        const width = this.container.offsetWidth;
         if (z > 1 && Math.abs(left - width / 2) > this.dynamicRange) {
             return;
         }
@@ -436,7 +410,7 @@ export class ScanWidget {
     
     // Event handlers
     private setupEventListeners(): void {
-        this.scaleArea.addEventListener("mousedown", this.onMouseDown.bind(this));
+        this.container.addEventListener("mousedown", this.onMouseDown.bind(this));
         document.addEventListener("mousemove", this.onMouseMove.bind(this));
         document.addEventListener("mouseup", this.onMouseUp.bind(this));
         this.container.addEventListener("wheel", this.onWheel.bind(this));
@@ -460,7 +434,7 @@ export class ScanWidget {
     }
     
     private onMouseDown(ev: MouseEvent): void {
-        const rect = this.scaleArea.getBoundingClientRect();
+        const rect = this.container.getBoundingClientRect();
         const x = ev.clientX - rect.left;
         const y = ev.clientY - rect.top;
         
@@ -473,10 +447,10 @@ export class ScanWidget {
             this._dragStartX = x;
             this._offset = x;
         } else {
-            // Check what area was clicked
-            const markersTop = 22; // From CSS: .scan-markers top position
+            const lineRect = this.container.querySelector(".scan-axis-line")!.getBoundingClientRect();
+            const lineY = lineRect.top - rect.top;
             
-            if (y < markersTop) {
+            if (y < lineY) {
                 // Clicked in axis area (above markers) - pan the axis
                 this._drag = "axis";
                 this._dragStartX = ev.clientX;
@@ -515,7 +489,7 @@ export class ScanWidget {
             return;
         }
         
-        const rect = this.scaleArea.getBoundingClientRect();
+        const rect = this.container.getBoundingClientRect();
         const x = ev.clientX - rect.left;
         
         if (this._drag === "select") {
@@ -523,16 +497,16 @@ export class ScanWidget {
         } else if (this._drag === "axis" && this._axisView && typeof this._offset === "number") {
             this.setView(x - this._offset, this._axisView[1]);
         } else if (this._drag === "start") {
-            const rect = this.scaleArea.getBoundingClientRect();
+            const rect = this.container.getBoundingClientRect();
             const x = ev.clientX - rect.left;
             this.setStart(this.pixelToAxis(x));
         } else if (this._drag === "stop") {
-            const rect = this.scaleArea.getBoundingClientRect();
+            const rect = this.container.getBoundingClientRect();
             const x = ev.clientX - rect.left;
             this.setStop(this.pixelToAxis(x));
         } else if (this._drag === "both" && Array.isArray(this._offset)) {
             // Move both markers together (drag the range)
-            const rect = this.scaleArea.getBoundingClientRect();
+            const rect = this.container.getBoundingClientRect();
             const x = ev.clientX - rect.left;
             this.setStart(this.pixelToAxis(x - this._offset[0]));
             this.setStop(this.pixelToAxis(x - this._offset[1]));
@@ -554,7 +528,7 @@ export class ScanWidget {
         if (ev.shiftKey) {
             this.setNpoints(Math.max(1, this._npoints + y));
         } else {
-            const rect = this.scaleArea.getBoundingClientRect();
+            const rect = this.container.getBoundingClientRect();
             const x = ev.clientX - rect.left;
             this.zoom(Math.pow(this.zoomFactor, y), x);
         }
@@ -574,7 +548,7 @@ export class ScanWidget {
     
     // Rendering
     render(): void {
-        const width = this.scaleArea.offsetWidth;
+        const width = this.container.offsetWidth;
         
         // Safeguard: ensure we have a valid interval
         // Extend the range beyond visible area for smooth tick appearance
@@ -605,7 +579,7 @@ export class ScanWidget {
         }
         
         // Render tick marks
-        const tickMarksContainer = this.scaleArea.querySelector(".scan-tick-marks");
+        const tickMarksContainer = this.container.querySelector(".scan-tick-marks");
         if (tickMarksContainer) {
             tickMarksContainer.innerHTML = "";
             for (const tick of tickResult.ticks) {
