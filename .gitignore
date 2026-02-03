@@ -1,7 +1,7 @@
 **.swp
 
-out
-shared
+out_core
+out_webview
 dist
 node_modules
 package-lock.json
