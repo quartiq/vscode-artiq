@@ -36,7 +36,7 @@
     "control system"
   ],
   "activationEvents": [],
-  "main": "./out/extension.js",
+  "main": "./out_core/extension.js",
   "contributes": {
     "configuration": {
       "properties": {
@@ -213,8 +213,8 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p tsconfig.json && tsc -p tsconfig.shared.json",
-    "watch": "concurrently \"tsc -p tsconfig.json -w\" \"tsc -p tsconfig.shared.json -w\"",
+    "compile": "tsc -p tsconfig.core.json && tsc -p tsconfig.webview.json",
+    "watch": "concurrently \"tsc -p tsconfig.core.json -w\" \"tsc -p tsconfig.webview.json -w\"",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test"

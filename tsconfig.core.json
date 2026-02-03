@@ -2,7 +2,7 @@
     "compilerOptions": {
         "module": "NodeNext",
         "target": "ES2022",
-        "outDir": "out",
+        "outDir": "out_core",
         "lib": [
             "ES2022",
             "dom",
@@ -19,8 +19,8 @@
     "include": ["src/**/*.ts"],
     "exclude": [
         "eslint.config.mjs",
-        "out",
-        "shared",
+        "out_core",
+        "out_webview",
         "test"
     ]
 }

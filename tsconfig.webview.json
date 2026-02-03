@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "outDir": "out_webview",
+        "target": "ES2022",
+        "module": "ES2022",
+        "lib": ["ES6", "dom", "ES2022"],
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "strict": true,
+    },
+    "include": ["src/entries.ts"],
+}
