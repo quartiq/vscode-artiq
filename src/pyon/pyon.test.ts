@@ -27,3 +27,10 @@ describe("encode", () => {
         expect(pyon.encode(tagged)).toBe(hinted.replaceAll(/\s/g,""));
     });
 });
+
+import { join } from "path";
+import { readFileSync } from "fs";
+
+let p = join(__dirname, "pyon_v2.test.json");
+let testobject = readFileSync(p, "utf8");
+console.log(pyon.decode(testobject));
