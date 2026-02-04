@@ -1,27 +1,27 @@
 // see sequence.plantuml
 const marker = "__jsonclass__"; // see: m-labs/sipyco/pyon
 
-type Params = any[];
-type JsonClass = [ name: string, params: Params ];
-type HintedJsonClass = { [ marker ]: JsonClass }; // see: https://www.jsonrpc.org/specification_v1#a3.JSONClasshinting
-let isHintedJsonClass = (v: any): boolean => {
-    if (typeof v !== "object") { return false; }
-    if (v === null) { return false; }
+let isMarked = (v: any): boolean => v &&
+    typeof v === "object" &&
+    marker in v;
 
-    let keys = Object.keys(v);
-    return keys.length === 1 && keys[0] === marker;
-};
+type Params = any[];
+type JsonClass = [name: string, params: Params];
+type HintedJsonClass = { [marker]: JsonClass }; // see: https://www.jsonrpc.org/specification_v1#a3.JSONClasshinting
+let isHintedJsonClass = (v: any): boolean => isMarked(v) &&
+    Object.keys(v).length === 1 &&
+    Array.isArray(v[marker]) &&
+    v[marker].length === 2 &&
+    typeof v[marker][0] === "string" &&
+    Array.isArray(v[marker][1]);
 
 // we use a marker key to tag type info, because
 // instanceof or constructor.name may be lost
 // by operations like structuredClone() in the meantime
-export type TypeTaggedObject = { [ marker ]: string };
-export let isTypeTaggedObject = (v: any): boolean => {
-    if (typeof v !== "object") { return false; }
-    if (v === null) { return false; }
-    
-    return v.hasOwnProperty(marker);
-};
+export type TypeTaggedObject = { [marker: string]: string };
+export let isTypeTaggedObject = (v: any): boolean => isMarked(v) &&
+    Object.keys(v).length > 1 &&
+    typeof v[marker] === "string";
 
 type ConvName = keyof ConvInterface;
 type Reviver = (params: Params) => any; // any := TypeTaggedObject
@@ -80,10 +80,11 @@ let toTagged = (v: HintedJsonClass, convname: ConvName): TypeTaggedObject => {
 
 let toHinted = (v: TypeTaggedObject, convname: ConvName): HintedJsonClass => {
     let typename = v[marker];
+    delete v[marker];
     let replacer = conv(typename, convname);
 
     let replaced: Record<string, any> = {};
-    replaced[marker] = [ typename, replacer(v) ];
+    replaced[marker] = [typename, replacer(v)];
     return replaced as HintedJsonClass;
 };
 
@@ -114,12 +115,3 @@ export let preview: Encoder = tagged => JSON.stringify(tagged, (k: string, v: an
     if (!isTypeTaggedObject(v)) { return v; }
     return toHinted(v, "forPreview");
 });
-
-export let validate = (hinted: string, decode: Decoder): boolean => {
-    try {
-        decode(hinted);
-        return true;
-    } catch (e) {
-        return false;
-    }
-};
