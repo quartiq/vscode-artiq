@@ -20,7 +20,6 @@ let isHintedJsonClass = (v: any): boolean => isMarked(v) &&
 // by operations like structuredClone() in the meantime
 export type TypeTaggedObject = { [marker: string]: string };
 export let isTypeTaggedObject = (v: any): boolean => isMarked(v) &&
-    Object.keys(v).length > 1 &&
     typeof v[marker] === "string";
 
 type ConvName = keyof ConvInterface;
