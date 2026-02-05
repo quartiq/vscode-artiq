@@ -1,10 +1,10 @@
 {
     "compilerOptions": {
-        "module": "NodeNext",
-        "target": "ES2022",
+        "module": "nodenext",
+        "target": "esnext",
         "outDir": "out_core",
         "lib": [
-            "ES2022",
+            "esnext",
             "dom",
         ],
         "sourceMap": true,

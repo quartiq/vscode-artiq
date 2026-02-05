@@ -1,4 +1,26 @@
-type Dict = Map<any, any>;
+import equal from "fast-deep-equal";
+
+class Dict extends Map {
+    set(key: any, value: any): this {
+        if (typeof key !== "object") {
+            super.set(key, value);
+            return this;
+        }
+
+        let existing = [...this.keys()].find((k: any) => equal(k, key));
+        super.set(existing ?? key, value);
+        return this;
+    }
+
+    get(key: any) {
+        if (typeof key !== "object") {
+            return super.get(key);
+        }
+
+        let existing = [...this.keys()].find((k: any) => equal(k, key));
+        return super.get(existing ?? key);
+    }
+}
 
 type Entry = [ key: any, value: any ];
 type Params = [ Entry[] ];
