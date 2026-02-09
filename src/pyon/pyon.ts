@@ -95,7 +95,7 @@ export let decode: Decoder = hinted => JSON.parse(hinted, (k: string, v: any): a
     return toTagged(v, "fromMachine");
 });
 
-export let encode: Encoder = tagged => JSON.stringify(tagged, (k: string, v: any): any => {
+export let encode: Encoder = tagged => JSON.stringify(structuredClone(tagged), (k: string, v: any): any => {
     if (!isTypeTaggedObject(v)) { return v; }
     return toHinted(v, "toMachine");
 });
@@ -105,12 +105,12 @@ export let parse: Decoder = hinted => JSON.parse(hinted, (k: string, v: any): an
     return toTagged(v, "fromHuman");
 });
 
-export let fmt: Encoder = tagged => JSON.stringify(tagged, (k: string, v: any): any => {
+export let fmt: Encoder = tagged => JSON.stringify(structuredClone(tagged), (k: string, v: any): any => {
     if (!isTypeTaggedObject(v)) { return v; }
     return toHinted(v, "toHuman");
 });
 
-export let preview: Encoder = tagged => JSON.stringify(tagged, (k: string, v: any): any => {
+export let preview: Encoder = tagged => JSON.stringify(structuredClone(tagged), (k: string, v: any): any => {
     if (!isTypeTaggedObject(v)) { return v; }
     return toHinted(v, "forPreview");
 });
