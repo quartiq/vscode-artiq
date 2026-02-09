@@ -1,44 +1,28 @@
 import { describe, it, expect } from "vitest";
+import { join } from "path";
+import { readFileSync } from "fs";
+
 import * as pyon from "./pyon.js";
+
+let hinted = readFileSync(join(__dirname, "pyon_v2.test.json"), "utf8");
+let tagged = pyon.decode(hinted);
 
 let normalize = (s: string): string => JSON.stringify(JSON.parse(s));
 
-let hinted = `
-    {
-        "__jsonclass__": [
-            "tuple",
-            [
-                [ "foo", 4, true, null ]
-            ]
-        ]
-    }
-`;
-
-let tagged = ["foo", 4, true, null ] as any;
-tagged["__jsonclass__"] = "tuple";
-
-describe("decode", () => {
-    it("should transform HintedJsonClass into TypeTaggedObject", () => {
-        expect(pyon.decode(hinted)).toStrictEqual(tagged);
-        expect(pyon.decode(hinted)["__jsonclass__"]).toBe("tuple");
-    });
-});
-
-describe("encode", () => {
-    it("should transform TypeTaggedObject into HintedJsonClass", () => {
+describe("roundtrip", () => {
+    it("should be identical to the input JSON", () => {
         expect(normalize(pyon.encode(tagged))).toBe(normalize(hinted));
     });
 });
 
-import { join } from "path";
-import { readFileSync } from "fs";
+describe("tuple", () => {
+    it("should match the structure of a JS pyon tuple", () => {
+        let tupleArrayKey = [1, 2] as any;
+        tupleArrayKey.__jsonclass__ = "tuple";
 
-let p = join(__dirname, "pyon_v2.test.json");
-let _hinted = readFileSync(p, "utf8");
-let _tagged = pyon.decode(_hinted);
-
-describe("roundtrip", () => {
-    it("should be identical to the input JSON", () => {
-        expect(normalize(pyon.encode(_tagged))).toBe(normalize(_hinted));
+        expect(tagged.get(tupleArrayKey)).toStrictEqual([ [3, 4.2], [2] ]);
+        tagged.get(tupleArrayKey).forEach((tuple: any) => {
+            expect(tuple.__jsonclass__).toBe("tuple");
+        });
     });
 });
