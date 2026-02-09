@@ -15,6 +15,13 @@ describe("roundtrip", () => {
     });
 });
 
+describe("set", () => {
+    it("should match the structure of a JS pyon set", () => {
+        expect(tagged.get("set")).toStrictEqual([ "testing", "sets" ]);
+        expect(tagged.get("set").__jsonclass__).toBe("set");
+    });
+});
+
 describe("tuple", () => {
     it("should match the structure of a JS pyon tuple", () => {
         let tupleArrayKey = [1, 2] as any;
