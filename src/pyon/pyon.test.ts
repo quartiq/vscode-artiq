@@ -22,11 +22,21 @@ describe("set", () => {
     });
 });
 
+let tupleArrayKey = [1, 2] as any;
+tupleArrayKey.__jsonclass__ = "tuple";
+
+describe("dict", () => {
+    it("should match the structure of a JS pyon dict", () => {
+        expect(tagged.get("od")).toStrictEqual(new Map([
+            [ 2, "a" ], [ 1, "b" ], [ 0, "c" ]
+        ]));
+
+        expect(tagged.has(tupleArrayKey)).toBe(true);
+    });
+});
+
 describe("tuple", () => {
     it("should match the structure of a JS pyon tuple", () => {
-        let tupleArrayKey = [1, 2] as any;
-        tupleArrayKey.__jsonclass__ = "tuple";
-
         expect(tagged.get(tupleArrayKey)).toStrictEqual([ [3, 4.2], [2] ]);
         tagged.get(tupleArrayKey).forEach((tuple: any) => {
             expect(tuple.__jsonclass__).toBe("tuple");
