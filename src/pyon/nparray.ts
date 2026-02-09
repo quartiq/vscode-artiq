@@ -67,7 +67,7 @@ export let toMachine = (data: any): Params => {
     if (!isTypedArray(arr.data)) { throw new Error(`Invalid datatype: ${arr.data.constructor.name}`); }
 
     let b64 = base64FromBuffer(arr.data.buffer as ArrayBuffer);
-    return [ arr.shape, getDtype(arr)!, b64 ];
+    return [ arr.shape ?? [], getDtype(arr)!, b64 ];
 };
 
 // humans can not edit base64 data which
