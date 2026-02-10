@@ -66,7 +66,8 @@ import * as set from "./set.js";
 import * as dict from "./dict.js";
 import * as tuple from "./tuple.js";
 import * as nparray from "./nparray.js";
-export const types: Record<string, TypeInterface> = { set, dict, tuple, nparray };
+import * as Fraction from "./fraction.js";
+export const types: Record<string, TypeInterface> = { set, dict, tuple, nparray, Fraction };
 
 let toTagged = (v: HintedJsonClass, convname: ConvName): TypeTaggedObject => {
     let [typename, params] = v[marker];
