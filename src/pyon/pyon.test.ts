@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { join } from "path";
 import { readFileSync } from "fs";
+import Fraction from "fraction.js";
 
 import * as pyon from "./pyon.js";
 
@@ -41,5 +42,28 @@ describe("tuple", () => {
         tagged.get(tupleArrayKey).forEach((tuple: any) => {
             expect(tuple.__jsonclass__).toBe("tuple");
         });
+    });
+});
+
+let linspaceKey = new Fraction(3, 4) as any;
+linspaceKey.__jsonclass__ = "Fraction";
+
+describe("Fraction", () => {
+    it("should match the structure of a JS pyon Fraction", () => {
+        expect(tagged.has(linspaceKey)).toBe(true);
+    });
+});
+
+describe("nparray", () => {
+    it("should match the structure of a JS pyon nparray", () => {
+        expect(tagged.get(linspaceKey).shape).toStrictEqual([1]);
+        expect(tagged.get(linspaceKey).data.constructor).toBe(Float64Array);
+        expect(tagged.get(linspaceKey).data.length).toBe(1);
+        expect(tagged.get(linspaceKey).data[0]).toBe(5);
+
+        expect(tagged.get("zerodim").shape).toStrictEqual([]);
+        expect(tagged.get("zerodim").data.constructor).toBe(BigInt64Array);
+        expect(tagged.get("zerodim").data.length).toBe(1);
+        expect(tagged.get("zerodim").data[0]).toBe(0n);
     });
 });
