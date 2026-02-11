@@ -4,6 +4,7 @@ import { readFileSync } from "fs";
 import Fraction from "fraction.js";
 
 import * as pyon from "./pyon.js";
+// TODO: test previews
 
 let hinted = readFileSync(join(__dirname, "pyon_v2.test.json"), "utf8");
 let tagged = pyon.decode(hinted);
@@ -52,10 +53,12 @@ linspaceKey.__jsonclass__ = "Fraction";
 describe("Fraction", () => {
     it("should match the structure of a JS pyon Fraction", () => {
         expect(tagged.has(linspaceKey)).toBe(true);
+        expect(pyon.preview(linspaceKey)).toBe(`["Fraction","3/4"]`);
     });
 });
 
 describe("nparray", () => {
+    // TODO: test toHuman and fromHuman
     it("should match the structure of a JS pyon nparray", () => {
         expect(tagged.get(linspaceKey).shape).toStrictEqual([1]);
         expect(tagged.get(linspaceKey).data.constructor).toBe(Float64Array);
