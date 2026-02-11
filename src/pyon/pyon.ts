@@ -18,6 +18,7 @@ let isHintedJsonClass = (v: any): boolean => isMarked(v) &&
 // we use a marker key to tag type info, because
 // instanceof or constructor.name may be lost
 // by operations like structuredClone() in the meantime
+// except for TypedArray's!
 export type TypeTaggedObject = { [marker: string]: string };
 export let isTypeTaggedObject = (v: any): boolean => isMarked(v) &&
     typeof v[marker] === "string";
@@ -67,7 +68,8 @@ import * as dict from "./dict.js";
 import * as tuple from "./tuple.js";
 import * as nparray from "./nparray.js";
 import * as Fraction from "./fraction.js";
-export const types: Record<string, TypeInterface> = { set, dict, tuple, nparray, Fraction };
+import * as bytes from "./bytes.js";
+export const types: Record<string, TypeInterface> = { set, dict, tuple, nparray, Fraction, bytes };
 
 let toTagged = (v: HintedJsonClass, convname: ConvName): TypeTaggedObject => {
     let [typename, params] = v[marker];

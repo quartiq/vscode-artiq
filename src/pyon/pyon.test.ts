@@ -73,3 +73,11 @@ describe("nparray", () => {
         expect(tagged.get("zerodim").__jsonclass__).toBe("nparray");
     });
 });
+
+describe("bytes", () => {
+    it("should match the structure of JS pyon bytes", () => {
+        expect(tagged.get(true)).toStrictEqual([98, 121, 116, 101, 115]);
+        expect(tagged.get(true).__jsonclass__).toBe("bytes");
+        expect(pyon.preview(tagged.get(true))).toBe(`["bytes",["62","79","74","65","73"]]`);
+    });
+});
