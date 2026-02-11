@@ -113,5 +113,9 @@ export let fmt: Encoder = tagged => JSON.stringify(structuredClone(tagged), (k: 
 
 export let preview: Encoder = tagged => JSON.stringify(structuredClone(tagged), (k: string, v: any): any => {
     if (!isTypeTaggedObject(v)) { return v; }
-    return toHinted(v, "forPreview");
+
+    let typename = v[marker];
+    delete v[marker];
+    let replacer = conv(typename, "forPreview");
+    return [typename, replacer(v)] as JsonClass;
 });
