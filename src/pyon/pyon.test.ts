@@ -31,6 +31,7 @@ describe("dict", () => {
         expect(tagged.get("od")).toStrictEqual(new Map([
             [ 2, "a" ], [ 1, "b" ], [ 0, "c" ]
         ]));
+        expect(tagged.get("od").__jsonclass__).toBe("dict");
 
         expect(tagged.has(tupleArrayKey)).toBe(true);
     });
@@ -60,10 +61,12 @@ describe("nparray", () => {
         expect(tagged.get(linspaceKey).data.constructor).toBe(Float64Array);
         expect(tagged.get(linspaceKey).data.length).toBe(1);
         expect(tagged.get(linspaceKey).data[0]).toBe(5);
+        expect(tagged.get(linspaceKey).__jsonclass__).toBe("nparray");
 
         expect(tagged.get("zerodim").shape).toStrictEqual([]);
         expect(tagged.get("zerodim").data.constructor).toBe(BigInt64Array);
         expect(tagged.get("zerodim").data.length).toBe(1);
         expect(tagged.get("zerodim").data[0]).toBe(0n);
+        expect(tagged.get("zerodim").__jsonclass__).toBe("nparray");
     });
 });
