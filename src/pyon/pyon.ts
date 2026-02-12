@@ -96,6 +96,9 @@ let toHinted = (v: TypeTaggedObject, convname: ConvName): HintedJsonClass => {
 export type Decoder = (hinted: string) => any; // HintedJsonClass -> TypeTaggedObject
 export type Encoder = (tagged: any) => string; // TypeTaggedObject -> HintedJsonClass
 
+// TODO: deal with BigInt roundtrip
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt#use_within_json
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON#using_json_numbers
 export let decode: Decoder = hinted => JSON.parse(hinted, (k: string, v: any): any => {
     if (!isHintedJsonClass(v)) { return v; }
     return toTagged(v, "fromMachine");
@@ -117,6 +120,8 @@ export let fmt: Encoder = tagged => JSON.stringify(tagged, (k: string, v: any): 
 });
 
 export let preview: Encoder = tagged => JSON.stringify(tagged, (k: string, v: any): any => {
+    // FIXME: make use of JSON.rawJSON(v.toString()); as soon as it becomes available
+    if (typeof v === "bigint") { return v.toString(); }
     if (!isTypeTaggedObject(v)) { return v; }
 
     let typename = v[marker];

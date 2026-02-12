@@ -3,7 +3,6 @@ import ndarray, { NdArray } from "ndarray";
 import isTypedArray from "is-typed-array";
 import { flatten } from "flat";
 
-import { unpack } from "./ndarray-unpack.js";
 import * as utils from "../utils.js";
 
 type Params = [shape: number[], dtype: string, data: string];
@@ -78,6 +77,29 @@ export let fromHuman = (params: any[]): NdArray => {
 
     let arr = flatten(params[2]);
     return ndarray(new TypedArray(arr), params[0]);
+};
+
+let unpack = (arr: NdArray): any => {
+    if (arr.shape.length === 0) {
+        return (arr.data as any)[arr.offset];
+    }
+
+    let result = [];
+    for (let i = 0; i < arr.shape[0]; i++) {
+        if (arr.shape.length === 1) {
+            result.push((arr.data as any)[arr.offset + i * arr.stride[0]]);
+            continue;
+        }
+
+        result.push(unpack(ndarray(
+            arr.data,
+            arr.shape.slice(1),
+            arr.stride.slice(1),
+            arr.offset + i * arr.stride[0]
+        )));
+    }
+
+    return result;
 };
 
 export let toHuman = (data: any): ParamsHuman => {
