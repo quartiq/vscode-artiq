@@ -21,6 +21,7 @@ describe("set", () => {
     it("should match the structure of a JS pyon set", () => {
         expect(tagged.get("set")).toStrictEqual([ "testing", "sets" ]);
         expect(tagged.get("set").__jsonclass__).toBe("set");
+        expect(pyon.preview(tagged.get("set"))).toBe(`["set",["testing","sets"]]`);
     });
 });
 
@@ -33,6 +34,7 @@ describe("dict", () => {
             [ 2, "a" ], [ 1, "b" ], [ 0, "c" ]
         ]));
         expect(tagged.get("od").__jsonclass__).toBe("dict");
+        expect(pyon.preview(tagged.get("od"))).toBe(`["dict",[[2,"a"],[1,"b"],[0,"c"]]]`);
 
         expect(tagged.has(tupleArrayKey)).toBe(true);
     });
@@ -44,6 +46,7 @@ describe("tuple", () => {
         tagged.get(tupleArrayKey).forEach((tuple: any) => {
             expect(tuple.__jsonclass__).toBe("tuple");
         });
+        expect(pyon.preview(tagged.get(tupleArrayKey))).toBe(`[["tuple",[3,4.2]],["tuple",[2]]]`);
     });
 });
 
@@ -65,12 +68,14 @@ describe("nparray", () => {
         expect(tagged.get(linspaceKey).data.length).toBe(1);
         expect(tagged.get(linspaceKey).data[0]).toBe(5);
         expect(tagged.get(linspaceKey).__jsonclass__).toBe("nparray");
+        expect(pyon.preview(tagged.get(linspaceKey))).toBe(`["nparray",[5]]`);
 
         expect(tagged.get("zerodim").shape).toStrictEqual([]);
         expect(tagged.get("zerodim").data.constructor).toBe(BigInt64Array);
         expect(tagged.get("zerodim").data.length).toBe(1);
         expect(tagged.get("zerodim").data[0]).toBe(0n);
         expect(tagged.get("zerodim").__jsonclass__).toBe("nparray");
+        expect(pyon.preview(tagged.get("zerodim"))).toBe(`["nparray","0"]`);
     });
 });
 
