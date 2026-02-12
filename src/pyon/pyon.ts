@@ -18,7 +18,7 @@ let isHintedJsonClass = (v: any): boolean => isMarked(v) &&
 // we use a marker key to tag type info, because
 // instanceof or constructor.name may be lost
 // by operations like structuredClone() in the meantime
-// except for TypedArray's!
+// except for TypedArray
 export type TypeTaggedObject = { [marker: string]: string };
 export let isTypeTaggedObject = (v: any): boolean => isMarked(v) &&
     typeof v[marker] === "string";
@@ -35,6 +35,8 @@ interface ConvInterface {
     // maybe one day, the user may enjoy editing python style formatted strings
     fromHuman: Reviver, toHuman: Replacer,
     forPreview: Previewer, // this is one-way, so it may be very liberal
+
+    copy: (tagged: TypeTaggedObject) => any,
 }
 
 interface TypeInterface extends ConvInterface {
@@ -49,7 +51,17 @@ let identityType: Record<ConvName, IdentityConv> = {
     fromMachine: identityConv, toMachine: identityConv,
     fromHuman: identityConv, toHuman: identityConv,
     forPreview: identityConv,
+    copy: (v: any) => [ ...v ],
 };
+
+// TODO: implement missing types
+import * as set from "./set.js";
+import * as dict from "./dict.js";
+import * as tuple from "./tuple.js";
+import * as nparray from "./nparray.js";
+import * as Fraction from "./fraction.js";
+import * as bytes from "./bytes.js";
+export const types: Record<string, TypeInterface> = { set, dict, tuple, nparray, Fraction, bytes };
 
 let conv = (t: string, c: ConvName): Reviver | Replacer | IdentityConv => {
     let type = types[t];
@@ -62,15 +74,6 @@ let conv = (t: string, c: ConvName): Reviver | Replacer | IdentityConv => {
     return type[c];
 };
 
-// TODO: implement missing types
-import * as set from "./set.js";
-import * as dict from "./dict.js";
-import * as tuple from "./tuple.js";
-import * as nparray from "./nparray.js";
-import * as Fraction from "./fraction.js";
-import * as bytes from "./bytes.js";
-export const types: Record<string, TypeInterface> = { set, dict, tuple, nparray, Fraction, bytes };
-
 let toTagged = (v: HintedJsonClass, convname: ConvName): TypeTaggedObject => {
     let [typename, params] = v[marker];
     let reviver = conv(typename, convname);
@@ -82,11 +85,11 @@ let toTagged = (v: HintedJsonClass, convname: ConvName): TypeTaggedObject => {
 
 let toHinted = (v: TypeTaggedObject, convname: ConvName): HintedJsonClass => {
     let typename = v[marker];
-    delete v[marker];
+    let untagged = conv(typename, "copy")(v);
     let replacer = conv(typename, convname);
 
     let replaced: Record<string, any> = {};
-    replaced[marker] = [typename, replacer(v)];
+    replaced[marker] = [typename, replacer(untagged)];
     return replaced as HintedJsonClass;
 };
 
@@ -98,7 +101,7 @@ export let decode: Decoder = hinted => JSON.parse(hinted, (k: string, v: any): a
     return toTagged(v, "fromMachine");
 });
 
-export let encode: Encoder = tagged => JSON.stringify(structuredClone(tagged), (k: string, v: any): any => {
+export let encode: Encoder = tagged => JSON.stringify(tagged, (k: string, v: any): any => {
     if (!isTypeTaggedObject(v)) { return v; }
     return toHinted(v, "toMachine");
 });
@@ -108,16 +111,16 @@ export let parse: Decoder = hinted => JSON.parse(hinted, (k: string, v: any): an
     return toTagged(v, "fromHuman");
 });
 
-export let fmt: Encoder = tagged => JSON.stringify(structuredClone(tagged), (k: string, v: any): any => {
+export let fmt: Encoder = tagged => JSON.stringify(tagged, (k: string, v: any): any => {
     if (!isTypeTaggedObject(v)) { return v; }
     return toHinted(v, "toHuman");
 });
 
-export let preview: Encoder = tagged => JSON.stringify(structuredClone(tagged), (k: string, v: any): any => {
+export let preview: Encoder = tagged => JSON.stringify(tagged, (k: string, v: any): any => {
     if (!isTypeTaggedObject(v)) { return v; }
 
     let typename = v[marker];
-    delete v[marker];
+    let untagged = conv(typename, "copy")(v);
     let replacer = conv(typename, "forPreview");
-    return [typename, replacer(v)] as JsonClass;
+    return [typename, replacer(untagged)] as JsonClass;
 });

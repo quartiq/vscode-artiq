@@ -52,6 +52,12 @@ export let toHuman = toMachine;
 
 export let forPreview = (data: any): Entry[] => Array.from(data as Dict);
 
+export let copy = (src: any): any => {
+    let clone = new Dict();
+    for (let [k, v] of (src as Dict)) { clone.set(k, v); }
+    return clone;
+};
+
 export let get = (tagged: any, key: any): any => (tagged as Dict).get(key);
 export let set = (tagged: any, key: any, value: any) => (tagged as Dict).set(key, value);
 export let del = (tagged: any, key: any) => (tagged as Dict).delete(key);

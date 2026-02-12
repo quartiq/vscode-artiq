@@ -85,7 +85,14 @@ export let toHuman = (data: any): ParamsHuman => {
     return [ arr.shape, getDtype(arr)!, unpack(arr) ];
 };
 
-export let forPreview = (data: any): any[] => unpack(data as NdArray);
+export let forPreview = (data: any): any => unpack(data as NdArray);
+
+export let copy = (src: any): any => ndarray(
+    ((src as NdArray).data as any).slice(),
+    (src as NdArray).shape.slice(),
+    (src as NdArray).stride.slice(),
+    (src as NdArray).offset,
+);
 
 // TODO: support tuple indices like [1, [2, 3]] and such
 export let get = (tagged: any, key: any): any => (tagged as NdArray).pick(key);
