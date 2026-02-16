@@ -61,7 +61,8 @@ import * as tuple from "./tuple.js";
 import * as nparray from "./nparray.js";
 import * as Fraction from "./fraction.js";
 import * as bytes from "./bytes.js";
-export const types: Record<string, TypeInterface> = { set, dict, tuple, nparray, Fraction, bytes };
+import * as slice from "./slice.js";
+export const types: Record<string, TypeInterface> = { set, dict, tuple, nparray, Fraction, bytes, slice };
 
 let conv = (t: string, c: ConvName): Reviver | Replacer | IdentityConv => {
     let type = types[t];
@@ -97,6 +98,7 @@ export type Decoder = (hinted: string) => any; // HintedJsonClass -> TypeTaggedO
 export type Encoder = (tagged: any) => string; // TypeTaggedObject -> HintedJsonClass
 
 // TODO: deal with BigInt roundtrip
+// e. g. "zerodim" in test data holds BigInt
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt#use_within_json
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON#using_json_numbers
 export let decode: Decoder = hinted => JSON.parse(hinted, (k: string, v: any): any => {

@@ -86,3 +86,10 @@ describe("bytes", () => {
         expect(pyon.preview(tagged.get(true))).toBe(`["bytes",["62","79","74","65","73"]]`);
     });
 });
+
+describe("slice", () => {
+    it("should match the structure of a JS pyon slice", () => {
+        expect(tagged.get("slice")).toStrictEqual({ start: null, stop: 3, step: null, __jsonclass__: "slice" });
+        expect(pyon.preview(tagged.get("slice"))).toBe(`["slice",{"start":null,"stop":3,"step":null}]`);
+    });
+});
