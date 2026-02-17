@@ -1,4 +1,7 @@
 import { describe, it, expect } from "vitest";
+import matchers from "jest-extended";
+expect.extend(matchers);
+
 import { join } from "path";
 import { readFileSync } from "fs";
 import Fraction from "fraction.js";
@@ -19,9 +22,12 @@ describe("roundtrip", () => {
 
 describe("set", () => {
     it("should match the structure of a JS pyon set", () => {
-        expect(tagged.get("set")).toStrictEqual([ "testing", "sets" ]);
+        expect(tagged.get("set")).toIncludeSameMembers(["testing", "sets"]);
         expect(tagged.get("set").__jsonclass__).toBe("set");
-        expect(pyon.preview(tagged.get("set"))).toBe(`["set",["testing","sets"]]`);
+        expect([
+            `["set",["testing","sets"]]`,
+            `["set",["sets","testing"]]`
+        ]).toContain(pyon.preview(tagged.get("set")));
     });
 });
 
