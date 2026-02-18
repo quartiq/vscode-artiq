@@ -99,3 +99,24 @@ describe("slice", () => {
         expect(pyon.preview(tagged.get("slice"))).toBe(`["slice",{"start":null,"stop":3,"step":null}]`);
     });
 });
+
+describe("npscalar", () => {
+    it("should match the structure of a JS pyon npscalar", () => {
+        expect(tagged.get("a")).toStrictEqual(new Int8Array([ 9 ]));
+        expect(tagged.get("b")).toStrictEqual(new Int16Array([ -98 ]));
+        expect(tagged.get("c")).toStrictEqual(new Int32Array([ 42 ]));
+        expect(tagged.get("d")).toStrictEqual(new BigInt64Array([ -5n ]));
+
+        expect(tagged.get("e")).toStrictEqual(new Uint8Array([ 8 ]));
+        expect(tagged.get("f")).toStrictEqual(new Uint16Array([ 5 ]));
+        expect(tagged.get("g")).toStrictEqual(new Uint32Array([ 4 ]));
+        expect(tagged.get("h")).toStrictEqual(new BigUint64Array([ 9n ]));
+
+        // FIXME: "x" waits for vanilla Float16Array feature to drop
+        //expect(tagged.get("x")).toStrictEqual(new Float16Array([ 9.0 ]));
+        expect(tagged.get("y")).toStrictEqual(new Float32Array([ 9.0 ]));
+        // "z" is pyonized to regular js float
+
+        expect(tagged.get("q")).toStrictEqual(new Float64Array([ 0, 1 ]));
+    });
+});

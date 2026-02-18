@@ -62,7 +62,8 @@ import * as nparray from "./nparray.js";
 import * as Fraction from "./fraction.js";
 import * as bytes from "./bytes.js";
 import * as slice from "./slice.js";
-export const types: Record<string, TypeInterface> = { set, dict, tuple, nparray, Fraction, bytes, slice };
+import * as npscalar from "./npscalar.js";
+export const types: Record<string, TypeInterface> = { set, dict, tuple, nparray, Fraction, bytes, slice, npscalar };
 
 let conv = (t: string, c: ConvName): Reviver | Replacer | IdentityConv => {
     let type = types[t];
