@@ -18,6 +18,7 @@ let isHintedJsonClass = (v: any): boolean => isMarked(v) &&
 // we use a marker key to tag type info, because
 // instanceof or constructor.name may be lost
 // by operations like structuredClone() in the meantime
+// except for TypedArray
 export type TypeTaggedObject = { [marker: string]: string };
 export let isTypeTaggedObject = (v: any): boolean => isMarked(v) &&
     typeof v[marker] === "string";
@@ -34,6 +35,10 @@ interface ConvInterface {
     // maybe one day, the user may enjoy editing python style formatted strings
     fromHuman: Reviver, toHuman: Replacer,
     forPreview: Previewer, // this is one-way, so it may be very liberal
+
+    // provides JSON replacer traverse with untagged copies of TypeTaggedObjects
+    // especially important for nested structures natively passed by reference
+    copy: (tagged: TypeTaggedObject) => any,
 }
 
 interface TypeInterface extends ConvInterface {
@@ -48,7 +53,20 @@ let identityType: Record<ConvName, IdentityConv> = {
     fromMachine: identityConv, toMachine: identityConv,
     fromHuman: identityConv, toHuman: identityConv,
     forPreview: identityConv,
+    copy: (v: any) => [ ...v ],
 };
+
+// TODO: implement missing types
+import * as set from "./set.js";
+import * as dict from "./dict.js";
+import * as tuple from "./tuple.js";
+import * as nparray from "./nparray.js";
+import * as Fraction from "./fraction.js";
+import * as bytes from "./bytes.js";
+import * as slice from "./slice.js";
+import * as npscalar from "./npscalar.js";
+import * as complex from "./complex.js";
+export const types: Record<string, TypeInterface> = { set, dict, tuple, nparray, Fraction, bytes, slice, npscalar, complex };
 
 let conv = (t: string, c: ConvName): Reviver | Replacer | IdentityConv => {
     let type = types[t];
@@ -61,14 +79,6 @@ let conv = (t: string, c: ConvName): Reviver | Replacer | IdentityConv => {
     return type[c];
 };
 
-// TODO: implement missing types
-import * as set from "./set.js";
-import * as dict from "./dict.js";
-import * as tuple from "./tuple.js";
-import * as nparray from "./nparray.js";
-import * as Fraction from "./fraction.js";
-export const types: Record<string, TypeInterface> = { set, dict, tuple, nparray, Fraction };
-
 let toTagged = (v: HintedJsonClass, convname: ConvName): TypeTaggedObject => {
     let [typename, params] = v[marker];
     let reviver = conv(typename, convname);
@@ -78,25 +88,30 @@ let toTagged = (v: HintedJsonClass, convname: ConvName): TypeTaggedObject => {
     return revived as TypeTaggedObject;
 };
 
+export let copy = (v: TypeTaggedObject): TypeTaggedObject => conv(v[marker], "copy")(v);
+
 let toHinted = (v: TypeTaggedObject, convname: ConvName): HintedJsonClass => {
     let typename = v[marker];
-    delete v[marker];
     let replacer = conv(typename, convname);
 
     let replaced: Record<string, any> = {};
-    replaced[marker] = [typename, replacer(v)];
+    replaced[marker] = [typename, replacer(copy(v))];
     return replaced as HintedJsonClass;
 };
 
 export type Decoder = (hinted: string) => any; // HintedJsonClass -> TypeTaggedObject
 export type Encoder = (tagged: any) => string; // TypeTaggedObject -> HintedJsonClass
 
+// TODO: deal with BigInt roundtrip
+// e. g. "zerodim", "d" and "h" in test data hold BigInt
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt#use_within_json
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON#using_json_numbers
 export let decode: Decoder = hinted => JSON.parse(hinted, (k: string, v: any): any => {
     if (!isHintedJsonClass(v)) { return v; }
     return toTagged(v, "fromMachine");
 });
 
-export let encode: Encoder = tagged => JSON.stringify(structuredClone(tagged), (k: string, v: any): any => {
+export let encode: Encoder = tagged => JSON.stringify(tagged, (k: string, v: any): any => {
     if (!isTypeTaggedObject(v)) { return v; }
     return toHinted(v, "toMachine");
 });
@@ -106,12 +121,17 @@ export let parse: Decoder = hinted => JSON.parse(hinted, (k: string, v: any): an
     return toTagged(v, "fromHuman");
 });
 
-export let fmt: Encoder = tagged => JSON.stringify(structuredClone(tagged), (k: string, v: any): any => {
+export let fmt: Encoder = tagged => JSON.stringify(tagged, (k: string, v: any): any => {
     if (!isTypeTaggedObject(v)) { return v; }
     return toHinted(v, "toHuman");
 });
 
-export let preview: Encoder = tagged => JSON.stringify(structuredClone(tagged), (k: string, v: any): any => {
+export let preview: Encoder = tagged => JSON.stringify(tagged, (k: string, v: any): any => {
+    // FIXME: make use of JSON.rawJSON(v.toString()); as soon as it becomes available
+    if (typeof v === "bigint") { return v.toString(); }
     if (!isTypeTaggedObject(v)) { return v; }
-    return toHinted(v, "forPreview");
+
+    let typename = v[marker];
+    let replacer = conv(typename, "forPreview");
+    return [typename, replacer(copy(v))] as JsonClass;
 });

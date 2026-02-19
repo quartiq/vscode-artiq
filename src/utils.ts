@@ -40,4 +40,12 @@ export let datetimelocal = (secs: number): string => {
     return `${a}-${mo}-${d}T${h}:${min}`;
 };
 
-export let range = (n: number) => [...Array(n).keys()];
+// FIXME: use Uint8Array.fromBase64() as soon it is available
+// see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array/fromBase64
+export let bytesFrom = (base64: string): Uint8Array =>
+    Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+
+// FIXME: use Uint8Array.prototype.toBase64() as soon it is available
+// see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array/toBase64
+export let base64From = (bytes: Uint8Array): string =>
+    btoa(String.fromCharCode(...bytes));

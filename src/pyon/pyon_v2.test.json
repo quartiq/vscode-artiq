@@ -97,8 +97,8 @@
                             "set",
                             [
                                 [
-                                    "testing",
-                                    "sets"
+                                    "sets",
+                                    "testing"
                                 ]
                             ]
                         ]
@@ -196,18 +196,6 @@
                             [
                                 "<u8",
                                 "CQAAAAAAAAA="
-                            ]
-                        ]
-                    }
-                ],
-                [
-                    "x",
-                    {
-                        "__jsonclass__": [
-                            "npscalar",
-                            [
-                                "<f2",
-                                "gEg="
                             ]
                         ]
                     }
