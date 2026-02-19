@@ -6,6 +6,7 @@ import { join } from "path";
 import { readFileSync } from "fs";
 import Fraction from "fraction.js";
 
+import * as dtype from "./dtype.js";
 import * as pyon from "./pyon.js";
 // TODO: test get and set
 // TODO: test toHuman and fromHuman
@@ -87,55 +88,32 @@ describe("slice", () => {
     });
 });
 
-// TODO: test for __dtype__
+let testNpScalar = (key: string, dtype: string, value: dtype.TypedArray, preview: string) => {
+    expect(tagged.get(key).__dtype__).toStrictEqual(dtype);
+    expect(tagged.get(key)).toStrictEqual(value);
+    expect(tagged.get(key).__jsonclass__).toBe("npscalar");
+    expect(pyon.preview(tagged.get(key))).toBe(`["npscalar",${preview}]`);
+    testCopy(tagged.get(key));
+};
+
 describe("npscalar", () => {
     it("should match the structure of a JS pyon npscalar", () => {
-        expect(tagged.get("a")).toStrictEqual(new Int8Array([ 9 ]));
-        expect(tagged.get("a").__jsonclass__).toBe("npscalar");
-        expect(pyon.preview(tagged.get("a"))).toBe(`["npscalar",[9]]`);
-        testCopy(tagged.get("a"));
-        expect(tagged.get("b")).toStrictEqual(new Int16Array([ -98 ]));
-        expect(tagged.get("b").__jsonclass__).toBe("npscalar");
-        expect(pyon.preview(tagged.get("b"))).toBe(`["npscalar",[-98]]`);
-        testCopy(tagged.get("b"));
-        expect(tagged.get("c")).toStrictEqual(new Int32Array([ 42 ]));
-        expect(tagged.get("c").__jsonclass__).toBe("npscalar");
-        expect(pyon.preview(tagged.get("c"))).toBe(`["npscalar",[42]]`);
-        testCopy(tagged.get("c"));
-        expect(tagged.get("d")).toStrictEqual(new BigInt64Array([ -5n ]));
-        expect(tagged.get("d").__jsonclass__).toBe("npscalar");
-        expect(pyon.preview(tagged.get("d"))).toBe(`["npscalar",["-5"]]`);
-        testCopy(tagged.get("d"));
+        testNpScalar("a", "|i1", new Int8Array([ 9 ]), `[9]`);
+        testNpScalar("b", "<i2", new Int16Array([ -98 ]), `[-98]`);
+        testNpScalar("c", "<i4", new Int32Array([ 42 ]), `[42]`);
+        testNpScalar("d", "<i8", new BigInt64Array([ -5n ]), `["-5"]`);
 
-        expect(tagged.get("e")).toStrictEqual(new Uint8Array([ 8 ]));
-        expect(tagged.get("e").__jsonclass__).toBe("npscalar");
-        expect(pyon.preview(tagged.get("e"))).toBe(`["npscalar",[8]]`);
-        testCopy(tagged.get("e"));
-        expect(tagged.get("f")).toStrictEqual(new Uint16Array([ 5 ]));
-        expect(tagged.get("f").__jsonclass__).toBe("npscalar");
-        expect(pyon.preview(tagged.get("f"))).toBe(`["npscalar",[5]]`);
-        testCopy(tagged.get("f"));
-        expect(tagged.get("g")).toStrictEqual(new Uint32Array([ 4 ]));
-        expect(tagged.get("g").__jsonclass__).toBe("npscalar");
-        expect(pyon.preview(tagged.get("g"))).toBe(`["npscalar",[4]]`);
-        testCopy(tagged.get("g"));
-        expect(tagged.get("h")).toStrictEqual(new BigUint64Array([ 9n ]));
-        expect(tagged.get("h").__jsonclass__).toBe("npscalar");
-        expect(pyon.preview(tagged.get("h"))).toBe(`["npscalar",["9"]]`);
-        testCopy(tagged.get("h"));
+        testNpScalar("e", "|u1", new Uint8Array([ 8 ]), `[8]`);
+        testNpScalar("f", "<u2", new Uint16Array([ 5 ]), `[5]`);
+        testNpScalar("g", "<u4", new Uint32Array([ 4 ]), `[4]`);
+        testNpScalar("h", "<u8", new BigUint64Array([ 9n ]), `["9"]`);
 
         // FIXME: "x" waits for vanilla Float16Array feature to drop
-        //expect(tagged.get("x")).toStrictEqual(new Float16Array([ 9.0 ]));
-        expect(tagged.get("y")).toStrictEqual(new Float32Array([ 9.0 ]));
-        expect(tagged.get("y").__jsonclass__).toBe("npscalar");
-        expect(pyon.preview(tagged.get("y"))).toBe(`["npscalar",[9]]`);
-        testCopy(tagged.get("y"));
+        //testNpScalar("x", "<f2", new Float16Array([ 9 ]), `[9]`);
+        testNpScalar("y", "<f4", new Float32Array([ 9 ]), `[9]`);
         // "z" is pyonized to regular js float
 
-        expect(tagged.get("q")).toStrictEqual(new Float64Array([ 0, 1 ]));
-        expect(tagged.get("q").__jsonclass__).toBe("npscalar");
-        expect(pyon.preview(tagged.get("q"))).toBe(`["npscalar",[0,1]]`);
-        testCopy(tagged.get("q"));
+        testNpScalar("q", "<c16", new Float64Array([ 0, 1 ]), `[0,1]`);
     });
 });
 
