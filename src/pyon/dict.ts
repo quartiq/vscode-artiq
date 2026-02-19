@@ -52,7 +52,7 @@ export let toHuman = toMachine;
 
 export let forPreview = (data: any): Entry[] => Array.from(data as Dict);
 
-export let copy = (src: any): any => {
+export let copy = (src: any): Dict => {
     let clone = new Dict();
     for (let [k, v] of (src as Dict)) { clone.set(k, v); }
     return clone;

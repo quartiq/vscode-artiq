@@ -21,6 +21,15 @@ describe("roundtrip", () => {
     });
 });
 
+let testCopy = (orig: pyon.TypeTaggedObject) => {
+    let copy = pyon.copy(orig);
+    expect(copy.__jsonclass__).toBe(undefined);
+
+    copy.__jsonclass__ = orig.__jsonclass__;
+    expect(copy).toStrictEqual(orig);
+    expect(copy).not.toBe(orig);
+};
+
 describe("set", () => {
     it("should match the structure of a JS pyon set", () => {
         expect(tagged.get("set")).toIncludeSameMembers(["testing", "sets"]);
@@ -29,6 +38,7 @@ describe("set", () => {
             `["set",["testing","sets"]]`,
             `["set",["sets","testing"]]`
         ]).toContain(pyon.preview(tagged.get("set")));
+        testCopy(tagged.get("set"));
     });
 });
 
@@ -42,6 +52,7 @@ describe("dict", () => {
         ]));
         expect(tagged.get("od").__jsonclass__).toBe("dict");
         expect(pyon.preview(tagged.get("od"))).toBe(`["dict",[[2,"a"],[1,"b"],[0,"c"]]]`);
+        testCopy(tagged.get("od"));
 
         expect(tagged.has(tupleArrayKey)).toBe(true);
     });
@@ -52,6 +63,7 @@ describe("tuple", () => {
         expect(tagged.get(tupleArrayKey)).toStrictEqual([[3, 4.2], [2]]);
         tagged.get(tupleArrayKey).forEach((tuple: any) => {
             expect(tuple.__jsonclass__).toBe("tuple");
+            testCopy(tuple);
         });
         expect(pyon.preview(tagged.get(tupleArrayKey))).toBe(`[["tuple",[3,4.2]],["tuple",[2]]]`);
     });
@@ -62,54 +74,68 @@ describe("bytes", () => {
         expect(tagged.get(true)).toStrictEqual(new Uint8Array([98, 121, 116, 101, 115]));
         expect(tagged.get(true).__jsonclass__).toBe("bytes");
         expect(pyon.preview(tagged.get(true))).toBe(`["bytes",["62","79","74","65","73"]]`);
+        testCopy(tagged.get(true));
     });
 });
 
 describe("slice", () => {
     it("should match the structure of a JS pyon slice", () => {
-        expect(tagged.get("slice")).toStrictEqual({ start: null, stop: 3, step: null, __jsonclass__: "slice" });
-        expect(pyon.preview(tagged.get("slice"))).toBe(`["slice",{"start":null,"stop":3,"step":null}]`);
+        expect(tagged.get("slice")).toStrictEqual([ null, 3, null ]);
+        expect(tagged.get("slice").__jsonclass__).toBe("slice");
+        expect(pyon.preview(tagged.get("slice"))).toBe(`["slice",[null,3,null]]`);
+        testCopy(tagged.get("slice"));
     });
 });
 
+// TODO: test for __dtype__
 describe("npscalar", () => {
     it("should match the structure of a JS pyon npscalar", () => {
         expect(tagged.get("a")).toStrictEqual(new Int8Array([ 9 ]));
         expect(tagged.get("a").__jsonclass__).toBe("npscalar");
         expect(pyon.preview(tagged.get("a"))).toBe(`["npscalar",[9]]`);
+        testCopy(tagged.get("a"));
         expect(tagged.get("b")).toStrictEqual(new Int16Array([ -98 ]));
         expect(tagged.get("b").__jsonclass__).toBe("npscalar");
         expect(pyon.preview(tagged.get("b"))).toBe(`["npscalar",[-98]]`);
+        testCopy(tagged.get("b"));
         expect(tagged.get("c")).toStrictEqual(new Int32Array([ 42 ]));
         expect(tagged.get("c").__jsonclass__).toBe("npscalar");
         expect(pyon.preview(tagged.get("c"))).toBe(`["npscalar",[42]]`);
+        testCopy(tagged.get("c"));
         expect(tagged.get("d")).toStrictEqual(new BigInt64Array([ -5n ]));
         expect(tagged.get("d").__jsonclass__).toBe("npscalar");
         expect(pyon.preview(tagged.get("d"))).toBe(`["npscalar",["-5"]]`);
+        testCopy(tagged.get("d"));
 
         expect(tagged.get("e")).toStrictEqual(new Uint8Array([ 8 ]));
         expect(tagged.get("e").__jsonclass__).toBe("npscalar");
         expect(pyon.preview(tagged.get("e"))).toBe(`["npscalar",[8]]`);
+        testCopy(tagged.get("e"));
         expect(tagged.get("f")).toStrictEqual(new Uint16Array([ 5 ]));
         expect(tagged.get("f").__jsonclass__).toBe("npscalar");
         expect(pyon.preview(tagged.get("f"))).toBe(`["npscalar",[5]]`);
+        testCopy(tagged.get("f"));
         expect(tagged.get("g")).toStrictEqual(new Uint32Array([ 4 ]));
         expect(tagged.get("g").__jsonclass__).toBe("npscalar");
         expect(pyon.preview(tagged.get("g"))).toBe(`["npscalar",[4]]`);
+        testCopy(tagged.get("g"));
         expect(tagged.get("h")).toStrictEqual(new BigUint64Array([ 9n ]));
         expect(tagged.get("h").__jsonclass__).toBe("npscalar");
         expect(pyon.preview(tagged.get("h"))).toBe(`["npscalar",["9"]]`);
+        testCopy(tagged.get("h"));
 
         // FIXME: "x" waits for vanilla Float16Array feature to drop
         //expect(tagged.get("x")).toStrictEqual(new Float16Array([ 9.0 ]));
         expect(tagged.get("y")).toStrictEqual(new Float32Array([ 9.0 ]));
         expect(tagged.get("y").__jsonclass__).toBe("npscalar");
         expect(pyon.preview(tagged.get("y"))).toBe(`["npscalar",[9]]`);
+        testCopy(tagged.get("y"));
         // "z" is pyonized to regular js float
 
         expect(tagged.get("q")).toStrictEqual(new Float64Array([ 0, 1 ]));
         expect(tagged.get("q").__jsonclass__).toBe("npscalar");
         expect(pyon.preview(tagged.get("q"))).toBe(`["npscalar",[0,1]]`);
+        testCopy(tagged.get("q"));
     });
 });
 
@@ -120,6 +146,7 @@ describe("Fraction", () => {
     it("should match the structure of a JS pyon Fraction", () => {
         expect(tagged.has(linspaceKey)).toBe(true);
         expect(pyon.preview(linspaceKey)).toBe(`["Fraction","3/4"]`);
+        testCopy(linspaceKey);
     });
 });
 
@@ -131,6 +158,7 @@ describe("nparray", () => {
         expect(tagged.get(linspaceKey)[0]).toBe(5);
         expect(tagged.get(linspaceKey).__jsonclass__).toBe("nparray");
         expect(pyon.preview(tagged.get(linspaceKey))).toBe(`["nparray",[5]]`);
+        testCopy(tagged.get(linspaceKey));
 
         expect(tagged.get("zerodim").__shape__).toStrictEqual([]);
         expect(tagged.get("zerodim").constructor).toBe(BigInt64Array);
@@ -138,18 +166,20 @@ describe("nparray", () => {
         expect(tagged.get("zerodim")[0]).toBe(0n);
         expect(tagged.get("zerodim").__jsonclass__).toBe("nparray");
         expect(pyon.preview(tagged.get("zerodim"))).toBe(`["nparray",["0"]]`);
+        testCopy(tagged.get("zerodim"));
     });
 });
 
 let complexKey = new Float64Array([0, 1]) as any;
 complexKey.__jsonclass__ = "complex";
 
-describe("nparray", () => {
-    it("should match the structure of a JS pyon nparray", () => {
+describe("complex", () => {
+    it("should match the structure of a JS pyon complex", () => {
         expect(tagged.get(complexKey).length).toBe(2);
         expect(tagged.get(complexKey)[0]).toBe(1);
         expect(tagged.get(complexKey)[1]).toBe(-9);
         expect(tagged.get(complexKey).__jsonclass__).toBe("complex");
         expect(pyon.preview(tagged.get(complexKey))).toBe(`["complex","1 - 9j"]`);
+        testCopy(tagged.get(complexKey));
     });
 });

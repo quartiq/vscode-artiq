@@ -15,5 +15,4 @@ export let forPreview = (data: any): string => {
     return `${data[0]} ${sign} ${Math.abs(data[1])}j`;
 };
 
-
-export let copy = (src: any): any => src.slice();
+export let copy = (src: any): Complex => src.slice();

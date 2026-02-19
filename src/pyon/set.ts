@@ -9,7 +9,7 @@ export let toHuman = toMachine;
 
 export let forPreview = (data: any): Set => data as Set;
 
-export let copy = (src: any): any => [ ...src ];
+export let copy = (src: any): Set => [ ...src ] as Set;
 
 export let get = (tagged: any, key: any): any => (tagged as Set)[key];
 export let set = (tagged: any, key: any, value: any) => (tagged as Set)[key] = value;

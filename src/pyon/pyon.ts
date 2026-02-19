@@ -36,6 +36,8 @@ interface ConvInterface {
     fromHuman: Reviver, toHuman: Replacer,
     forPreview: Previewer, // this is one-way, so it may be very liberal
 
+    // provides JSON replacer traverse with untagged copies of TypeTaggedObjects
+    // especially important for nested structures natively passed by reference
     copy: (tagged: TypeTaggedObject) => any,
 }
 
@@ -86,13 +88,14 @@ let toTagged = (v: HintedJsonClass, convname: ConvName): TypeTaggedObject => {
     return revived as TypeTaggedObject;
 };
 
+export let copy = (v: TypeTaggedObject): TypeTaggedObject => conv(v[marker], "copy")(v);
+
 let toHinted = (v: TypeTaggedObject, convname: ConvName): HintedJsonClass => {
     let typename = v[marker];
-    let untagged = conv(typename, "copy")(v);
     let replacer = conv(typename, convname);
 
     let replaced: Record<string, any> = {};
-    replaced[marker] = [typename, replacer(untagged)];
+    replaced[marker] = [typename, replacer(copy(v))];
     return replaced as HintedJsonClass;
 };
 
@@ -129,7 +132,6 @@ export let preview: Encoder = tagged => JSON.stringify(tagged, (k: string, v: an
     if (!isTypeTaggedObject(v)) { return v; }
 
     let typename = v[marker];
-    let untagged = conv(typename, "copy")(v);
     let replacer = conv(typename, "forPreview");
-    return [typename, replacer(untagged)] as JsonClass;
+    return [typename, replacer(copy(v))] as JsonClass;
 });

@@ -9,7 +9,7 @@ export let toHuman = toMachine;
 
 export let forPreview = (data: any): Tuple => data as Tuple;
 
-export let copy = (src: any): any => [ ...src ];
+export let copy = (src: any): Tuple => [ ...src ] as Tuple;
 
 export let get = (tagged: any, key: any): any => (tagged as Tuple)[key];
 export let set = (tagged: any, key: any, value: any) => (tagged as Tuple)[key] = value;

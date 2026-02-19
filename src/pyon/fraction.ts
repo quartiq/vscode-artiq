@@ -23,4 +23,4 @@ export let toHuman = toMachine;
 
 export let forPreview = (data: any): string => (data as Fraction).toFraction();
 
-export let copy = (src: any): any => new Fraction(src);
+export let copy = (src: any): Fraction => new Fraction(src);

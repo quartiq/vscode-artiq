@@ -19,7 +19,7 @@ export let fromMachine = ([dtypeName, base64]: any[]): NpScalar => {
 
 export let toMachine = (data: any): Params => {
     let base64 = utils.base64From(new Uint8Array((data as NpScalar).buffer));
-    return ([ (data as NpScalar).__dtype__, base64 ] as Params);
+    return [ (data as NpScalar).__dtype__, base64 ] as Params;
 };
 
 export let fromHuman = ([dtypeName, arr]: any[]): NpScalar =>
@@ -32,7 +32,7 @@ export let toHuman = (data: any): ParamsHuman => [
     [ ...data as dtype.TypedArray ],
 ] as ParamsHuman;
 
-export let forPreview = (data: any): (number | bigint)[] => [ ...(data as NpScalar) ];
+export let forPreview = (data: any): (number | bigint)[] => [ ...data as NpScalar ];
 
 export let copy = (src: any): NpScalar => {
     let dest = src.slice() as NpScalar;

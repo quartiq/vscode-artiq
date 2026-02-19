@@ -16,4 +16,4 @@ export let toHuman = toMachine;
 // see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array/toHex
 export let forPreview = (data: any): string[] => Array.from(data as Bytes).map(b => b.toString(16));
 
-export let copy = (src: any): any => [ ...src ];
+export let copy = (src: any): Bytes => src.slice();
