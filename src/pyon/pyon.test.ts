@@ -130,3 +130,16 @@ describe("nparray", () => {
         expect(pyon.preview(tagged.get("zerodim"))).toBe(`["nparray",["0"]]`);
     });
 });
+
+let complexKey = new Float64Array([0, 1]) as any;
+complexKey.__jsonclass__ = "complex";
+
+describe("nparray", () => {
+    it("should match the structure of a JS pyon nparray", () => {
+        expect(tagged.get(complexKey).length).toBe(2);
+        expect(tagged.get(complexKey)[0]).toBe(1);
+        expect(tagged.get(complexKey)[1]).toBe(-9);
+        expect(tagged.get(complexKey).__jsonclass__).toBe("complex");
+        expect(pyon.preview(tagged.get(complexKey))).toBe(`["complex","1 - 9j"]`);
+    });
+});
