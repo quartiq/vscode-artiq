@@ -7,7 +7,8 @@ import { readFileSync } from "fs";
 import Fraction from "fraction.js";
 
 import * as pyon from "./pyon.js";
-// TODO: test previews
+// TODO: test get and set
+// TODO: test toHuman and fromHuman
 
 let hinted = readFileSync(join(__dirname, "pyon_v2.test.json"), "utf8");
 let tagged = pyon.decode(hinted);
@@ -37,7 +38,7 @@ tupleArrayKey.__jsonclass__ = "tuple";
 describe("dict", () => {
     it("should match the structure of a JS pyon dict", () => {
         expect(tagged.get("od")).toStrictEqual(new Map([
-            [ 2, "a" ], [ 1, "b" ], [ 0, "c" ]
+            [2, "a"], [1, "b"], [0, "c"]
         ]));
         expect(tagged.get("od").__jsonclass__).toBe("dict");
         expect(pyon.preview(tagged.get("od"))).toBe(`["dict",[[2,"a"],[1,"b"],[0,"c"]]]`);
@@ -48,40 +49,11 @@ describe("dict", () => {
 
 describe("tuple", () => {
     it("should match the structure of a JS pyon tuple", () => {
-        expect(tagged.get(tupleArrayKey)).toStrictEqual([ [3, 4.2], [2] ]);
+        expect(tagged.get(tupleArrayKey)).toStrictEqual([[3, 4.2], [2]]);
         tagged.get(tupleArrayKey).forEach((tuple: any) => {
             expect(tuple.__jsonclass__).toBe("tuple");
         });
         expect(pyon.preview(tagged.get(tupleArrayKey))).toBe(`[["tuple",[3,4.2]],["tuple",[2]]]`);
-    });
-});
-
-let linspaceKey = new Fraction(3, 4) as any;
-linspaceKey.__jsonclass__ = "Fraction";
-
-describe("Fraction", () => {
-    it("should match the structure of a JS pyon Fraction", () => {
-        expect(tagged.has(linspaceKey)).toBe(true);
-        expect(pyon.preview(linspaceKey)).toBe(`["Fraction","3/4"]`);
-    });
-});
-
-describe("nparray", () => {
-    // TODO: test toHuman and fromHuman
-    it("should match the structure of a JS pyon nparray", () => {
-        expect(tagged.get(linspaceKey).shape).toStrictEqual([1]);
-        expect(tagged.get(linspaceKey).data.constructor).toBe(Float64Array);
-        expect(tagged.get(linspaceKey).data.length).toBe(1);
-        expect(tagged.get(linspaceKey).data[0]).toBe(5);
-        expect(tagged.get(linspaceKey).__jsonclass__).toBe("nparray");
-        expect(pyon.preview(tagged.get(linspaceKey))).toBe(`["nparray",[5]]`);
-
-        expect(tagged.get("zerodim").shape).toStrictEqual([]);
-        expect(tagged.get("zerodim").data.constructor).toBe(BigInt64Array);
-        expect(tagged.get("zerodim").data.length).toBe(1);
-        expect(tagged.get("zerodim").data[0]).toBe(0n);
-        expect(tagged.get("zerodim").__jsonclass__).toBe("nparray");
-        expect(pyon.preview(tagged.get("zerodim"))).toBe(`["nparray","0"]`);
     });
 });
 
@@ -103,20 +75,58 @@ describe("slice", () => {
 describe("npscalar", () => {
     it("should match the structure of a JS pyon npscalar", () => {
         expect(tagged.get("a")).toStrictEqual(new Int8Array([ 9 ]));
+        expect(pyon.preview(tagged.get("a"))).toBe(`["npscalar",[9]]`);
         expect(tagged.get("b")).toStrictEqual(new Int16Array([ -98 ]));
+        expect(pyon.preview(tagged.get("b"))).toBe(`["npscalar",[-98]]`);
         expect(tagged.get("c")).toStrictEqual(new Int32Array([ 42 ]));
+        expect(pyon.preview(tagged.get("c"))).toBe(`["npscalar",[42]]`);
         expect(tagged.get("d")).toStrictEqual(new BigInt64Array([ -5n ]));
+        expect(pyon.preview(tagged.get("d"))).toBe(`["npscalar",["-5"]]`);
 
         expect(tagged.get("e")).toStrictEqual(new Uint8Array([ 8 ]));
+        expect(pyon.preview(tagged.get("e"))).toBe(`["npscalar",[8]]`);
         expect(tagged.get("f")).toStrictEqual(new Uint16Array([ 5 ]));
+        expect(pyon.preview(tagged.get("f"))).toBe(`["npscalar",[5]]`);
         expect(tagged.get("g")).toStrictEqual(new Uint32Array([ 4 ]));
+        expect(pyon.preview(tagged.get("g"))).toBe(`["npscalar",[4]]`);
         expect(tagged.get("h")).toStrictEqual(new BigUint64Array([ 9n ]));
+        expect(pyon.preview(tagged.get("h"))).toBe(`["npscalar",["9"]]`);
 
         // FIXME: "x" waits for vanilla Float16Array feature to drop
         //expect(tagged.get("x")).toStrictEqual(new Float16Array([ 9.0 ]));
         expect(tagged.get("y")).toStrictEqual(new Float32Array([ 9.0 ]));
+        expect(pyon.preview(tagged.get("y"))).toBe(`["npscalar",[9]]`);
         // "z" is pyonized to regular js float
 
         expect(tagged.get("q")).toStrictEqual(new Float64Array([ 0, 1 ]));
+        expect(pyon.preview(tagged.get("q"))).toBe(`["npscalar",[0,1]]`);
+    });
+});
+
+let linspaceKey = new Fraction(3, 4) as any;
+linspaceKey.__jsonclass__ = "Fraction";
+
+describe("Fraction", () => {
+    it("should match the structure of a JS pyon Fraction", () => {
+        expect(tagged.has(linspaceKey)).toBe(true);
+        expect(pyon.preview(linspaceKey)).toBe(`["Fraction","3/4"]`);
+    });
+});
+
+describe("nparray", () => {
+    it("should match the structure of a JS pyon nparray", () => {
+        expect(tagged.get(linspaceKey).__shape__).toStrictEqual([1]);
+        expect(tagged.get(linspaceKey).constructor).toBe(Float64Array);
+        expect(tagged.get(linspaceKey).length).toBe(1);
+        expect(tagged.get(linspaceKey)[0]).toBe(5);
+        expect(tagged.get(linspaceKey).__jsonclass__).toBe("nparray");
+        expect(pyon.preview(tagged.get(linspaceKey))).toBe(`["nparray",[5]]`);
+
+        expect(tagged.get("zerodim").__shape__).toStrictEqual([]);
+        expect(tagged.get("zerodim").constructor).toBe(BigInt64Array);
+        expect(tagged.get("zerodim").length).toBe(1);
+        expect(tagged.get("zerodim")[0]).toBe(0n);
+        expect(tagged.get("zerodim").__jsonclass__).toBe("nparray");
+        expect(pyon.preview(tagged.get("zerodim"))).toBe(`["nparray",["0"]]`);
     });
 });

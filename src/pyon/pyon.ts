@@ -99,7 +99,7 @@ export type Decoder = (hinted: string) => any; // HintedJsonClass -> TypeTaggedO
 export type Encoder = (tagged: any) => string; // TypeTaggedObject -> HintedJsonClass
 
 // TODO: deal with BigInt roundtrip
-// e. g. "zerodim" in test data holds BigInt
+// e. g. "zerodim", "d" and "h" in test data hold BigInt
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt#use_within_json
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON#using_json_numbers
 export let decode: Decoder = hinted => JSON.parse(hinted, (k: string, v: any): any => {

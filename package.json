@@ -221,7 +221,6 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
-    "@types/ndarray": "^1.0.14",
     "@types/node": "20.x",
     "@types/vscode": "^1.98.0",
     "@types/ws": "^8.18.0",
@@ -235,11 +234,8 @@
     "ws": "^8.18.1"
   },
   "dependencies": {
-    "flat": "^6.0.1",
     "fraction.js": "^5.3.4",
-    "is-typed-array": "^1.1.15",
     "jest-extended": "^7.0.0",
-    "ndarray": "^1.0.19",
     "tabulator-tables": "^6.3.1",
     "vitest": "^4.0.18"
   },
