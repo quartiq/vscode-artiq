@@ -1,9 +1,12 @@
 {
     "compilerOptions": {
+        "module": "esnext",
+        "target": "esnext",
         "outDir": "out_webview",
-        "target": "ES2022",
-        "module": "ES2022",
-        "lib": ["ES6", "dom", "ES2022"],
+        "lib": [
+            "esnext",
+            "dom",
+        ],
         "moduleResolution": "node",
         "esModuleInterop": true,
         "strict": true,
