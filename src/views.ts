@@ -68,7 +68,7 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 		);
 
 		let sharedUri = this._view!.webview.asWebviewUri(
-			vscode.Uri.joinPath(this._extensionUri, "shared")
+			vscode.Uri.joinPath(this._extensionUri, "out_webview")
 		);
 
 		// TODO: make all webviews typescript based, no more html files!
