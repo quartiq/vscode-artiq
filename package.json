@@ -235,7 +235,6 @@
   },
   "dependencies": {
     "fraction.js": "^5.3.4",
-    "jest-extended": "^7.0.0",
     "tabulator-tables": "^6.3.1",
     "vitest": "^4.0.18"
   },

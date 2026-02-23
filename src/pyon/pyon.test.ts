@@ -1,6 +1,4 @@
 import { describe, it, expect } from "vitest";
-import matchers from "jest-extended";
-expect.extend(matchers);
 
 import { join } from "path";
 import { readFileSync } from "fs";
@@ -33,7 +31,7 @@ let testCopy = (orig: pyon.TypeTaggedObject) => {
 
 describe("set", () => {
     it("should match the structure of a JS pyon set", () => {
-        expect(tagged.get("set")).toIncludeSameMembers(["testing", "sets"]);
+        expect(tagged.get("set")).toStrictEqual(new Set(["testing", "sets"]));
         expect(tagged.get("set").__jsonclass__).toBe("set");
         expect([
             `["set",["testing","sets"]]`,
