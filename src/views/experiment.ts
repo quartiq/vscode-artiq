@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 
 import * as views from "../views.js";
 import * as experiment from "../experiment.js";
-import * as hostutils from "../hostutils.js";
+import * as hostutils from "../coreutils.js";
 
 export let view: views.ArtiqViewProvider;
 

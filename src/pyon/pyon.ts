@@ -68,6 +68,9 @@ import * as npscalar from "./npscalar.js";
 import * as complex from "./complex.js";
 export const types: Record<string, TypeInterface> = { set, dict, tuple, nparray, Fraction, bytes, slice, npscalar, complex };
 
+// TODO: export all mayor types?
+export { Dict } from "./dict.js";
+
 let conv = (t: string, c: ConvName): Reviver | Replacer | IdentityConv => {
     let type = types[t];
     if (!type) {

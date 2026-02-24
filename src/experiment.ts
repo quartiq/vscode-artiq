@@ -4,7 +4,7 @@ import * as path from "path";
 import * as dbio from "./dbio.js";
 import * as net from "./net.js";
 import * as argument from "./argument.js";
-import * as hostutils from "./hostutils.js";
+import * as hostutils from "./coreutils.js";
 import * as syncstruct from "./syncstruct.js";
 import * as entries from "./entries.js";
 

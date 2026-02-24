@@ -5,7 +5,9 @@ import * as net from "./net.js";
 import * as argument from "./argument.js";
 import * as experiment from "./experiment.js";
 
-type Expid = {
+export type Id = number;
+
+export type Expid = {
     log_level: number,
     file: string,
     class_name: string,
@@ -23,6 +25,10 @@ interface SubmitInfo extends experiment.SchedulerInfo {
 // see "notification" dict in artiq/master/scheduler.py:Run
 export interface SyncInfo extends Omit<SubmitInfo, "pipeline_name"> {
     pipeline: string,
+    expid: Expid,
+    priority: number,
+    due_date: number,
+    flush: boolean,
     status: string,
     repo_msg: string,
 }

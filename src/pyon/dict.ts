@@ -1,6 +1,6 @@
 import equal from "fast-deep-equal";
 
-class Dict extends Map {
+export class Dict<K = any, V = any> extends Map<K, V> {
     // like Map, but Object keys are compared by value, not by reference
     // inspired by Python dictionary
 
@@ -9,7 +9,7 @@ class Dict extends Map {
             v1.__jsonclass__ === v2.__jsonclass__;
     }
 
-    private find(key: any): any {
+    private find(key: K): K {
         if (typeof key !== "object") { return key; }
 
         for (let k of this.keys()) {
@@ -19,19 +19,19 @@ class Dict extends Map {
         return key;
     }
 
-    set(key: any, value: any): this {
+    set(key: K, value: V): this {
         return super.set(this.find(key), value);
     }
 
-    get(key: any): any | undefined {
+    get(key: K): V | undefined {
         return super.get(this.find(key));
     }
 
-    has(key: any): boolean {
+    has(key: K): boolean {
         return super.has(this.find(key));
     }
 
-    delete(key: any): boolean {
+    delete(key: K): boolean {
         return super.delete(this.find(key));
     }
 }

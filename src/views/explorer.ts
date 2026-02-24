@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 
-import * as hostutils from "../hostutils.js";
+import * as hostutils from "../coreutils.js";
 import * as net from "../net.js";
 import * as experiment from "../experiment.js";
 
