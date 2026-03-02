@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
 import * as mutex from "./mutex.js";
-import * as hostutils from "./hostutils.js";
+import * as coreutils from "./coreutils.js";
 
 export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 
@@ -67,16 +67,16 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 			vscode.Uri.joinPath(this._extensionUri, "src", "views", "main.css")
 		);
 
-		let sharedUri = this._view!.webview.asWebviewUri(
-			vscode.Uri.joinPath(this._extensionUri, "out_webview")
+		let scriptUri = this._view!.webview.asWebviewUri(
+			vscode.Uri.joinPath(this._extensionUri, "out", "webviews", this._viewType, ".js")
 		);
 
 		// TODO: make all webviews typescript based, no more html files!
-		this.html = hostutils.html(this._viewType, this._extensionUri.fsPath)
+		this.html = coreutils.html(this._viewType, this._extensionUri.fsPath)
 			.replaceAll("{TABULATOR_SCRIPT_URI}", tabulatorScriptUri.toString())
 			.replaceAll("{TABULATOR_STYLES_URI}", tabulatorStylesUri.toString())
 			.replaceAll("{CUSTOM_STYLES_URI}", customStylesUri.toString())
-			.replaceAll("{SHARED_URI}", sharedUri.toString());
+			.replaceAll("{SCRIPT_URI}", scriptUri.toString());
 
 		this._view!.webview.html = this.html;
 	}

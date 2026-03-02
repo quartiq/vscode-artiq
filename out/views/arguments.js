@@ -1,0 +1,23 @@
+import * as views from "../views.js";
+import * as experiment from "../experiment.js";
+import * as run from "../run.js";
+export let view;
+export let init = async (context) => {
+    view = new views.ArtiqViewProvider("arguments", context.extensionUri, {
+        submit: run.submitCurr,
+        change: async (data) => {
+            let exp = await experiment.curr();
+            if (!exp) {
+                return;
+            }
+            exp.arginfo[data.name] = data.arg;
+            experiment.updateDb(exp);
+        },
+    });
+    view.init();
+};
+export let update = async () => {
+    let exp = await experiment.curr();
+    view.post({ action: "update", data: exp?.arginfo });
+};
+//# sourceMappingURL=arguments.js.map

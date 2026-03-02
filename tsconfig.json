@@ -2,7 +2,7 @@
     "compilerOptions": {
         "module": "nodenext",
         "target": "esnext",
-        "outDir": "out_core",
+        "outDir": "out",
         "lib": [
             "esnext",
             "dom",
@@ -15,12 +15,13 @@
         // "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
         // "noUnusedParameters": true,  /* Report errors on unused parameters. */
         "allowJs": true,
+        "skipLibCheck": true
     },
     "include": ["src/**/*.ts"],
     "exclude": [
         "eslint.config.mjs",
-        "out_core",
-        "out_webview",
+        "webviews",
+        "out",
         "test"
     ]
 }

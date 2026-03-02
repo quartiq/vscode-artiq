@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Log</title>
@@ -7,28 +8,9 @@
 
     <link href="{TABULATOR_STYLES_URI}" rel="stylesheet">
     <link href="{CUSTOM_STYLES_URI}" rel="stylesheet">
-    <script type="text/javascript" src="{TABULATOR_SCRIPT_URI}"></script>
 </head>
 <body>
     <div class="table"></div>
-
-    <script>
-        let table = new Tabulator(".table", {
-            layout:"fitDataFill",
-            columns: [
-                {title: "Level", field: "level"},
-                {title: "Source", field: "source"},
-                {title: "Time", field: "time"},
-                {title: "Message", field: "message"},
-            ],
-        });
-
-        window.addEventListener("message", ev => {
-            ev.data.forEach(row => {
-                let data = {level: row[0], source: row[1], time: row[2], message: row[3]};
-                table.addRow(data, true);
-            });
-        });
-    </script>
+    <script type="module" src="${SCRIPT_URI}"></script>
 </body>
 </html>
