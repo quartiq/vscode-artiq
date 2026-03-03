@@ -5,11 +5,11 @@
         "outDir": "out_webview",
         "lib": [
             "esnext",
-            "dom",
+            "dom"
         ],
         "moduleResolution": "node",
         "esModuleInterop": true,
-        "strict": true,
+        "strict": true
     },
-    "include": ["src/entries.ts"],
+    "include": ["src/entries.ts", "src/utils.ts", "src/pyon"]
 }

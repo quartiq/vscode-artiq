@@ -1,0 +1,66 @@
+@startuml
+note over artiq_master : pyon v2 JSON
+/ note over "vscode-artiq" : JS Object
+/ note over "UI input"
+human-readable
+inline string
+end note
+
+hnote over artiq_master
+""{""
+""  "&#95;&#95;jsonclass&#95;&#95;": &#91;""
+""    "tuple", ""
+""    &#91;""
+""      &#91;42, "foo", true&#93;""
+""    &#93;""
+""  &#93;""
+""}""
+end hnote
+
+artiq_master -> "vscode-artiq" : revive
+
+hnote over "vscode-artiq"
+""Array(3) &#91; 42, "foo", true &#93;""
+""  0: 42""
+""  1: "foo"""
+""  2: true""
+""  &#95;&#95;jsonclass&#95;&#95;: "tuple"""
+""  length: 3""
+end hnote
+
+"vscode-artiq" -> "UI input" : fmt
+
+hnote over "UI input"
+""pyon.tuple([42,"foo",true])""
+end hnote
+
+... User types and submits ...
+
+hnote over "UI input"
+""pyon.tuple([42,"foo",false])""
+end hnote
+
+"UI input" -> "vscode-artiq" : parse
+
+hnote over "vscode-artiq"
+""Array(3) &#91; 42, "foo", false &#93;""
+""  0: 42""
+""  1: "foo"""
+""  2: true""
+""  &#95;&#95;jsonclass&#95;&#95;: "tuple"""
+""  length: 3""
+end hnote
+
+"vscode-artiq" -> artiq_master : replace
+
+hnote over artiq_master
+""{""
+""  "&#95;&#95;jsonclass&#95;&#95;": &#91;""
+""    "tuple", ""
+""    &#91;""
+""      &#91;42, "foo", false&#93;""
+""    &#93;""
+""  &#93;""
+""}""
+end hnote
+@enduml

@@ -2,7 +2,7 @@ import * as argument from "./argument.js";
 
 export type Info<P extends argument.Procdesc> = {
     arg: argument.Argument<P>,
-    parse: (el: HTMLElement) => any,
+    parse?: (el: HTMLElement) => any,
     // type refers to: acquireVsCodeApi().postMessage
     // TODO: make "acquireVsCodeApi()" accessable in webview ts
     post: (message: any) => void,
@@ -18,7 +18,7 @@ export type Editor<P extends argument.Procdesc> = (info: Info<P>) => HTMLElement
 export let buttons: Editor<argument.Enum> = info => {
     let el = document.createElement("div");
 
-    info.arg[0].choices.forEach((c: string) => {
+    (info.arg[0] as argument.Enum).choices.forEach((c: string) => {
         let cel = document.createElement("input");
         cel.setAttribute("type", "button");
         cel.setAttribute("value", c);
@@ -38,7 +38,7 @@ export let buttons: Editor<argument.Enum> = info => {
 export let select: Editor<argument.Enum> = info => {
     let el = document.createElement("select");
 
-    info.arg[0].choices.forEach((c: string) => {
+    (info.arg[0] as argument.Enum).choices.forEach((c: string) => {
         let cel = document.createElement("option");
         cel.textContent = c;
         cel.setAttribute("value", c);
@@ -58,9 +58,9 @@ export let input: Editor<argument.Procdesc> = info => {
     el.value = info.cell.getValue();
 
     info.onRendered(() => el.focus());
-    el.addEventListener("blur", () => info.success(info.parse(el)));
+    el.addEventListener("blur", () => info.success(info.parse!(el)));
     el.addEventListener("keydown", ev => {
-        if (ev.key === "Enter") { info.success(info.parse(el)); }
+        if (ev.key === "Enter") { info.success(info.parse!(el)); }
         if (ev.key === "Escape") { info.cancel(); }
     });
 
