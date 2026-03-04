@@ -181,7 +181,7 @@ let initSaveButton = (el: HTMLElement, info: editors.Info<argument.Scannable>) =
 
 let initDiscardButton = (el: HTMLElement, info: editors.Info<argument.Scannable>) => {
     el.querySelector(".button.discard")!.addEventListener("click", () => {
-        info.cancel();
+        info.cancel(info.arg[3]);
         el.remove();
         document.body.classList.remove("noscroll");
     });

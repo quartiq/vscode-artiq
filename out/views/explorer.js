@@ -1,0 +1,93 @@
+import * as vscode from "vscode";
+import * as path from "path";
+import * as hostutils from "../coreutils.js";
+import * as net from "../net.js";
+import * as experiment from "../experiment.js";
+let provider;
+export let view;
+export let open = async (filename, classname) => {
+    let p = path.posix.join(await experiment.repoRoot, filename);
+    let uri = vscode.Uri.parse(p);
+    try {
+        await vscode.workspace.fs.stat(uri);
+    }
+    catch {
+        vscode.window.showErrorMessage("No such file, consider rescanning ARTIQ repository");
+        return;
+    }
+    let symbols = await hostutils.symbols(uri);
+    let location = symbols.find(s => s.name === classname)?.location;
+    if (!location) {
+        vscode.window.showErrorMessage("No such class, consider rescanning ARTIQ repository");
+        return;
+    }
+    let selection = new vscode.Selection(location.range.start, location.range.start);
+    vscode.commands.executeCommand("vscode.open", location.uri, { selection });
+};
+class ExperimentTreeItem extends vscode.TreeItem {
+    constructor(name) {
+        super(name);
+        let exp = experiment.repo.data[name];
+        this.tooltip = `${exp.file}:${exp.class_name}`;
+        let color = new vscode.ThemeColor("symbolIcon.classForeground");
+        this.iconPath = new vscode.ThemeIcon("package", color);
+        this.command = {
+            // TODO: fix editor tab on double click
+            command: "artiq.openExperiment",
+            title: "",
+            arguments: [exp.file, exp.class_name],
+        };
+    }
+}
+class ExplorerProvider {
+    _onDidChangeTreeData = new vscode.EventEmitter();
+    onDidChangeTreeData = this._onDidChangeTreeData.event;
+    refresh() {
+        this._onDidChangeTreeData.fire(undefined);
+        vscode.window.showInformationMessage("Updated Explorer");
+    }
+    constructor() { }
+    getTreeItem(name) {
+        return new ExperimentTreeItem(name);
+    }
+    getParent() { } // no-op; must be implemented to access TreeView.reveal()
+    async getChildren(name) {
+        if (name) {
+            return Promise.resolve([]);
+        }
+        if (Object.keys(experiment.repo.data).length === 0) {
+            view.message = "Populate the repository directory with experiment files ...";
+            return Promise.resolve([]);
+        }
+        view.message = "";
+        return Object.keys(experiment.repo.data);
+    }
+}
+export let init = async () => {
+    provider = new ExplorerProvider();
+    view = vscode.window.createTreeView("explorer", {
+        treeDataProvider: provider,
+    });
+    if (vscode.workspace.getConfiguration("artiq").get("initialScan")) {
+        await scan();
+    }
+};
+export let scan = async () => {
+    vscode.window.showInformationMessage("Scanning repository directory ...");
+    await net.rpc("experiment_db", "scan_repository", []);
+};
+let deselectAll = (names) => {
+    // TODO: waiting for feature to ship
+    // see https://github.com/microsoft/vscode/issues/48754
+};
+export let update = async () => {
+    provider.refresh();
+    let names = Object.keys(experiment.repo.data);
+    let curr = await experiment.curr();
+    if (!curr) {
+        deselectAll(names);
+        return;
+    }
+    experiment.inRepo(curr) ? view.reveal(curr.name) : deselectAll(names);
+};
+//# sourceMappingURL=explorer.js.map
