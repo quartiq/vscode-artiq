@@ -4,14 +4,14 @@ import * as path from "path";
 import * as dbio from "./dbio.js";
 import * as net from "./net.js";
 import * as argument from "./argument.js";
-import * as hostutils from "./hostutils.js";
+import * as hostutils from "./coreutils.js";
 import * as syncstruct from "./syncstruct.js";
 import * as entries from "./entries.js";
 
 type Name = string
 type ClassName = string
 
-export interface SchedulerInfo {
+export type SchedulerInfo = {
 	pipeline_name: string,
 	priority: number,
 	due_date: number | null,
@@ -26,15 +26,17 @@ let scheduler_defaults: SchedulerInfo = {
     flush: false,
 };
 
-export interface DbInfo extends SchedulerInfo {
+export type LogLevel = {
+    log_level: string, // see utils.logging()
+};
+
+export type DbInfo = SchedulerInfo & LogLevel & {
     // path and class_name are the primary key of any experiment
 	path: string, // full absolute filepath, derived by client
 	class_name: string,
 
     name: string, // unique name derived from class_name by server
 	arginfo: argument.SyncInfo<argument.Procdesc>,
-
-	log_level: string, // see utils.logging()
 };
 
 type SyncInfo = {
@@ -48,8 +50,8 @@ type SyncInfo = {
 
 type SyncDict = Record<Name, SyncInfo>
 
-type Struct = { data: SyncDict };
-export let repo: Struct = { data: {} };
+type Store = syncstruct.StructStore & { data: SyncDict };
+export let repo: Store = { data: {} };
 
 export let repoRoot: Promise<string> = new Promise(resolve => {
 	net.rpc("experiment_db", "root", []).then((data: any) => resolve(data.ret));
@@ -64,11 +66,11 @@ let initArgstates: (arginfo: argument.SyncInfo<argument.Procdesc>) => argument.S
 
 repo = await syncstruct.from({
     channel: "explist",
-    onReceive: async (struct: Struct) => {
+    onReceive: async (struct: syncstruct.StructStore) => {
         let basepath = await repoRoot;
         // update "softly" to provide what is new
         // yet to sustain what was known and customized
-        createAllDb(Object.entries(struct.data).map(([name, syncinfo]) => ({
+        createAllDb(Object.entries(struct.data).map(([name, syncinfo]: [string, SyncInfo]) => ({
             ...scheduler_defaults, ...syncinfo.scheduler_defaults,
 
             path: path.posix.join(basepath, syncinfo.file),

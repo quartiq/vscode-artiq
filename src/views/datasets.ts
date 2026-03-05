@@ -15,8 +15,8 @@ export let view: vscode.TreeView<string>;
 type Keypath = string;
 type Metadata = { unit: string, scale: number, precision: number };
 type Dataset = [ persist: boolean, value: any, metadata: Metadata ];
-type Struct = { data: Record<Keypath, Dataset> };
-let sets: Struct = { data: {} };
+type Store = syncstruct.StructStore & { data: Record<Keypath, Dataset> };
+let sets: Store = { data: {} };
 
 type InputProperty = { path: any[], desc: string, test: (s: string) => boolean, parse: (s: string) => any };
 let inputProps: Record<string, InputProperty> = {
@@ -181,7 +181,7 @@ export let init = async () => {
 
     sets = await syncstruct.from({
         channel: "datasets",
-        onReceive: (struct: Struct, mod: syncstruct.Mod) => {
+        onReceive: (struct: Store, mod: syncstruct.Mod) => {
             if (mod.action === "init") { return; }
 
             let keypath = mod.path[0] ?? mod.key;

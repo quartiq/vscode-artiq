@@ -1,0 +1,1 @@
+{"version":3,"file":"mutex.js","sourceRoot":"","sources":["../src/mutex.ts"],"names":[],"mappings":"AASA,MAAM,CAAC,IAAI,IAAI,GAAG,GAAS,EAAE;IACzB,IAAI,MAAgB,CAAC;IACrB,OAAO;QACH,MAAM,EAAE,IAAI,OAAO,CAAC,CAAC,CAAC,EAAE,CAAC,MAAM,GAAG,CAAC,CAAC;QACpC,MAAM,EAAE,MAAO;KAClB,CAAC;AACN,CAAC,CAAC"}

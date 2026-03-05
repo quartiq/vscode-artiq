@@ -1,3 +1,16 @@
+- refactor editors!
+- make it work for codium AND vscode
+- merge coreutils and utils
+- connect to server on server start
+- Race condition lässt Experiment und Argument view manchmal leer
+- schedule zeigt manchmal beim neustart nix an
+- due date aktualisiert immer beim schreiben
+- precision und scale gelten auch für np arrays
+- elaborate any appearance of "any" if possible
+
+- Qiskit support
+- Imaging support
+
 - Widgets
 
 - create pyon lib with Odoo's `py_js` in mind

@@ -53,7 +53,7 @@ let DatetimeEntry: Entry<argument.Unixtime> = {
 
         let el = editors.input({ ...info, parse }) as HTMLInputElement;
         el.setAttribute("type", "datetime-local");
-        el.value = utils.datetimelocal(info.cell.getValue());
+        el.value = utils.datetimelocal(info.arg[3]);
         return el;
     },
 
@@ -67,7 +67,7 @@ let BooleanEntry: Entry<argument.Boolean> = {
         let parse = (el: HTMLElement): boolean => (el as HTMLInputElement).checked;
         let el = editors.input({ ...info, parse }) as HTMLInputElement;
         el.setAttribute("type", "checkbox");
-        el.checked = info.cell.getValue();
+        el.checked = info.arg[3];
         return el;
     },
 
