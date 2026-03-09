@@ -15,8 +15,8 @@ export let view: vscode.TreeView<string>;
 type Keypath = string;
 type Metadata = { unit: string, scale: number, precision: number };
 type Dataset = [ persist: boolean, value: any, metadata: Metadata ];
-type Struct = { data: Record<Keypath, Dataset> };
-let sets: Struct = { data: {} };
+type Store = syncstruct.Store & { struct: Record<Keypath, Dataset> };
+let sets: Store = { struct: {} };
 
 type InputProperty = { path: any[], desc: string, test: (s: string) => boolean, parse: (s: string) => any };
 let inputProps: Record<string, InputProperty> = {
@@ -40,12 +40,12 @@ let findChildren = (keypaths: string[], prefix: string[], depth?: number): strin
     .filter(keys => startsWith(keys, prefix))
     .filter(keys => keys.length >= prefix.length + (depth ?? 0));
 
-let isNode = (keypath: string): boolean => findChildren(Object.keys(sets.data), keypath.split(".")).length > 0;
+let isNode = (keypath: string): boolean => findChildren(Object.keys(sets.struct), keypath.split(".")).length > 0;
 
 let closestParent = (keypath: string | undefined): string | undefined => {
-    if (!keypath || Object.keys(sets.data).length === 0) { return undefined; }
+    if (!keypath || Object.keys(sets.struct).length === 0) { return undefined; }
 
-    let ancestors = Object.keys(sets.data).filter(path => path !== keypath); // exclude self
+    let ancestors = Object.keys(sets.struct).filter(path => path !== keypath); // exclude self
     let target = keypath.split(".");
 
     while (true) {
@@ -95,7 +95,7 @@ class DatasetTreeItem extends vscode.TreeItem {
     ) {
         super(name(keypath));
 
-        let set = sets.data[keypath];
+        let set = sets.struct[keypath];
         if (set) {
             this.description = String(fmt(set, pyon.preview));
             this.contextValue = "dataset";
@@ -116,7 +116,7 @@ class DatasetTreeItem extends vscode.TreeItem {
         // only metadata nodes (= leafs) left at this point
         let propname;
         [keypath, propname] = utils.splitOnLast(keypath, ".");
-        this.description = String(utils.getByPath(sets.data[keypath], inputProps[propname!].path));
+        this.description = String(utils.getByPath(sets.struct[keypath], inputProps[propname!].path));
         let color = new vscode.ThemeColor("symbolIcon.variableForeground");
         this.iconPath = new vscode.ThemeIcon("edit", color);
         this.command = {
@@ -149,12 +149,12 @@ class DatasetsProvider implements vscode.TreeDataProvider<string> {
 
     async getChildren(keypath?: string): Promise<string[]> {
         let parentKeys = keypath ? keypath.split(".") : [];
-        let dups = findChildren(Object.keys(sets.data), parentKeys, 1)
+        let dups = findChildren(Object.keys(sets.struct), parentKeys, 1)
             .map(keys => keys.slice(0, parentKeys.length + 1).join("."))
             .sort((a, b) => name(a).localeCompare(name(b)));
 
         let leafs: string[] = [];
-        if (keypath && keypath in sets.data) {
+        if (keypath && keypath in sets.struct) {
             leafs = Object.keys(inputProps)
                 .filter(name => name !== "Value")
                 .map(name => [keypath, name].join("."));
@@ -174,14 +174,14 @@ export let init = async () => {
 
     view.onDidChangeCheckboxState(ev => ev.items.forEach(item => {
         let [keypath, checked] = item;
-        let set = sets.data[keypath];
+        let set = sets.struct[keypath];
         set[0] = Boolean(checked);
         submit(keypath, set);
     }));
 
     sets = await syncstruct.from({
         channel: "datasets",
-        onReceive: (struct: Struct, mod: syncstruct.Mod) => {
+        onReceive: (store: syncstruct.Store, mod: syncstruct.Mod) => {
             if (mod.action === "init") { return; }
 
             let keypath = mod.path[0] ?? mod.key;
@@ -201,7 +201,7 @@ export let create = async () => {
 export let move = async (keypath: string) => {
     let newPath = await vscode.window.showInputBox({ prompt: "New path:", value: keypath });
     if (newPath && newPath !== keypath) {
-        let set = sets.data[keypath];
+        let set = sets.struct[keypath];
         net.rpc("dataset_db", "delete", [keypath]);
         submit(newPath, set);
     }
@@ -221,7 +221,7 @@ export let del = async (keypath: string) => {
 
 // see: m-labs/artiq/dashboard/datasets:CreateEditDialog.accept
 export let edit = async (keypath: string, propname: string) => {
-    let set = structuredClone(sets.data[keypath]);
+    let set = structuredClone(sets.struct[keypath]);
     set[1] = applyScale(set[1], set[2], true);
 
     let prop = inputProps[propname];

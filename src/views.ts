@@ -1,18 +1,20 @@
 import * as vscode from "vscode";
+import * as fs from "fs";
+import * as path from "path";
 
 import * as mutex from "./mutex.js";
-import * as hostutils from "./hostutils.js";
+import * as coreutils from "./coreutils.js";
 
 export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 
-	private _view?: vscode.WebviewView;
+	private view?: vscode.WebviewView;
 	private ready: mutex.Lock;
 	private html: string;
 
 	constructor(
-		private readonly _viewType: string,
-		private readonly _extensionUri: vscode.Uri,
-		private readonly _actions?: Record<string, ((data: any) => void)>,
+		private readonly viewType: string,
+		private readonly context: vscode.ExtensionContext,
+		private readonly actions?: Record<string, ((data: any) => void)>,
 	) {
 		this.ready = mutex.lock();
 		this.html = "";
@@ -23,24 +25,22 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 		_context: vscode.WebviewViewResolveContext,
 		_token: vscode.CancellationToken,
 	) {
-		this._view = webviewView;
+		this.view = webviewView;
 		this.ready.unlock();
 
 		webviewView.webview.options = {
-			// Allow scripts in the webview
-			enableScripts: true,
-
+			enableScripts: true, // allow scripts in webviews
 			localResourceRoots: [
-				this._extensionUri
-			]
+				vscode.Uri.file(this.context.extensionPath),
+			],
 		};
 
-		webviewView.webview.onDidReceiveMessage(msg => this._actions?.[msg.action](msg.data));
+		webviewView.webview.onDidReceiveMessage(msg => this.actions?.[msg.action](msg.data));
 	}
 
 	public register(): vscode.Disposable {
-		return vscode.window.registerWebviewViewProvider(this._viewType, this, {
-			// keep the webview alive, even if it is not visible
+		return vscode.window.registerWebviewViewProvider(this.viewType, this, {
+			// keep webviews alive, even if it is not visible
 			webviewOptions: { retainContextWhenHidden: true },
 		});
 	}
@@ -49,41 +49,44 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 		await this.ready.locked;
 
 		this.html = text;
-		this._view!.webview.html = this.html;
+		this.view!.webview.html = this.html;
 	}
 
 	public async init() {
 		await this.ready.locked;
 
-		let tabulatorScriptUri = this._view!.webview.asWebviewUri(
-			vscode.Uri.joinPath(this._extensionUri, "node_modules", "tabulator-tables", "dist", "js", "tabulator.min.js")
+		let tabulatorScriptUri = this.view!.webview.asWebviewUri(
+			vscode.Uri.joinPath(this.context.extensionUri, "node_modules", "tabulator-tables", "dist", "js", "tabulator.min.js")
 		);
 
-		let tabulatorStylesUri = this._view!.webview.asWebviewUri(
-			vscode.Uri.joinPath(this._extensionUri, "node_modules", "tabulator-tables", "dist", "css", "tabulator.min.css")
+		let tabulatorStylesUri = this.view!.webview.asWebviewUri(
+			vscode.Uri.joinPath(this.context.extensionUri, "node_modules", "tabulator-tables", "dist", "css", "tabulator.min.css")
 		);
 
-		let customStylesUri = this._view!.webview.asWebviewUri(
-			vscode.Uri.joinPath(this._extensionUri, "src", "views", "main.css")
+		let customStylesUri = this.view!.webview.asWebviewUri(
+			vscode.Uri.joinPath(this.context.extensionUri, "src", "views", "main.css")
 		);
 
-		let sharedUri = this._view!.webview.asWebviewUri(
-			vscode.Uri.joinPath(this._extensionUri, "out_webview")
+		let scriptUri = this.view!.webview.asWebviewUri(
+			// FIXME: need to do it like this, because Codium may get the URI scheme wrong otherwise
+			vscode.Uri.file(
+				path.join(this.context.extensionPath, "out", "webviews", `${this.viewType}.js`)
+			)
 		);
 
 		// TODO: make all webviews typescript based, no more html files!
-		this.html = hostutils.html(this._viewType, this._extensionUri.fsPath)
+		this.html = coreutils.html(this.viewType, this.context.extensionUri.fsPath)
 			.replaceAll("{TABULATOR_SCRIPT_URI}", tabulatorScriptUri.toString())
 			.replaceAll("{TABULATOR_STYLES_URI}", tabulatorStylesUri.toString())
 			.replaceAll("{CUSTOM_STYLES_URI}", customStylesUri.toString())
-			.replaceAll("{SHARED_URI}", sharedUri.toString());
+			.replaceAll("{SCRIPT_URI}", scriptUri.toString());
 
-		this._view!.webview.html = this.html;
+		this.view!.webview.html = this.html;
 	}
 
 	public async post(msg: any) {
 		await this.ready.locked;
 
-		this._view!.webview.postMessage(msg);
+		this.view!.webview.postMessage(msg);
 	}
 }

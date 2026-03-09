@@ -4,14 +4,14 @@ import * as path from "path";
 import * as dbio from "./dbio.js";
 import * as net from "./net.js";
 import * as argument from "./argument.js";
-import * as hostutils from "./hostutils.js";
+import * as coreutils from "./coreutils.js";
 import * as syncstruct from "./syncstruct.js";
 import * as entries from "./entries.js";
 
 type Name = string
 type ClassName = string
 
-export interface SchedulerInfo {
+export type SchedulerInfo = {
 	pipeline_name: string,
 	priority: number,
 	due_date: number | null,
@@ -26,15 +26,17 @@ let scheduler_defaults: SchedulerInfo = {
     flush: false,
 };
 
-export interface DbInfo extends SchedulerInfo {
+export type LogLevel = {
+    log_level: string, // see utils.logging()
+};
+
+export type DbInfo = SchedulerInfo & LogLevel & {
     // path and class_name are the primary key of any experiment
 	path: string, // full absolute filepath, derived by client
 	class_name: string,
 
     name: string, // unique name derived from class_name by server
 	arginfo: argument.SyncInfo<argument.Procdesc>,
-
-	log_level: string, // see utils.logging()
 };
 
 type SyncInfo = {
@@ -48,8 +50,8 @@ type SyncInfo = {
 
 type SyncDict = Record<Name, SyncInfo>
 
-type Struct = { data: SyncDict };
-export let repo: Struct = { data: {} };
+type Store = syncstruct.Store & { struct: SyncDict };
+export let repo: Store = { struct: {} };
 
 export let repoRoot: Promise<string> = new Promise(resolve => {
 	net.rpc("experiment_db", "root", []).then((data: any) => resolve(data.ret));
@@ -62,13 +64,13 @@ let initArgstates: (arginfo: argument.SyncInfo<argument.Procdesc>) => argument.S
         return [name, arg];
     }));
 
-repo = await syncstruct.from({
+repo = await syncstruct.from<SyncDict>({
     channel: "explist",
-    onReceive: async (struct: Struct) => {
+    onReceive: async (store: syncstruct.Store) => {
         let basepath = await repoRoot;
         // update "softly" to provide what is new
         // yet to sustain what was known and customized
-        createAllDb(Object.entries(struct.data).map(([name, syncinfo]) => ({
+        createAllDb(Object.entries(store.struct as SyncDict).map(([name, syncinfo]: [string, SyncInfo]) => ({
             ...scheduler_defaults, ...syncinfo.scheduler_defaults,
 
             path: path.posix.join(basepath, syncinfo.file),
@@ -82,7 +84,7 @@ repo = await syncstruct.from({
     },
 });
 
-export let inRepo: (exp: DbInfo) => Boolean = exp => exp.name in repo.data;
+export let inRepo: (exp: DbInfo) => Boolean = exp => exp.name in repo.struct;
 
 type ExamineInfo = {
     name: Name,
@@ -120,7 +122,7 @@ export let examineFile: () => Promise<void> = async () => {
 
 export let curr = async (): Promise<DbInfo | undefined> => {
 	if (!vscode.window.activeTextEditor) { return undefined; }
-    let className = await hostutils.selectedClass();
+    let className = await coreutils.selectedClass();
     if (className === "") { return undefined; }
 
 	return dbio.get(

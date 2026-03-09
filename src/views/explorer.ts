@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 
-import * as hostutils from "../hostutils.js";
+import * as coreutils from "../coreutils.js";
 import * as net from "../net.js";
 import * as experiment from "../experiment.js";
 
@@ -16,7 +16,7 @@ export let open = async (filename: string, classname: string) => {
 		return;
 	}
 
-	let symbols = await hostutils.symbols(uri);
+	let symbols = await coreutils.symbols(uri);
 	let location = symbols.find(s => s.name === classname)?.location;
 	if (!location) {
 		vscode.window.showErrorMessage("No such class, consider rescanning ARTIQ repository");
@@ -32,7 +32,7 @@ class ExperimentTreeItem extends vscode.TreeItem {
 		name: string,
 	) {
 		super(name);
-		let exp = experiment.repo.data[name];
+		let exp = experiment.repo.struct[name];
 
 		this.tooltip = `${exp.file}:${exp.class_name}`;
 		let color = new vscode.ThemeColor("symbolIcon.classForeground");
@@ -65,13 +65,13 @@ class ExplorerProvider implements vscode.TreeDataProvider<string> {
 	async getChildren(name?: string): Promise<string[]> {
 		if (name) { return Promise.resolve([]); }
 
-		if (Object.keys(experiment.repo.data).length === 0) {
+		if (Object.keys(experiment.repo.struct).length === 0) {
 			view.message = "Populate the repository directory with experiment files ...";
 			return Promise.resolve([]);
 		}
 
 		view.message = "";
-		return Object.keys(experiment.repo.data);
+		return Object.keys(experiment.repo.struct);
 	}
 }
 
@@ -99,7 +99,7 @@ let deselectAll = (names: string[]) => {
 export let update = async () => {
 	provider.refresh();
 
-	let names = Object.keys(experiment.repo.data);
+	let names = Object.keys(experiment.repo.struct);
 	let curr = await experiment.curr();
 	if (!curr) {
 		deselectAll(names);

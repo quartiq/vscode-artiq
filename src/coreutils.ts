@@ -3,6 +3,8 @@
 // May not be necessary any longer, as soon the whole codebase becomes typescript anyway
 // Not sure though
 
+// FIXME: drop this; dissolve in utils.ts and others
+
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";

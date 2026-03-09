@@ -36,7 +36,7 @@
     "control system"
   ],
   "activationEvents": [],
-  "main": "./out_core/extension.js",
+  "main": "./out/extension.js",
   "contributes": {
     "configuration": {
       "properties": {
@@ -213,8 +213,13 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p tsconfig.core.json && tsc -p tsconfig.webview.json",
-    "watch": "concurrently \"tsc -p tsconfig.core.json -w\" \"tsc -p tsconfig.webview.json -w\"",
+
+    "compile": "tsc && npm run compile:webviews",
+    "compile:webviews": "esbuild src/webviews/*.ts --bundle --outdir=out/webviews --format=esm --external:vscode",
+
+    "watch": "concurrently \"tsc --watch\" \"npm run watch:webviews\"",
+    "watch:webviews": "esbuild src/webviews/*.ts --bundle --outdir=out/webviews --format=esm --external:vscode --watch",
+
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test"
@@ -222,6 +227,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
+    "@types/tabulator-tables": "^6.3.1",
     "@types/vscode": "^1.98.0",
     "@types/ws": "^8.18.0",
     "@typescript-eslint/eslint-plugin": "^8.25.0",
@@ -229,6 +235,7 @@
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
     "concurrently": "^9.2.1",
+    "esbuild": "^0.27.3",
     "eslint": "^9.21.0",
     "typescript": "^5.9.3",
     "ws": "^8.18.1"

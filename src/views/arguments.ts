@@ -8,9 +8,9 @@ import * as run from "../run.js";
 export let view: views.ArtiqViewProvider;
 
 export let init = async (context: vscode.ExtensionContext) => {
-    view = new views.ArtiqViewProvider("arguments", context.extensionUri, {
+    view = new views.ArtiqViewProvider("arguments", context, {
         submit: run.submitCurr,
-        change: async (data: {name: string, arg: argument.Argument<argument.Procdesc>}) => {
+        change: async (data: argument.RowInfo<argument.Procdesc>) => {
             let exp = await experiment.curr();
             if (!exp) { return; }
 
@@ -23,5 +23,9 @@ export let init = async (context: vscode.ExtensionContext) => {
 
 export let update = async () => {
     let exp = await experiment.curr();
-    view.post( {action: "update", data: {arginfo: exp?.arginfo}} );
+    exp && view.post({
+        action: "update",
+        data: Object.entries(exp.arginfo)
+            .map(([name, arg]) => ({ name, arg, state: arg[3] })) as argument.RowInfo<argument.Procdesc>[],
+    });
 };
