@@ -7,7 +7,11 @@ import * as pyonutils from "./pyon/utils.js";
 
 type Struct = Record<string, any> | pyon.Dict;
 export type Store = { struct: Struct | undefined }; // we need to operate on object property singleton to utilize the mutable object pattern
-export type Mod = { action: string, struct: Struct, path: any[], key: any, value: any };
+
+type InitMod = { action: "init", struct: Struct };
+type SetitemMod = { action: "setitem", path: any[], key: any, value: any };
+type DelitemMod = { action: "delitem", path: any[], key: any };
+export type Mod = InitMod | SetitemMod | DelitemMod;
 type Action = (target: Store, mod: Mod, initDone: mutex.Lock) => void;
 
 // see: m-labs/artiq/frontend/artiq_master:_show_dict
@@ -19,17 +23,29 @@ let traverse = (tree: any, path: any[]): any => path.reduce((node, key) => {
 }, tree);
 
 let init = (store: Store, mod: Mod, lock: mutex.Lock) => {
+    mod = mod as InitMod;
+
     store.struct = mod.struct;
+    if (mod.struct.constructor.name === "Object" && Object.keys(mod.struct).length === 0) {
+        // FIXME: empty dicts are sent as {}, so we auto-upgrade all of these to dicts for now
+        // my occur with setitem's value property as well, but was never observed yet
+        store.struct = pyonutils.create("dict", [[]]);
+    }
+
     lock.unlock();
 };
 
 let setitem = (store: Store, mod: Mod) => {
+    mod = mod as SetitemMod;
+
     let penultimate = traverse(store.struct, mod.path);
     if (pyon.isTypeTaggedObject(penultimate)) { return pyonutils.set(penultimate, mod.key, mod.value); }
     penultimate[mod.key] = mod.value;
 };
 
 let delitem = (store: Store, mod: Mod) => {
+    mod = mod as DelitemMod;
+
     let penultimate = traverse(store.struct, mod.path);
     if (pyon.isTypeTaggedObject(penultimate)) { return pyonutils.del(penultimate, mod.key); }
     delete penultimate[mod.key];

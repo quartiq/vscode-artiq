@@ -1,12 +1,39 @@
 // see sequence.plantuml
-const marker = "__jsonclass__"; // see: m-labs/sipyco/pyon
+export const marker = "__jsonclass__"; // see: m-labs/sipyco/pyon
+
+import * as set from "./set.js";
+import * as dict from "./dict.js";
+import * as tuple from "./tuple.js";
+import * as nparray from "./nparray.js";
+import * as Fraction from "./fraction.js";
+import * as bytes from "./bytes.js";
+import * as slice from "./slice.js";
+import * as npscalar from "./npscalar.js";
+import * as complex from "./complex.js";
+
+export const types: Record<string, TypeInterface> = {
+    set,
+    dict,
+    tuple,
+    nparray,
+    Fraction,
+    bytes,
+    slice,
+    npscalar,
+    complex
+};
+
+export type TypeName = keyof typeof types;
+
+// TODO: export all types?
+export { Dict } from "./dict.js"; // FIXME: this lacks something like `& { __jsonclass__: "dict" }`
 
 let isMarked = (v: any): boolean => v &&
     typeof v === "object" &&
     marker in v;
 
 type Params = any[];
-type JsonClass = [name: string, params: Params];
+type JsonClass = [name: TypeName, params: Params];
 type HintedJsonClass = { [marker]: JsonClass }; // see: https://www.jsonrpc.org/specification_v1#a3.JSONClasshinting
 let isHintedJsonClass = (v: any): boolean => isMarked(v) &&
     Object.keys(v).length === 1 &&
@@ -19,7 +46,7 @@ let isHintedJsonClass = (v: any): boolean => isMarked(v) &&
 // instanceof or constructor.name may be lost
 // by operations like structuredClone() in the meantime
 // except for TypedArray
-export type TypeTaggedObject = { [marker: string]: string };
+export type TypeTaggedObject = { [marker: string]: TypeName };
 export let isTypeTaggedObject = (v: any): boolean => isMarked(v) &&
     typeof v[marker] === "string";
 
@@ -56,22 +83,7 @@ let identityType: Record<ConvName, IdentityConv> = {
     copy: (v: any) => [ ...v ],
 };
 
-// TODO: implement missing types
-import * as set from "./set.js";
-import * as dict from "./dict.js";
-import * as tuple from "./tuple.js";
-import * as nparray from "./nparray.js";
-import * as Fraction from "./fraction.js";
-import * as bytes from "./bytes.js";
-import * as slice from "./slice.js";
-import * as npscalar from "./npscalar.js";
-import * as complex from "./complex.js";
-export const types: Record<string, TypeInterface> = { set, dict, tuple, nparray, Fraction, bytes, slice, npscalar, complex };
-
-// TODO: export all mayor types?
-export { Dict } from "./dict.js";
-
-let conv = (t: string, c: ConvName): Reviver | Replacer | IdentityConv => {
+let conv = (t: TypeName, c: ConvName): Reviver | Replacer | IdentityConv => {
     let type = types[t];
     if (!type) {
         // TODO: distinguish between valid PYON v2 types, not yet implemented
