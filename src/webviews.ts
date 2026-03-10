@@ -73,16 +73,20 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 			<html lang="en">
 			<head>
 				<meta charset="UTF-8">
+				<meta http-equiv="Content-Security-Policy" content="
+					default-src 'none';
+					style-src ${ this.view!.webview.cspSource } 'unsafe-inline';
+					connect-src ${ this.view!.webview.cspSource };
+					script-src ${ this.view!.webview.cspSource };
+				">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 				<link href="${ stylesTabulatorUri }" rel="stylesheet">
 				<link href="${ stylesMainUri }" rel="stylesheet">
 			</head>
-
 			<body>
 				<script type="module" src="${ scriptUri }"></script>
 			</body>
-
 			</html>
 		`;
 
