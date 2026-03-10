@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-import * as views from "../views.js";
+import * as views from "../webviews.js";
 import * as experiment from "../experiment.js";
 import * as coreutils from "../coreutils.js";
 

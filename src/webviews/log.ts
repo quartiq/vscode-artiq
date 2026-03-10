@@ -1,5 +1,14 @@
 import * as tabulator from "tabulator-tables";
 
+let createEls = (): HTMLElement[] => {
+    let tableel = document.createElement("div");
+    tableel.className = "table";
+    document.body.append(tableel);
+    return [ tableel ];
+};
+
+createEls();
+
 let table = new tabulator.TabulatorFull(".table", {
     layout:"fitDataFill",
     columns: [

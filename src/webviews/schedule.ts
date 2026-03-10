@@ -1,4 +1,5 @@
 import * as tabulator from "tabulator-tables";
+
 import * as pyon from "../pyon/pyon.js";
 import * as run from "../run.js";
 import { Runs } from "../views/schedule.js";
@@ -13,6 +14,15 @@ let rpc = (method: RpcMethod, rid: run.Id) => vscode.postMessage({
     action: "rpc",
     data: {method, rid},
 });
+
+let createEls = (): HTMLElement[] => {
+    let tableel = document.createElement("div");
+    tableel.className = "table";
+    document.body.append(tableel);
+    return [ tableel ];
+};
+
+createEls();
 
 let table = new tabulator.TabulatorFull(".table", {
     layout:"fitDataFill",

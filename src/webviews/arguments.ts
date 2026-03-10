@@ -7,9 +7,6 @@ const vscode = acquireVsCodeApi();
 
 let table: tabulator.TabulatorFull;
 
-let idleel = document.querySelector(".idle")!;
-let tableel = document.querySelector(".table")!;
-
 let formatter: tabulator.Formatter = cell => {
     let row = cell.getRow().getData() as argument.RowInfo<argument.Procdesc>;
     return entries.entry(row.arg[0].ty)?.formatter(row.arg[3]);
@@ -56,6 +53,25 @@ let updateTable = (data: argument.RowInfo<argument.Procdesc>[]) => {
         columnDefaults: { tooltip },
     });
 };
+
+let createEls = (): HTMLElement[] => {
+    let tableel = document.createElement("div");
+    tableel.className = "table";
+
+    let idleel = document.createElement("div");
+    idleel.className = "idle hidden";
+
+    let msgel = document.createElement("p");
+    msgel.className = "msg";
+    msgel.innerText = "No arguments available.";
+
+    idleel.append(msgel);
+    document.body.append(tableel, idleel);
+
+    return [ tableel, idleel ];
+};
+
+let [ tableel, idleel ] = createEls();
 
 type Action = (msg: argument.RowInfo<argument.Procdesc>[]) => void;
 let actions: Record<string, Action> = {

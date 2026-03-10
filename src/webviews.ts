@@ -1,9 +1,7 @@
 import * as vscode from "vscode";
-import * as fs from "fs";
 import * as path from "path";
 
 import * as mutex from "./mutex.js";
-import * as coreutils from "./coreutils.js";
 
 export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 
@@ -55,16 +53,12 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 	public async init() {
 		await this.ready.locked;
 
-		let tabulatorScriptUri = this.view!.webview.asWebviewUri(
-			vscode.Uri.joinPath(this.context.extensionUri, "node_modules", "tabulator-tables", "dist", "js", "tabulator.min.js")
-		);
-
-		let tabulatorStylesUri = this.view!.webview.asWebviewUri(
+		let stylesTabulatorUri = this.view!.webview.asWebviewUri(
 			vscode.Uri.joinPath(this.context.extensionUri, "node_modules", "tabulator-tables", "dist", "css", "tabulator.min.css")
 		);
 
-		let customStylesUri = this.view!.webview.asWebviewUri(
-			vscode.Uri.joinPath(this.context.extensionUri, "src", "views", "main.css")
+		let stylesMainUri = this.view!.webview.asWebviewUri(
+			vscode.Uri.joinPath(this.context.extensionUri, "src", "webviews", "main.css")
 		);
 
 		let scriptUri = this.view!.webview.asWebviewUri(
@@ -74,12 +68,23 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 			)
 		);
 
-		// TODO: make all webviews typescript based, no more html files!
-		this.html = coreutils.html(this.viewType, this.context.extensionUri.fsPath)
-			.replaceAll("{TABULATOR_SCRIPT_URI}", tabulatorScriptUri.toString())
-			.replaceAll("{TABULATOR_STYLES_URI}", tabulatorStylesUri.toString())
-			.replaceAll("{CUSTOM_STYLES_URI}", customStylesUri.toString())
-			.replaceAll("{SCRIPT_URI}", scriptUri.toString());
+		this.html = `
+			<!DOCTYPE html>
+			<html lang="en">
+			<head>
+				<meta charset="UTF-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+				<link href="${ stylesTabulatorUri }" rel="stylesheet">
+				<link href="${ stylesMainUri }" rel="stylesheet">
+			</head>
+
+			<body>
+				<script type="module" src="${ scriptUri }"></script>
+			</body>
+
+			</html>
+		`;
 
 		this.view!.webview.html = this.html;
 	}

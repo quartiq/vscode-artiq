@@ -11,10 +11,6 @@ const vscode = acquireVsCodeApi();
 
 let table: tabulator.TabulatorFull;
 
-let idleel = document.querySelector(".idle")!;
-let msgels = idleel.querySelectorAll(".msg");
-let tableel = document.querySelector(".table")!;
-
 type Info = experiment.SchedulerInfo & experiment.LogLevel;
 type RowInfo<K extends keyof Info> = argument.RowInfo<argument.Procdesc> & {
     name: K,
@@ -83,6 +79,32 @@ let updateTable = (exp: experiment.DbInfo) => {
         ],
     });
 };
+
+let createEls = (): [ HTMLElement, HTMLElement, HTMLElement[] ] => {
+    let tableel = document.createElement("div");
+    tableel.className = "table";
+
+    let idleel = document.createElement("div");
+    idleel.className = "idle hidden";
+
+    let msgels = Object.entries({
+        select: "Select an experiment in the editor or in the explorer ...",
+        scan: "Unknown experiment. Consider saving the file and rescanning the repository ...",
+        examine: "Unknown experiment. Consider saving and examining the file ...",
+    }).map(([name, text]) => {
+        let el = document.createElement("p");
+        el.className = `msg ${name}`;
+        el.innerText = text;
+        return el;
+    });
+
+    idleel.append(...msgels);
+    document.body.append(tableel, idleel);
+
+    return [ tableel, idleel, msgels ];
+};
+
+let [ tableel, idleel, msgels ] = createEls();
 
 type Action = (msg: Message) => void;
 let actions: Record<string, Action> = {

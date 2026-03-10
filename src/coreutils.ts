@@ -6,19 +6,12 @@
 // FIXME: drop this; dissolve in utils.ts and others
 
 import * as vscode from "vscode";
-import * as path from "path";
-import * as fs from "fs";
 
 export let symbols = async (uri: vscode.Uri | undefined) => {
     return await vscode.commands.executeCommand<vscode.SymbolInformation[]>(
         "vscode.executeDocumentSymbolProvider",
         uri,
     ) ?? [];
-};
-
-export let html = (name: string, root: string) => {
-    let filePath = path.join(root, "src", "views", `${name}.html`);
-    return fs.readFileSync(filePath, "utf-8");
 };
 
 export let selectedClass: () => Promise<string> = async () => {
@@ -30,6 +23,7 @@ export let selectedClass: () => Promise<string> = async () => {
     let symbol = (await symbols(ed.document.uri))
         .filter(s => s.kind === vscode.SymbolKind.Class)
         .find(s => s.location.range.contains(ed.selection.active));
+    // TODO: filter for BaseClassName "EnvExperiment" in the class signature
 
     return symbol ? symbol.name : "";
 };

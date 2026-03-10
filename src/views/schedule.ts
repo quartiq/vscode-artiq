@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
 import * as run from "../run.js";
-import * as views from "../views.js";
+import * as views from "../webviews.js";
 import * as net from "../net.js";
 import * as syncstruct from "../syncstruct.js";
 import * as pyon from "../pyon/pyon.js";
