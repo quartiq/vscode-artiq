@@ -57,6 +57,11 @@ export let repoRoot: Promise<string> = new Promise(resolve => {
 	net.rpc("experiment_db", "root", []).then((data: any) => resolve(data.ret));
 });
 
+let key = (exp: DbInfo) => ["experiments", exp.path, exp.class_name].join();
+export let updateDb = (exp: DbInfo) => dbio.update(key(exp), exp);
+export let updateAllDb = async (exps: DbInfo[]) => dbio.updateAll(exps.map(e => [key(e), e]));
+export let createAllDb = async (exps: DbInfo[]) => dbio.createAll(exps.map(e => [key(e), e]));
+
 let initArgstates: (arginfo: argument.SyncInfo<argument.Procdesc>) => argument.SyncInfo<argument.Procdesc> = arginfo => Object
     .fromEntries(Object.entries(arginfo).map(([name, arg]) => {
         // see: artiq/dashboard/experiments:ExperimentManager.initialize_submission_arguments
@@ -131,8 +136,3 @@ export let curr = async (): Promise<DbInfo | undefined> => {
 		className,
 	);
 };
-
-let key = (exp: DbInfo) => ["experiments", exp.path, exp.class_name].join();
-export let updateDb = (exp: DbInfo) => dbio.update(key(exp), exp);
-export let updateAllDb = async (exps: DbInfo[]) => dbio.updateAll(exps.map(e => [key(e), e]));
-export let createAllDb = async (exps: DbInfo[]) => dbio.createAll(exps.map(e => [key(e), e]));
