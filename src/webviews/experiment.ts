@@ -36,6 +36,7 @@ let formatter: tabulator.Formatter = cell => {
     return entries.entry(row.arg[0].ty)?.formatter(row.arg[3]);
 };
 
+// TODO: guard priority and pipeline_name against bad entries, e. g. ""
 let editor: tabulator.Editor = (cell, onRendered, success, cancel) => {
     let row = cell.getRow().getData() as RowInfo<keyof Info>;
     return entries.entry(row.arg[0].ty)?.editor({

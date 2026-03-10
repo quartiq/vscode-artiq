@@ -42,7 +42,7 @@
       "properties": {
         "artiq.host": {
           "type": "string",
-          "default": "::1",
+          "default": "127.0.0.1",
           "description": "URI host of ARTIQ server"
         },
         "artiq.initialScan": {
