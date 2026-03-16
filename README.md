@@ -7,16 +7,7 @@ provides rich UI for the
 ## Requirements
 
 *   Visual Studio Code 1.98 or newer (or editors compatible with VS Code 1.98+ APIs).
-*   ARTIQ: HEAD of the `master` branch (what becomes `release-9` one day).
-    Clone directly from the [repository](https://github.com/m-labs/artiq), e.g.:
-
-    ```
-    git clone https://github.com/m-labs/artiq
-    cd artiq
-    nix run # obtain nix via https://nix.dev/install-nix#install-nix
-    cd path/to/my/experiments
-    artiq_master
-    ```
+*   ARTIQ-9 or newer
 
 ## Quick Start
 
@@ -24,7 +15,7 @@ Welcome! 👋🏻<br/>
 Whether you are new to ARTIQ or an experienced ARTIQ user, we hope this
 extension fits your needs and enhances your working experience.
 
-1.  Install [ARTIQ](https://github.com/m-labs/artiq) if you haven't already.
+1.  Install [ARTIQ](https://m-labs.hk/artiq/manual/installing.html) if you haven't already.
 
 1.  Install the [VS Code ARTIQ extension](https://marketplace.visualstudio.com/items?itemName=quartiq.artiq).
 
@@ -57,7 +48,7 @@ same filesystem tree.
 
 
 If you are new to ARTIQ, [this article](https://m-labs.hk/artiq/manual/rtio.html) provides
-the overview on ARTIQ Real-Time I/O concepts and basic terminology.
+an overview on ARTIQ Real-Time I/O concepts and basic terminology.
 <!--TODO: screencast showing how to write and run your first experiment using VS Code ARTIQ-->
 
 ## Feature highlights
