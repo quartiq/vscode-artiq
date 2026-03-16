@@ -1,13 +1,13 @@
 import * as vscode from "vscode";
 
-import * as views from "../webviews.js";
+import * as webview from "../webview.js";
 import * as net from "../net.js";
 
-export let view: views.ArtiqViewProvider;
+export let view: webview.Provider;
 let receiver;
 
 export let init = async (context: vscode.ExtensionContext) => {
-    view = new views.ArtiqViewProvider("log", context);
+    view = new webview.Provider("log", context);
     view.set("Waiting for connection ...");
 
     // see: https://github.com/m-labs/artiq/blob/master/artiq/frontend/artiq_client.py#L347-L348

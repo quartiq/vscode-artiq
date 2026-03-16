@@ -1,14 +1,14 @@
 import * as vscode from "vscode";
 
-import * as views from "../webviews.js";
+import * as webview from "../webview.js";
 import * as experiment from "../experiment.js";
 import * as argument from "../argument.js";
 import * as run from "../run.js";
 
-export let view: views.ArtiqViewProvider;
+export let view: webview.Provider;
 
 export let init = async (context: vscode.ExtensionContext) => {
-    view = new views.ArtiqViewProvider("arguments", context, {
+    view = new webview.Provider("arguments", context, {
         submit: run.submitCurr,
         change: async (data: argument.RowInfo<argument.Procdesc>) => {
             let exp = await experiment.curr();

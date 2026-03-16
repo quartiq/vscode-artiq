@@ -3,7 +3,7 @@ import * as path from "path";
 
 import * as mutex from "./mutex.js";
 
-export class ArtiqViewProvider implements vscode.WebviewViewProvider {
+export class Provider implements vscode.WebviewViewProvider {
 
 	private view?: vscode.WebviewView;
 	private ready: mutex.Lock;
@@ -64,7 +64,7 @@ export class ArtiqViewProvider implements vscode.WebviewViewProvider {
 		let scriptUri = this.view!.webview.asWebviewUri(
 			// FIXME: need to do it like this, because Codium may get the URI scheme wrong otherwise
 			vscode.Uri.file(
-				path.join(this.context.extensionPath, "out", "webviews", `${this.viewType}.js`)
+				path.join(this.context.extensionPath, "dist", "webviews", `${this.viewType}.js`)
 			)
 		);
 
