@@ -53,20 +53,12 @@ export class Provider implements vscode.WebviewViewProvider {
 	public async init() {
 		await this.ready.locked;
 
-		let stylesTabulatorUri = this.view!.webview.asWebviewUri(
-			vscode.Uri.joinPath(this.context.extensionUri, "node_modules", "tabulator-tables", "dist", "css", "tabulator.min.css")
-		);
-
-		let stylesMainUri = this.view!.webview.asWebviewUri(
-			vscode.Uri.joinPath(this.context.extensionUri, "src", "webviews", "main.css")
-		);
-
-		let scriptUri = this.view!.webview.asWebviewUri(
-			// FIXME: need to do it like this, because Codium may get the URI scheme wrong otherwise
-			vscode.Uri.file(
-				path.join(this.context.extensionPath, "dist", "webviews", `${this.viewType}.js`)
-			)
-		);
+		let uris = ["tabulator.min.css", "main.css", `${this.viewType}.js`]
+			.map(filename => {
+				let p = path.join(this.context.extensionPath, "dist/webviews", filename);
+				// FIXME: need to do it like this, because Codium may get the URI scheme wrong otherwise
+				return this.view!.webview.asWebviewUri(vscode.Uri.file(p));
+			});
 
 		this.html = `
 			<!DOCTYPE html>
@@ -81,11 +73,11 @@ export class Provider implements vscode.WebviewViewProvider {
 				">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-				<link href="${ stylesTabulatorUri }" rel="stylesheet">
-				<link href="${ stylesMainUri }" rel="stylesheet">
+				<link href="${ uris[0] }" rel="stylesheet">
+				<link href="${ uris[1] }" rel="stylesheet">
 			</head>
 			<body>
-				<script type="module" src="${ scriptUri }"></script>
+				<script type="module" src="${ uris[2] }"></script>
 			</body>
 			</html>
 		`;

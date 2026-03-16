@@ -9,3 +9,11 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 **/.vscode-test.*
+
+node_modules
+tsconfig.json
+esbuild.cjs
+qa.md
+todo.md
+test/
+publish.sh
