@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
 
-import * as coreutils from "../coreutils.js";
 import * as net from "../net.js";
 import * as experiment from "../experiment.js";
 
@@ -16,8 +15,7 @@ export let open = async (filename: string, classname: string) => {
 		return;
 	}
 
-	let symbols = await coreutils.symbols(uri);
-	let location = symbols.find(s => s.name === classname)?.location;
+	let location = (await experiment.symbols(uri)).find(s => s.name === classname)?.location;
 	if (!location) {
 		vscode.window.showErrorMessage("No such class, consider rescanning ARTIQ repository");
 		return;

@@ -9,7 +9,7 @@ type DbEntry = [DbKey, DbValue]
 let db: vscode.Memento;
 
 // somewhere in code, the db gets updated
-// but the the update callback singleton
+// but the update callback singleton
 // (dbio.onUpdate) is not yet initialized
 // hence we want to wait for it to be ready
 let updateHandler = mutex.lock();

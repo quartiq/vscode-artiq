@@ -2,7 +2,6 @@ import * as vscode from "vscode";
 
 import * as webview from "../webview.js";
 import * as experiment from "../experiment.js";
-import * as coreutils from "../coreutils.js";
 
 export let view: webview.Provider;
 
@@ -27,7 +26,7 @@ export type Message = {
 };
 
 export let update = async () => {
-    let selectedClass = await coreutils.selectedClass();
+    let selectedClass = await experiment.selectedClass();
     let exp = await experiment.curr();
     let inRepo = exp ? experiment.inRepo(exp) : false;
     view.post( {action: "update", data: {selectedClass, inRepo, exp} as Message} );

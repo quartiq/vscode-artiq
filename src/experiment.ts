@@ -4,7 +4,6 @@ import * as path from "path";
 import * as dbio from "./dbio.js";
 import * as net from "./net.js";
 import * as argument from "./argument.js";
-import * as coreutils from "./coreutils.js";
 import * as syncstruct from "./syncstruct.js";
 import * as entries from "./entries.js";
 
@@ -125,9 +124,30 @@ export let examineFile: () => Promise<void> = async () => {
     updateAllDb(exps);
 };
 
+export let symbols = async (uri: vscode.Uri | undefined) => {
+    return await vscode.commands.executeCommand<vscode.SymbolInformation[]>(
+        "vscode.executeDocumentSymbolProvider",
+        uri,
+    ) ?? [];
+};
+
+export let selectedClass: () => Promise<string> = async () => {
+    await vscode.extensions.getExtension("ms-python.python")!.exports.ready;
+
+    let ed = vscode.window.activeTextEditor;
+    if (!ed) { return ""; }
+
+    let symbol = (await symbols(ed.document.uri))
+        .filter(s => s.kind === vscode.SymbolKind.Class)
+        .find(s => s.location.range.contains(ed.selection.active));
+    // TODO: filter for BaseClassName "EnvExperiment" in the class signature
+
+    return symbol ? symbol.name : "";
+};
+
 export let curr = async (): Promise<DbInfo | undefined> => {
 	if (!vscode.window.activeTextEditor) { return undefined; }
-    let className = await coreutils.selectedClass();
+    let className = await selectedClass();
     if (className === "") { return undefined; }
 
 	return dbio.get(
