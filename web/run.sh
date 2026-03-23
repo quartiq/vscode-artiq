@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")" || exit 1
 
-for cmd in esbuild go; do
+for cmd in npm go; do
     if ! command -v "$cmd" >/dev/null 2>&1; then
         echo "Please install $cmd"
         exit 1
