@@ -9,6 +9,6 @@ for cmd in npm go; do
     fi
 done
 
-[ -d web/node_modules ] || npm install
+[ -d node_modules ] || npm install
 npm run build
 go run main.go localhost:1071
