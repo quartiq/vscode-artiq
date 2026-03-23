@@ -1,0 +1,17 @@
+{
+  "name": "web-artiq",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "pyon": "file:../pyon"
+  },
+  "scripts": {
+    "build:pyon": "npm --prefix ../pyon install && npm --prefix ../pyon run build",
+    "build:web": "esbuild src/* --bundle --outdir=static --format=esm",
+    "build": "npm run build:pyon && npm run build:web",
+
+    "watch:pyon": "npm --prefix ../pyon run watch",
+    "watch:web": "esbuild src/* --bundle --outdir=static --format=esm --watch",
+    "watch": "npm-run-all -p watch:pyon watch:web"
+  }
+}

@@ -1,4 +1,4 @@
-import * as utils from "../utils.js";
+import * as utils from "./utils.js";
 
 type Bytes = Uint8Array;
 type Params = [ base64: string ];

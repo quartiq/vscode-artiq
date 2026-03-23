@@ -9,5 +9,6 @@ for cmd in esbuild go; do
     fi
 done
 
-esbuild src/* --bundle --outdir=static --format=esm
+[ -d web/node_modules ] || npm install
+npm run build
 go run main.go localhost:1071

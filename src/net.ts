@@ -1,8 +1,7 @@
 import * as vscode from "vscode";
 import net from "net";
 import { once } from "events";
-
-import * as pyon from "./pyon/pyon.js";
+import * as pyon from "pyon";
 
 export type Bytes = {type: "Buffer", data: number[]};
 

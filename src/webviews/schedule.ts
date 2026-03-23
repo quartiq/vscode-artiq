@@ -1,6 +1,6 @@
 import * as tabulator from "tabulator-tables";
+import * as pyon from "pyon";
 
-import * as pyon from "../pyon/pyon.js";
 import * as run from "../run.js";
 import { Runs } from "../views/schedule.js";
 

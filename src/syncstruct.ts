@@ -1,9 +1,10 @@
 // see: m-labs/sipyco/sync_struct
 
+import * as pyon from "pyon";
+import * as pyonutils from "pyon/utils";
+
 import * as net from "./net.js";
 import * as mutex from "./mutex.js";
-import * as pyon from "./pyon/pyon.js";
-import * as pyonutils from "./pyon/utils.js";
 
 type Struct = Record<string, any> | pyon.Dict;
 export type Store = { struct: Struct | undefined }; // we need to operate on object property singleton to utilize the mutable object pattern

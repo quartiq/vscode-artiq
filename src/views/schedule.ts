@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
+import * as pyon from "pyon";
 
 import * as run from "../run.js";
 import * as webview from "../webview.js";
 import * as net from "../net.js";
 import * as syncstruct from "../syncstruct.js";
-import * as pyon from "../pyon/pyon.js";
 
 export let view: webview.Provider;
 

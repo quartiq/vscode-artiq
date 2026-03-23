@@ -1,12 +1,12 @@
 // TODO: clarify and distinguish between keypath, setpath and leafpath
 
 import * as vscode from "vscode";
+import * as pyon from "pyon";
+import * as pyonutils from "pyon/utils";
 
 import * as utils from "../utils.js";
 import * as units from "../units.js";
 import * as net from "../net.js";
-import * as pyon from "../pyon/pyon.js";
-import * as pyonutils from "../pyon/utils.js";
 import * as syncstruct from "../syncstruct.js";
 
 let provider: DatasetsProvider;

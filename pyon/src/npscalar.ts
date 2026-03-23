@@ -1,5 +1,5 @@
 import * as dtype from "./dtype.js";
-import * as utils from "../utils.js";
+import * as utils from "./utils.js";
 
 export type NpScalar = dtype.TypedArray & { __dtype__: string };
 export type Params = [ dtype: string, base64: string ];

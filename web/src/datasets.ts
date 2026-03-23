@@ -1,4 +1,4 @@
-import * as pyon from "../../src/pyon/pyon.ts";
+import * as pyon from "pyon";
 
 const uri = document.location.href
     .replace(/^http/, "ws")
