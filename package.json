@@ -213,15 +213,15 @@
     }
   },
   "scripts": {
-    "compile": "npm run build:pyon && npm run check-types && node esbuild.cjs",
-    "build:pyon": "npm --prefix ./pyon install && npm --prefix ./pyon run build",
+    "compile": "npm run build:sipyco && npm run check-types && node esbuild.cjs",
+    "build:sipyco": "npm --prefix ./sipyco install && npm --prefix ./sipyco run build",
     "check-types": "tsc",
     "watch": "npm-run-all -p watch:*",
-    "watch:pyon": "npm --prefix ./pyon run watch",
+    "watch:sipyco": "npm --prefix ./sipyco run watch",
     "watch:esbuild": "node esbuild.cjs --watch",
     "watch:tsc": "tsc --watch",
     "vscode:prepublish": "npm run package",
-    "package": "npm run build:pyon && npm run check-types && node esbuild.cjs --production",
+    "package": "npm run build:sipyco && npm run check-types && node esbuild.cjs --production",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test"
@@ -238,7 +238,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "pyon": "file:pyon",
+    "sipyco": "file:sipyco",
     "tabulator-tables": "^6.3.1"
   },
   "extensionDependencies": [

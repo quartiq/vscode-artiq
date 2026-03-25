@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"web-artiq/sipyco"
+	"web-artiq/proxy"
 )
 
 func viewHandler(w http.ResponseWriter, r *http.Request) {
@@ -23,12 +23,12 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/", viewHandler)
 	http.HandleFunc("/static/", fileHandler)
-	http.HandleFunc("/sipyco", sipyco.HandlerFunc)
+	http.HandleFunc("/proxy/", proxy.HandlerFunc)
 
 	if len(os.Args) < 2 {
 		fmt.Println("missing URI argument")
 		return
 	}
-	log.Printf("Listening at %s", os.Args[1])
+	log.Printf("Listening at http://%s", os.Args[1])
 	log.Fatal(http.ListenAndServe(os.Args[1], nil))
 }

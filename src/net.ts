@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import net from "net";
 import { once } from "events";
-import * as pyon from "pyon";
+import * as pyon from "../sipyco/src/pyon/pyon.js";
 
 export type Bytes = {type: "Buffer", data: number[]};
 
@@ -35,6 +35,12 @@ export interface RpcObject {
     status: RpcStatus,
     exception: RpcException,
 }
+
+
+let parseLine = (bytes: Bytes) => pyon.decode(bytes.toString());
+
+export let parseLines = (bytes: Bytes) => bytes.toString().trim().split("\n")
+    .map((s: string) => pyon.decode(s));
 
 // TODO: use kwargs instead of args, less ugly
 export let rpc = async (target: string, method: string, args: any[], kwargs?: Record<string, any>, debug?: string): Promise<RpcObject | undefined> => {
@@ -83,8 +89,3 @@ export let rpc = async (target: string, method: string, args: any[], kwargs?: Re
 
     return result;
 };
-
-let parseLine = (bytes: Bytes) => pyon.decode(bytes.toString());
-
-export let parseLines = (bytes: Bytes) => bytes.toString().trim().split("\n")
-    .map((s: string) => pyon.decode(s));

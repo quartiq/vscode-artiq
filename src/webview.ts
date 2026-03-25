@@ -56,7 +56,7 @@ export class Provider implements vscode.WebviewViewProvider {
 		let uris = ["tabulator.min.css", "main.css", `${this.viewType}.js`]
 			.map(filename => {
 				let p = path.join(this.context.extensionPath, "dist/webviews", filename);
-				// FIXME: need to do it like this, because Codium may get the URI scheme wrong otherwise
+				// need to do it like this, because Codium may get the URI scheme wrong otherwise
 				return this.view!.webview.asWebviewUri(vscode.Uri.file(p));
 			});
 
