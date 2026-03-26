@@ -6,7 +6,8 @@ export type Info<P extends argument.Procdesc> = {
     arg: argument.Argument<P>,
     parse?: (el: HTMLElement) => any,
     // type refers to: acquireVsCodeApi().postMessage
-    // FIXME: make "acquireVsCodeApi()" accessable in webview ts
+    // FIXME: this was solely implemented to trigger
+    // run.submitCurr() via the "quickstyle" editor
     post: (message: any) => void,
 
     cell: tabulator.CellComponent, // TODO: maybe drop cell?
