@@ -11,4 +11,4 @@ done
 
 npm install
 npm run build
-go run main.go localhost:1071
+go run main.go localhost:1071 # FIXME: standardize this port via ARTIQ repo

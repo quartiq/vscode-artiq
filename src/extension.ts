@@ -2,6 +2,8 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 
+import "./proxy.js";
+
 import * as dbio from "./dbio.js";
 import * as run from "./run.js";
 import * as experiment from "./experiment.js";

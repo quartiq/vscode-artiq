@@ -63,7 +63,7 @@ export let from = async <T extends Struct = Struct>(params: {
     let store: Store = { struct: undefined };
     let initDone: mutex.Lock = mutex.lock();
 
-    let chan = proxy.chan(`${params.masterHostname}:${port}`, "sync_struct", params.notifierName);
+    let chan = proxy.chan(params.masterHostname, port, "sync_struct", params.notifierName);
 
     chan.addEventListener("close", ev => {
         // see: https://www.rfc-editor.org/rfc/rfc6455.html#section-7.4.1
