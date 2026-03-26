@@ -57,7 +57,7 @@ let dict: Entry[] = [
 export let from = (dtype: Name): TypedArrayConstructor => {
     let entry = dict.find((e: Entry) => e.dtype === dtype);
     if (entry) { return entry.ctor; }
-    
+
     console.error("Unknown dtype: " + dtype);
     return Uint8Array;
 };

@@ -15,7 +15,6 @@ export let init = async (context: vscode.ExtensionContext) => {
             experiment.updateDb(exp);
         },
     });
-
     view.init();
 };
 

@@ -1,0 +1,33 @@
+{
+  "name": "sipyco",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./pyon": {
+      "types": "./dist/pyon/pyon.d.ts",
+      "default": "./dist/pyon/pyon.js"
+    },
+    "./pyonutils": {
+      "types": "./dist/pyon/utils.d.ts",
+      "default": "./dist/pyon/utils.js"
+    },
+    "./sync_struct": {
+      "types": "./dist/sync_struct/sync_struct.d.ts",
+      "default": "./dist/sync_struct/sync_struct.js"
+    }
+  },
+  "dependencies": {
+    "fraction.js": "^5.3.4",
+    "fast-deep-equal": "^3.1.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "test": "vitest"
+  }
+}

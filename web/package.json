@@ -3,15 +3,15 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "pyon": "file:../pyon"
+    "sipyco": "file:../sipyco"
   },
   "scripts": {
-    "build:pyon": "npm --prefix ../pyon install && npm --prefix ../pyon run build",
+    "build:sipyco": "npm --prefix ../sipyco install && npm --prefix ../sipyco run build",
     "build:web": "esbuild src/* --bundle --outdir=static --format=esm",
-    "build": "npm run build:pyon && npm run build:web",
+    "build": "npm run build:sipyco && npm run build:web",
 
-    "watch:pyon": "npm --prefix ../pyon run watch",
+    "watch:sipyco": "npm --prefix ../sipyco run watch",
     "watch:web": "esbuild src/* --bundle --outdir=static --format=esm --watch",
-    "watch": "npm-run-all -p watch:pyon watch:web"
+    "watch": "npm-run-all -p watch:sipyco watch:web"
   }
 }

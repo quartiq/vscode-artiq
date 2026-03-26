@@ -1,18 +1,8 @@
-import * as pyon from "pyon";
+import * as sync_struct from "sipyco/sync_struct";
 
-const uri = document.location.href
-    .replace(/^http/, "ws")
-    .replace(/(.*\/).*/, "$1sipyco");
-const sipyco = new WebSocket(uri);
-
-sipyco.addEventListener("message", ev => {
-    console.log(pyon.decode(ev.data));
-});
-
-sipyco.addEventListener("open", () => {
-    // see: https://git.m-labs.hk/M-Labs/artiq/src/branch/master/doc/manual/default_network_ports.rst
-    sipyco.send("localhost:3251");
-    // see: https://git.m-labs.hk/M-Labs/sipyco/src/branch/master/sipyco/pc_rpc.py
-    sipyco.send("ARTIQ pc_rpc");
-    sipyco.send("schedule pyon_v2");
+let store = sync_struct.from({
+    masterHostname: "localhost",
+    notifierName: "schedule",
+    onReceive: store => console.log(store.struct),
+    onError: err => console.error("Connection error. Is ARTIQ server running?", err),
 });

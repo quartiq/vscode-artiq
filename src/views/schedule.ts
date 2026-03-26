@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import * as pyon from "pyon";
+import * as pyon from "sipyco/pyon";
 
 import * as run from "../run.js";
 import * as webview from "../webview.js";
@@ -16,11 +16,10 @@ export let init = async (context: vscode.ExtensionContext) => {
             net.rpc("schedule", data.method, [data.rid]);
         },
     });
-    view.set("Waiting for connection ...");
+    view.init();
 
     syncstruct.from({
         channel: "schedule",
-        onReady: () => view.init(),
         onReceive: (store: syncstruct.Store) => view.post(pyon.encode(store.struct as Runs)),
     });
 };
