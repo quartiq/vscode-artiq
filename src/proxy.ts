@@ -1,3 +1,5 @@
+// TODO: move ws proxy towards artiq_ctlmgr?
+
 import * as net from "node:net";
 import { WebSocketServer } from "ws";
 

@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
 import * as path from "path";
+import * as sync_struct from "sipyco/sync_struct";
 
 import * as dbio from "./dbio.js";
 import * as net from "./net.js";
 import * as argument from "./argument.js";
-import * as syncstruct from "./syncstruct.js";
 import * as entries from "./entries.js";
 
 type Name = string
@@ -49,11 +49,12 @@ export type SyncInfo = {
 
 type SyncDict = Record<Name, SyncInfo>
 
-export type Store = syncstruct.Store & { struct: SyncDict };
+export type Store = sync_struct.Store & { struct: SyncDict };
 export let repo: Promise<Store> = new Promise(resolve => {
-    syncstruct.from<SyncDict>({
-        channel: "explist",
-        onReceive: async (store: syncstruct.Store) => {
+    sync_struct.from<SyncDict>({
+        masterHostname: vscode.workspace.getConfiguration("artiq").get("host")!,
+        notifierName: "explist",
+        onReceive: async (store: sync_struct.Store) => {
             let basepath = await repoRoot;
             // update "softly" to provide what is new
             // yet to sustain what was known and customized

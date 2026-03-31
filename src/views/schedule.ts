@@ -19,9 +19,9 @@ export let init = async (context: vscode.ExtensionContext) => {
     view.init();
 
     sync_struct.from({
-        masterHostname: "localhost",
+        masterHostname: vscode.workspace.getConfiguration("artiq").get("host")!,
         notifierName: "schedule",
         onReceive: (store: sync_struct.Store) => view.post(pyon.encode(store.struct as Runs)),
-        onError: err => console.error("Connection error. Is ARTIQ server running?", err),
+        onError: err => console.error("Connection error. Is ARTIQ server running?", err), // FIXME: handle this error globally?
     });
 };

@@ -3,11 +3,11 @@
 import * as vscode from "vscode";
 import * as pyon from "sipyco/pyon";
 import * as pyonutils from "sipyco/pyonutils";
+import * as sync_struct from "sipyco/sync_struct";
 
 import * as utils from "../utils.js";
 import * as units from "../units.js";
 import * as net from "../net.js";
-import * as syncstruct from "../syncstruct.js";
 
 let provider: DatasetsProvider;
 export let view: vscode.TreeView<string>;
@@ -15,7 +15,7 @@ export let view: vscode.TreeView<string>;
 type Keypath = string;
 type Metadata = { unit: string, scale: number, precision: number };
 type Dataset = [ persist: boolean, value: any, metadata: Metadata ];
-type Store = syncstruct.Store & { struct: Record<Keypath, Dataset> };
+type Store = sync_struct.Store & { struct: Record<Keypath, Dataset> };
 let sets: Store = { struct: {} };
 
 type InputProperty = { path: any[], desc: string, test: (s: string) => boolean, parse: (s: string) => any };
@@ -179,10 +179,14 @@ export let init = async () => {
         submit(keypath, set);
     }));
 
-    sets = await syncstruct.from({
-        channel: "datasets",
-        onReceive: (store: syncstruct.Store, mod: syncstruct.Mod) => {
-            if (mod.action === "init") { return; }
+    sets = await sync_struct.from({
+        masterHostname: vscode.workspace.getConfiguration("artiq").get("host")!,
+        notifierName: "datasets",
+        onReceive: (store: sync_struct.Store, mod: sync_struct.Mod) => {
+            if (mod.action === "init") {
+                provider.refresh(undefined);
+                return;
+            }
 
             let keypath = mod.path[0] ?? mod.key;
             provider.refresh(keypath);

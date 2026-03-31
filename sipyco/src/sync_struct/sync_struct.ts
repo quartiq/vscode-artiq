@@ -58,7 +58,7 @@ export let from = async <T extends Struct = Struct>(params: {
     masterHostname: string,
     notifierName: string,
     onReceive: UpdateHandler,
-    onError: (err: string) => void,
+    onError?: (err: string) => void,
 }): Promise<Store & { struct: T }> => {
     let store: Store = { struct: undefined };
     let initDone: mutex.Lock = mutex.lock();
@@ -69,7 +69,7 @@ export let from = async <T extends Struct = Struct>(params: {
         // see: https://www.rfc-editor.org/rfc/rfc6455.html#section-7.4.1
         let statusInternalError = 1011;
         if (ev.code !== statusInternalError) return;
-        params.onError(ev.reason);
+        params.onError?.(ev.reason);
     });
 
     chan.addEventListener("message", ev => {
