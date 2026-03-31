@@ -70,7 +70,7 @@ export let from = async (params: {
 
 }): Promise<MethodMessage | undefined> => {
     let resolve: Function;
-    let data: Promise<MethodMessage | undefined> = new Promise(r => resolve = r);
+    let result: Promise<MethodMessage | undefined> = new Promise(r => resolve = r);
     let chan = proxy.chan(params.masterHostname, port, "pc_rpc", `${params.targetName} pyon_v2`);
     let phase: Phase = "banner";
 
@@ -121,5 +121,5 @@ export let from = async (params: {
         }
     });
 
-    return data;
+    return result;
 };

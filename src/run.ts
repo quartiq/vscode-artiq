@@ -2,7 +2,6 @@ import * as vscode from "vscode";
 import * as pc_rpc from "sipyco/pc_rpc";
 
 import * as utils from "./utils.js";
-import * as net from "./net.js";
 import * as argument from "./argument.js";
 import * as experiment from "./experiment.js";
 
