@@ -38,7 +38,7 @@ export type DbInfo = SchedulerInfo & LogLevel & {
 	arginfo: argument.SyncInfo<argument.Procdesc>,
 };
 
-type SyncInfo = {
+export type SyncInfo = {
     file: string,
     class_name: ClassName,
 
@@ -49,11 +49,31 @@ type SyncInfo = {
 
 type SyncDict = Record<Name, SyncInfo>
 
-type Store = syncstruct.Store & { struct: SyncDict };
-export let repo: Store = { struct: {} };
+export type Store = syncstruct.Store & { struct: SyncDict };
+export let repo: Promise<Store> = new Promise(resolve => {
+    syncstruct.from<SyncDict>({
+        channel: "explist",
+        onReceive: async (store: syncstruct.Store) => {
+            let basepath = await repoRoot;
+            // update "softly" to provide what is new
+            // yet to sustain what was known and customized
+            createAllDb(Object.entries(store.struct as SyncDict).map(([name, syncinfo]: [string, SyncInfo]) => ({
+                ...scheduler_defaults, ...syncinfo.scheduler_defaults,
+
+                path: path.posix.join(basepath, syncinfo.file),
+                class_name: syncinfo.class_name,
+
+                name,
+                arginfo: initArgstates(syncinfo.arginfo),
+
+                log_level: "WARNING", // see: artiq/dashboard/experiments.py:ExperimentManager.get_submission_options
+            })));
+        },
+    }).then((data: Store) => resolve(data));
+});
 
 export let repoRoot: Promise<string> = new Promise(resolve => {
-	net.rpc("experiment_db", "root", []).then((data: any) => resolve(data.ret));
+	net.rpc("experiment_db", "root", []).then((data: net.RpcObject | undefined) => resolve(data?.ret));
 });
 
 let key = (exp: DbInfo) => ["experiments", exp.path, exp.class_name].join();
@@ -68,27 +88,7 @@ let initArgstates: (arginfo: argument.SyncInfo<argument.Procdesc>) => argument.S
         return [name, arg];
     }));
 
-repo = await syncstruct.from<SyncDict>({
-    channel: "explist",
-    onReceive: async (store: syncstruct.Store) => {
-        let basepath = await repoRoot;
-        // update "softly" to provide what is new
-        // yet to sustain what was known and customized
-        createAllDb(Object.entries(store.struct as SyncDict).map(([name, syncinfo]: [string, SyncInfo]) => ({
-            ...scheduler_defaults, ...syncinfo.scheduler_defaults,
-
-            path: path.posix.join(basepath, syncinfo.file),
-            class_name: syncinfo.class_name,
-
-            name,
-            arginfo: initArgstates(syncinfo.arginfo),
-
-            log_level: "WARNING", // see: artiq/dashboard/experiments.py:ExperimentManager.get_submission_options
-        })));
-    },
-});
-
-export let inRepo: (exp: DbInfo) => Boolean = exp => exp.name in repo.struct;
+export let inRepo: (exp: DbInfo) => Promise<Boolean> = async exp => exp.name in (await repo).struct;
 
 type ExamineInfo = {
     name: Name,

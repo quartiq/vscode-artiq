@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
 import * as pyon from "sipyco/pyon";
+import * as sync_struct from "sipyco/sync_struct";
 
 import * as run from "../run.js";
 import * as webview from "../webview.js";
 import * as net from "../net.js";
-import * as syncstruct from "../syncstruct.js";
 
 export let view: webview.Provider;
 
@@ -18,8 +18,10 @@ export let init = async (context: vscode.ExtensionContext) => {
     });
     view.init();
 
-    syncstruct.from({
-        channel: "schedule",
-        onReceive: (store: syncstruct.Store) => view.post(pyon.encode(store.struct as Runs)),
+    sync_struct.from({
+        masterHostname: "localhost",
+        notifierName: "schedule",
+        onReceive: (store: sync_struct.Store) => view.post(pyon.encode(store.struct as Runs)),
+        onError: err => console.error("Connection error. Is ARTIQ server running?", err),
     });
 };

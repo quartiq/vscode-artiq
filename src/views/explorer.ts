@@ -5,7 +5,7 @@ import * as net from "../net.js";
 import * as experiment from "../experiment.js";
 
 let provider: ExplorerProvider;
-export let view: vscode.TreeView<string>;
+export let view: vscode.TreeView<ExperimentTreeItem>;
 
 export let open = async (filename: string, classname: string) => {
 	let p = path.posix.join(await experiment.repoRoot, filename);
@@ -28,9 +28,9 @@ export let open = async (filename: string, classname: string) => {
 class ExperimentTreeItem extends vscode.TreeItem {
 	constructor(
 		name: string,
+		exp: experiment.SyncInfo,
 	) {
 		super(name);
-		let exp = experiment.repo.struct[name];
 
 		this.tooltip = `${exp.file}:${exp.class_name}`;
 		let color = new vscode.ThemeColor("symbolIcon.classForeground");
@@ -44,7 +44,9 @@ class ExperimentTreeItem extends vscode.TreeItem {
 	}
 }
 
-class ExplorerProvider implements vscode.TreeDataProvider<string> {
+class ExplorerProvider implements vscode.TreeDataProvider<ExperimentTreeItem> {
+	public items = new Map<string, ExperimentTreeItem>();
+
 	private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
 	readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
 	public refresh(): void {
@@ -54,22 +56,29 @@ class ExplorerProvider implements vscode.TreeDataProvider<string> {
 
 	constructor() {}
 
-	getTreeItem(name: string): vscode.TreeItem {
-		return new ExperimentTreeItem(name);
+	getTreeItem(item: ExperimentTreeItem): vscode.TreeItem {
+		return item;
 	}
 
 	getParent(): undefined {} // no-op; must be implemented to access TreeView.reveal()
 
-	async getChildren(name?: string): Promise<string[]> {
-		if (name) { return Promise.resolve([]); }
-
-		if (Object.keys(experiment.repo.struct).length === 0) {
+	async getChildren(element?: ExperimentTreeItem): Promise<ExperimentTreeItem[]> {
+		if (element) { return Promise.resolve([]); }
+		
+		let repo = await experiment.repo;
+		if (Object.keys(repo.struct).length === 0) {
 			view.message = "Populate the repository directory with experiment files ...";
 			return Promise.resolve([]);
 		}
 
 		view.message = "";
-		return Object.keys(experiment.repo.struct);
+		let items = Object.keys(repo.struct).map(name => {
+			let item = new ExperimentTreeItem(name, repo.struct[name]);
+			this.items.set(name, item);
+			return item;
+		});
+
+		return items;
 	}
 }
 
@@ -89,20 +98,25 @@ export let scan = async () => {
 	await net.rpc("experiment_db", "scan_repository", []);
 };
 
-let deselectAll = (names: string[]) => {
+let deselectAll = (items: Map<string, ExperimentTreeItem>) => {
 	// TODO: waiting for feature to ship
 	// see https://github.com/microsoft/vscode/issues/48754
 };
 
-export let update = async () => {
-	provider.refresh();
+export let update = async (refresh?: Boolean) => {
+	if (refresh) { provider.refresh(); }
 
-	let names = Object.keys(experiment.repo.struct);
 	let curr = await experiment.curr();
 	if (!curr) {
-		deselectAll(names);
+		deselectAll(provider.items);
 		return;
 	}
 
-	experiment.inRepo(curr) ? view.reveal(curr.name) : deselectAll(names);
+	if (await experiment.inRepo(curr)) {
+		let item = provider.items.get(curr.name);
+		item && view.reveal(item);
+		return;
+	}
+
+	deselectAll(provider.items);
 };

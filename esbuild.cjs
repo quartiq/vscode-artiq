@@ -27,7 +27,7 @@ async function main() {
   const coreCtx = await esbuild.context({
     entryPoints: ["src/extension.ts"],
     bundle: true,
-    format: "esm",
+    format: "cjs",
     minify: production,
     sourcemap: !production,
     sourcesContent: false,
