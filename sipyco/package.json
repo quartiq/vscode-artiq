@@ -14,6 +14,10 @@
     "./sync_struct": {
       "types": "./dist/sync_struct/sync_struct.d.ts",
       "default": "./dist/sync_struct/sync_struct.js"
+    },
+    "./pc_rpc": {
+      "types": "./dist/pc_rpc/pc_rpc.d.ts",
+      "default": "./dist/pc_rpc/pc_rpc.js"
     }
   },
   "dependencies": {

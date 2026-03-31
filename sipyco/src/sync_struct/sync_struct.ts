@@ -59,6 +59,7 @@ export let from = async <T extends Struct = Struct>(params: {
     notifierName: string,
     onReceive: UpdateHandler,
     onError?: (err: string) => void,
+
 }): Promise<Store & { struct: T }> => {
     let store: Store = { struct: undefined };
     let initDone: mutex.Lock = mutex.lock();

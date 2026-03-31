@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import * as pc_rpc from "sipyco/pc_rpc";
 
 import * as utils from "./utils.js";
 import * as net from "./net.js";
@@ -33,11 +34,11 @@ export interface SyncInfo extends Omit<SubmitInfo, "pipeline_name"> {
     repo_msg: string,
 }
 
-let submit: (exp: experiment.DbInfo) => void = exp => {
+let submit: (exp: experiment.DbInfo) => void = async exp => {
     let file = vscode.window.activeTextEditor?.document.uri.fsPath;
     if (!file) { return; }
 
-    let data: SubmitInfo = {
+    let kwargs: SubmitInfo = {
         pipeline_name: exp.pipeline_name,
         expid: {
             file,
@@ -50,7 +51,13 @@ let submit: (exp: experiment.DbInfo) => void = exp => {
         flush: exp.flush,
     };
 
-    net.rpc("schedule", "submit", [], data);
+    await pc_rpc.from({
+        masterHostname: vscode.workspace.getConfiguration("artiq").get("host")!,
+        targetName: "schedule",
+        methodName: "submit",
+        kwargs,
+        onError: err => vscode.window.showErrorMessage(`schedule submit: ${err}`),
+    });
 
     vscode.window.showInformationMessage(`Submitted experiment: ${exp.name}`);
 };
