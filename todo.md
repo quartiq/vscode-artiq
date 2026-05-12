@@ -1,16 +1,18 @@
-- Widgets
+- refactor editors!
+- make it work for codium AND vscode
+- connect to server on server start
+- Race condition lässt Experiment und Argument view manchmal leer
+- due date aktualisiert immer beim schreiben
+- precision und scale gelten auch für np arrays
 
-- create pyon lib with Odoo's `py_js` in mind
-  - check out npm packages:
-  - json-source-map
-  - json-lexer
-  - json-to-ast
+- Qiskit support
+- Imaging support
+
+- Widgets
 
 - use ThemeIcon IDs directly for commands in package.json
   - get rid of icon files!
 
 - use official ARTIQ "no hardware" example experiment files
 
-- refactor/abstract/automate views
 - rename mutex "locked" to "ready"? see: golang mutex
-- typesafety everywhere
