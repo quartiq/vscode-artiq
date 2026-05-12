@@ -18,6 +18,10 @@
     "./pc_rpc": {
       "types": "./dist/pc_rpc/pc_rpc.d.ts",
       "default": "./dist/pc_rpc/pc_rpc.js"
+    },
+    "./broadcast": {
+      "types": "./dist/broadcast/broadcast.d.ts",
+      "default": "./dist/broadcast/broadcast.js"
     }
   },
   "dependencies": {

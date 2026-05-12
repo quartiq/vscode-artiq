@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
+import * as broadcast from "sipyco/broadcast";
 
 import * as webview from "../webview.js";
-import * as net from "../net.js";
 
 export let view: webview.Provider;
 
@@ -9,8 +9,16 @@ export let init = async (context: vscode.ExtensionContext) => {
     view = new webview.Provider("log", context);
     view.init();
 
-    // see: https://github.com/m-labs/artiq/blob/master/artiq/frontend/artiq_client.py#L347-L348
-    let receiver = await net.receiver(1067, "broadcast", "log");
-    // TODO: use pyon for messaging between core and webview in ALL webviews
-    receiver.on("data", (data: net.Bytes) => view.post(net.parseLines(data)));
+    broadcast.subscribe({
+        masterHostname: vscode.workspace.getConfiguration("artiq").get("host")!,
+        targetName: "log",
+        onReceive: (msg: Message) => view.post(msg),
+    });
 };
+
+export type Message = [
+    level: number,
+    source: string,
+    time: number,
+    message: string,
+];
