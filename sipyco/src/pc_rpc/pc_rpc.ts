@@ -20,7 +20,7 @@ type RpcException = {
 };
 
 type RpcStatus = "ok" | "failed";
-interface MethodMessage {
+export interface MethodMessage {
     status: RpcStatus,
     ret: any,
     exception?: RpcException,

@@ -4,10 +4,10 @@ import * as vscode from "vscode";
 import * as pyon from "sipyco/pyon";
 import * as pyonutils from "sipyco/pyonutils";
 import * as sync_struct from "sipyco/sync_struct";
+import * as pc_rpc from "sipyco/pc_rpc";
 
 import * as utils from "../utils.js";
 import * as units from "../units.js";
-import * as net from "../net.js";
 
 let provider: DatasetsProvider;
 export let view: vscode.TreeView<string>;
@@ -57,11 +57,13 @@ let closestParent = (keypath: string | undefined): string | undefined => {
     return target.join(".");
 };
 
-// unfortunately the interfaces of m-labs/artiq/master/databases:DatasetDB.set()
-// and the underlying data model differ in field order
-// and as they are external interfaces, they can never be harmonized
-// TODO: maybe this will become pretty via kwargs implementation of rpc?
-let submit = async (setpath: string, set?: Dataset) => await net.rpc("dataset_db", "set", [setpath, set?.[1], set?.[0], set?.[2]]);
+let submit = async (setpath: string, set?: Dataset) => await pc_rpc.from({
+    masterHostname: vscode.workspace.getConfiguration("artiq").get("host")!,
+    targetName: "dataset_db",
+    methodName: "set",
+    kwargs: { key: setpath, ...set },
+    onError: err => vscode.window.showErrorMessage(`dataset_db set: ${err}`),
+});
 
 let applyScale = (value: any, meta: Metadata, inverse?: boolean): any => {
     let scale = meta.scale ?? units.scale(meta.unit); // see: m-labs/artiq/tools:scale_from_metadata
@@ -206,7 +208,13 @@ export let move = async (keypath: string) => {
     let newPath = await vscode.window.showInputBox({ prompt: "New path:", value: keypath });
     if (newPath && newPath !== keypath) {
         let set = sets.struct[keypath];
-        net.rpc("dataset_db", "delete", [keypath]);
+        pc_rpc.from({
+            masterHostname: vscode.workspace.getConfiguration("artiq").get("host")!,
+            targetName: "dataset_db",
+            methodName: "delete",
+            kwargs: { key: keypath },
+            onError: err => vscode.window.showErrorMessage(`dataset_db delete: ${err}`),
+        });
         submit(newPath, set);
     }
 };
@@ -219,7 +227,13 @@ export let del = async (keypath: string) => {
         "Delete"
     );
     if (result === "Delete") {
-        net.rpc("dataset_db", "delete", [keypath]);
+        pc_rpc.from({
+            masterHostname: vscode.workspace.getConfiguration("artiq").get("host")!,
+            targetName: "dataset_db",
+            methodName: "delete",
+            kwargs: { key: keypath },
+            onError: err => vscode.window.showErrorMessage(`dataset_db delete: ${err}`),
+        });
     }
 };
 

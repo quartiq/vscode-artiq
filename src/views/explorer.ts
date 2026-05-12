@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
+import * as pc_rpc from "sipyco/pc_rpc";
 
-import * as net from "../net.js";
 import * as experiment from "../experiment.js";
 
 let provider: ExplorerProvider;
@@ -95,7 +95,12 @@ export let init = async () => {
 
 export let scan = async () => {
 	vscode.window.showInformationMessage("Scanning repository directory ...");
-	await net.rpc("experiment_db", "scan_repository", []);
+	await pc_rpc.from({
+		masterHostname: vscode.workspace.getConfiguration("artiq").get("host")!,
+		targetName: "experiment_db",
+		methodName: "scan_repository",
+		onError: err => vscode.window.showErrorMessage(`experiment_db scan_repository: ${err}`),
+	});
 };
 
 let deselectAll = (items: Map<string, ExperimentTreeItem>) => {

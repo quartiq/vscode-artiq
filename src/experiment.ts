@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as sync_struct from "sipyco/sync_struct";
+import * as pc_rpc from "sipyco/pc_rpc";
 
 import * as dbio from "./dbio.js";
-import * as net from "./net.js";
 import * as argument from "./argument.js";
 import * as entries from "./entries.js";
 
@@ -74,7 +74,12 @@ export let repo: Promise<Store> = new Promise(resolve => {
 });
 
 export let repoRoot: Promise<string> = new Promise(resolve => {
-	net.rpc("experiment_db", "root", []).then((data: net.RpcObject | undefined) => resolve(data?.ret));
+    pc_rpc.from({
+        masterHostname: vscode.workspace.getConfiguration("artiq").get("host")!,
+        targetName: "experiment_db",
+        methodName: "root",
+        onError: err => vscode.window.showErrorMessage(`experiment_db root: ${err}`),
+    }).then((data: pc_rpc.MethodMessage | undefined) => resolve(data?.ret));
 });
 
 let key = (exp: DbInfo) => ["experiments", exp.path, exp.class_name].join();
@@ -100,13 +105,19 @@ type ExamineInfo = {
 }
 
 type ExamineDict = Record<ClassName, ExamineInfo>
-interface RpcObject extends net.RpcObject {
+interface RpcObject extends pc_rpc.MethodMessage {
     ret: ExamineDict,
 }
 
 export let examineFile: () => Promise<void> = async () => {
     let path = vscode.window.activeTextEditor!.document.uri.fsPath;
-    let resp: RpcObject | undefined = await net.rpc("experiment_db", "examine", [path, false]);
+    let resp: RpcObject | undefined = await pc_rpc.from({
+        masterHostname: vscode.workspace.getConfiguration("artiq").get("host")!,
+        targetName: "experiment_db",
+        methodName: "examine",
+        kwargs: { filename: path, use_repository: false },
+        onError: err => vscode.window.showErrorMessage(`experiment_db examine: ${err}`),
+    });
     if (resp === undefined) { return; }
 
     vscode.window.showInformationMessage(`Examined file: ${resp?.status}`);
