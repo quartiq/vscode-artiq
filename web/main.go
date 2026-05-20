@@ -10,11 +10,13 @@ import (
 )
 
 func viewHandler(w http.ResponseWriter, r *http.Request) {
+	// FIXME: not every view makes use of that stylesheet
 	fmt.Fprintf(w, `
 		<!DOCTYPE html>
 		<html>
 			<head>
 				<link href="/static/%s.css" rel="stylesheet">
+				<link href="/node_modules/gridstack/dist/gridstack.min.css" rel="stylesheet">
 			</head>
 			<body>
 				<script type="module" src="/static/%s.js"></script>
@@ -30,6 +32,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/", viewHandler)
 	http.HandleFunc("/static/", fileHandler)
+	http.HandleFunc("/node_modules/", fileHandler)
 	http.HandleFunc("/proxy/", proxy.HandlerFunc)
 
 	if len(os.Args) < 2 {
