@@ -103,7 +103,7 @@ let ScanEntry: Entry<argument.Scannable> = {
         // see: artiq/gui/entries:ScanEntry.default_state
         const scale = procdesc.scale;
         return {
-            selected: "NoScan",
+            selected: procdesc.default[0].ty ?? "NoScan",
             NoScan: { value: 0, repetitions: 1 },
             RangeScan: { start: 0, stop: 100 * scale, npoints: 10, randomize: false, seed: null },
             CenterScan: { center: 0, span: 100 * scale, step: 10 * scale, randomize: false, seed: null },

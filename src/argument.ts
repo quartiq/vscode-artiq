@@ -2,14 +2,18 @@ import * as scan from "./scan.js";
 
 export type Name = string;
 export type State<P extends Procdesc> = P extends Scannable ? scan.ScanState : P["default"];
+export type SubmitState<P extends Procdesc> = P extends Scannable ? scan.ScanObject : P["default"];
 
 export type Argument<P extends Procdesc, S = State<P>> = [ procdesc: P, group: string, tooltip: string, state: S ];
 export type SyncInfo<P extends Procdesc> = Record<Name, Argument<P>>;
-export type SubmitInfo<P extends Procdesc> = Record<Name, State<P>>;
+export type SubmitInfo<P extends Procdesc> = Record<Name, SubmitState<P>>;
 export type RowInfo<P extends Procdesc> = { name: Name, arg: Argument<P>, state: State<P> };
 
 export let toSubmitInfo = <P extends Procdesc>(syncinfo: SyncInfo<P>): SubmitInfo<P> => {
-    let entries = Object.entries(syncinfo).map(([k, v]) => [k, v[3]]);
+    let entries = Object.entries(syncinfo).map(([k, v]) => {
+		if (v[0].ty === "Scannable") return [k, v[3][v[3].selected]];
+		return [k, v[3]];
+	});
     return Object.fromEntries(entries);
 };
 
