@@ -1,0 +1,1 @@
+export let foo = (argv: string[]) => console.log(argv);

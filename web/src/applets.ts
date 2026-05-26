@@ -1,4 +1,6 @@
+import shellQuote from "shell-quote";
 import { GridStack, Utils } from "gridstack";
+
 import * as broadcast from "sipyco/broadcast";
 
 type ArgTypes = {
@@ -40,6 +42,16 @@ let normalize = <S extends ServiceName>(msg: CCBMessage<S>): KwargTypes[S] => {
     return { ...args, ...msg.kwargs } as KwargTypes[S];
 };
 
+import * as plot_xy from "./applets/plot_xy.js";
+
+type AppletInterface = {
+    foo: Function,
+};
+
+export const applets: Record<string, AppletInterface> = {
+    plot_xy,
+};
+
 let create = (args: KwargTypes["create_applet"]) => {
     let w = Utils.find(grid.engine.nodes, args.name);
     if (w && w.el) {
@@ -47,6 +59,9 @@ let create = (args: KwargTypes["create_applet"]) => {
         return;
     }
 
+    // TODO: create proper content
+    let [name, ...argv] = shellQuote.parse(args.command) as string[];
+    applets[name].foo(argv);
     grid.addWidget({ id: args.name, w: 2, content: "FOOOBAR" });
 };
 

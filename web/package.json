@@ -4,14 +4,18 @@
   "type": "module",
   "dependencies": {
     "gridstack": "^12.6.0",
+    "shell-quote": "^1.8.4",
     "sipyco": "file:../sipyco"
   },
   "scripts": {
     "build:sipyco": "npm --prefix ../sipyco install && npm --prefix ../sipyco audit fix && npm --prefix ../sipyco run build",
-    "build:web": "esbuild src/* --bundle --outdir=static --format=esm",
+    "build:web": "esbuild ./src/* --bundle --outdir=static --format=esm",
     "build": "npm run build:sipyco && npm run build:web",
     "watch:sipyco": "npm --prefix ../sipyco run watch",
-    "watch:web": "esbuild src/* --bundle --outdir=static --format=esm --watch",
+    "watch:web": "esbuild ./src/* --bundle --outdir=static --format=esm --watch",
     "watch": "npm-run-all -p watch:sipyco watch:web"
+  },
+  "devDependencies": {
+    "@types/shell-quote": "^1.7.5"
   }
 }
