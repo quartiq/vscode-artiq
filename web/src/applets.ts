@@ -1,4 +1,5 @@
 import shellQuote from "shell-quote";
+import minimist from "minimist";
 import { GridStack, Utils } from "gridstack";
 
 import * as broadcast from "sipyco/broadcast";
@@ -45,7 +46,7 @@ let normalize = <S extends ServiceName>(msg: CCBMessage<S>): KwargTypes[S] => {
 import * as plot_xy from "./applets/plot_xy.js";
 
 type AppletInterface = {
-    foo: Function,
+    from: (args: minimist.ParsedArgs) => void,
 };
 
 export const applets: Record<string, AppletInterface> = {
@@ -61,7 +62,7 @@ let create = (args: KwargTypes["create_applet"]) => {
 
     // TODO: create proper content
     let [name, ...argv] = shellQuote.parse(args.command) as string[];
-    applets[name].foo(argv);
+    applets[name].from(minimist(argv));
     grid.addWidget({ id: args.name, w: 2, content: "FOOOBAR" });
 };
 
