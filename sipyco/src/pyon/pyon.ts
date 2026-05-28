@@ -27,6 +27,7 @@ export type TypeName = keyof typeof types;
 
 // TODO: export all types?
 export { Dict } from "./dict.js"; // FIXME: this lacks something like `& { __jsonclass__: "dict" }`
+export { NpArray } from "./nparray.js"; // FIXME: this lacks something like `& { __jsonclass__: "nparray" }`
 
 let isMarked = (v: any): boolean => v &&
     typeof v === "object" &&

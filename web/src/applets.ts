@@ -1,74 +1,47 @@
 import shellQuote from "shell-quote";
 import minimist from "minimist";
-import { GridStack, Utils } from "gridstack";
-
+import { GridItemHTMLElement, GridStack, Utils } from "gridstack";
+import * as sync_struct from "sipyco/sync_struct";
 import * as broadcast from "sipyco/broadcast";
 
-type ArgTypes = {
-    create_applet: [ string, string, string, string ],
-    restart_applet: [ string, string ],
-    disable_applet: [ string, string ],
+type CCBArgTypes = {
+    create_applet: [ AppletName, string, string, string ],
+    restart_applet: [ AppletName, string ],
+    disable_applet: [ AppletName, string ],
     disable_applet_group: [ string ],
 };
 
-type KwargTypes = {
-    create_applet: { name: string, command: string, group: string, code: string },
-    restart_applet: { name: string, group: string },
-    disable_applet: { name: string, group: string },
+type CCBKwargTypes = {
+    create_applet: { name: AppletName, command: string, group: string, code: string },
+    restart_applet: { name: AppletName, group: string },
+    disable_applet: { name: AppletName, group: string },
     disable_applet_group: { group: string },
 };
 
-type ServiceName = keyof KwargTypes;
-
-type CCBMessage<S extends ServiceName> = {
-    service: S,
-    args: ArgTypes[S],
-    kwargs: KwargTypes[S],
-};
-
-type AnyCCBMessage = {
-    [S in ServiceName]: CCBMessage<S>
-}[ServiceName]
-
-let keyLists: { [K in ServiceName]: Array<keyof KwargTypes[K]> } = {
+let keyLists: { [K in CCBServiceName]: Array<keyof CCBKwargTypes[K]> } = {
     create_applet: [ "name", "command", "group", "code" ],
     restart_applet: [ "name", "group" ],
     disable_applet: [ "name", "group" ],
     disable_applet_group: [ "group" ],
 };
 
-let normalize = <S extends ServiceName>(msg: CCBMessage<S>): KwargTypes[S] => {
-    let keys = keyLists[msg.service] as (keyof KwargTypes[S])[];
+type CCBServiceName = keyof CCBKwargTypes;
+
+type CCBMessage<S extends CCBServiceName> = {
+    service: S,
+    args: CCBArgTypes[S],
+    kwargs: CCBKwargTypes[S],
+};
+
+type AnyCCBMessage = {
+    [S in CCBServiceName]: CCBMessage<S>
+}[CCBServiceName]
+
+let normalize = <S extends CCBServiceName>(msg: CCBMessage<S>): CCBKwargTypes[S] => {
+    let keys = keyLists[msg.service] as (keyof CCBKwargTypes[S])[];
     let args = msg.args.reduce((a, v, i) => ({ ...a, [keys[i]]: v}), {});
-    return { ...args, ...msg.kwargs } as KwargTypes[S];
+    return { ...args, ...msg.kwargs } as CCBKwargTypes[S];
 };
-
-import * as plot_xy from "./applets/plot_xy.js";
-
-type AppletInterface = {
-    from: (args: minimist.ParsedArgs) => void,
-};
-
-export const applets: Record<string, AppletInterface> = {
-    plot_xy,
-};
-
-let create = (args: KwargTypes["create_applet"]) => {
-    let w = Utils.find(grid.engine.nodes, args.name);
-    if (w && w.el) {
-        grid.update(w.el, { content: "UPDATED" });
-        return;
-    }
-
-    // TODO: create proper content
-    let [name, ...argv] = shellQuote.parse(args.command) as string[];
-    applets[name].from(minimist(argv));
-    grid.addWidget({ id: args.name, w: 2, content: "FOOOBAR" });
-};
-
-let restart = (args: KwargTypes["restart_applet"]) => {}; // TODO
-let disable = (args: KwargTypes["disable_applet"]) => {}; // TODO
-let disableGroup = (args: KwargTypes["disable_applet_group"]) => {}; // TODO
 
 broadcast.subscribe({
     masterHostname: "localhost",
@@ -93,6 +66,62 @@ broadcast.subscribe({
     },
     onError: err => console.error("applets: Connection error. Is ARTIQ server running?", err),
 });
+
+type ArgName = string;
+type ArgsMap = Record<ArgName, Keypath>;
+type Args = Record<ArgName, any>;
+type Applet = {
+    argsMap: ArgsMap,
+    draw: (args: Args) => string,
+};
+
+type AppletInterface = {
+    from: (args: minimist.ParsedArgs) => Applet,
+};
+
+import * as plot_xy from "./applets/plot_xy.js";
+
+export let applets: Record<string, AppletInterface> = {
+    plot_xy,
+};
+
+type Keypath = string;
+type Metadata = { unit: string, scale: number, precision: number };
+type Dataset = [ persist: boolean, value: any, metadata: Metadata ];
+type Store = sync_struct.Store & { struct: Record<Keypath, Dataset> };
+let sets: Store = await sync_struct.from({
+    masterHostname: "localhost",
+    notifierName: "datasets",
+    onReceive: (store: sync_struct.Store, mod: sync_struct.Mod) => {},
+});
+
+type AppletName = string;
+type loopId = number;
+let loops: Record<AppletName, loopId> = {};
+
+let deriveArgs = (argsMap: ArgsMap, sets: Store) => Object.fromEntries(Object.entries(argsMap)
+    .map(([ argName, keypath ]) => [ argName, sets.struct[keypath][1] ]));
+
+let create = async (args: CCBKwargTypes["create_applet"]) => {
+    let node = Utils.find(grid.engine.nodes, args.name);
+    let wel = node?.el ?? grid.addWidget({ id: args.name, w: 2 });
+
+    let [name, ...argv] = shellQuote.parse(args.command) as string[];
+    let applet = await applets[name].from(minimist(argv));
+
+    let loop = () => {
+        let args = deriveArgs(applet.argsMap, sets);
+        grid.update(wel, { content: applet.draw(args) });
+        window.requestAnimationFrame(loop);
+    };
+
+    window.cancelAnimationFrame(loops[args.name]);
+    loops[args.name] = window.requestAnimationFrame(loop);
+};
+
+let restart = (args: CCBKwargTypes["restart_applet"]) => {}; // TODO
+let disable = (args: CCBKwargTypes["disable_applet"]) => {}; // TODO
+let disableGroup = (args: CCBKwargTypes["disable_applet_group"]) => {}; // TODO
 
 let el = document.createElement("div");
 el.classList.add("grid-stack");

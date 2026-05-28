@@ -1,6 +1,6 @@
 import * as npscalar from "./npscalar.js";
 
-type NpArray = npscalar.NpScalar & { __shape__: number[] };
+export type NpArray = npscalar.NpScalar & { __shape__: number[] };
 type Params = [ shape: number[], ...npscalar.Params ];
 type ParamsHuman = [ shape: number[], ...npscalar.ParamsHuman ];
 
