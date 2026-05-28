@@ -72,7 +72,8 @@ type ArgsMap = Record<ArgName, Keypath>;
 type Args = Record<ArgName, any>;
 type Applet = {
     argsMap: ArgsMap,
-    draw: (args: Args) => string,
+    setup: (wel: GridItemHTMLElement, args: Args) => void,
+    update: (wel: GridItemHTMLElement, args: Args) => void,
 };
 
 type AppletInterface = {
@@ -103,15 +104,18 @@ let deriveArgs = (argsMap: ArgsMap, sets: Store) => Object.fromEntries(Object.en
     .map(([ argName, keypath ]) => [ argName, sets.struct[keypath][1] ]));
 
 let create = async (args: CCBKwargTypes["create_applet"]) => {
-    let node = Utils.find(grid.engine.nodes, args.name);
-    let wel = node?.el ?? grid.addWidget({ id: args.name, w: 2 });
 
     let [name, ...argv] = shellQuote.parse(args.command) as string[];
     let applet = await applets[name].from(minimist(argv));
 
+    let node = Utils.find(grid.engine.nodes, args.name);
+    let wel = node?.el ?? grid.addWidget({ id: args.name, w: 10 });
+
+    wel.innerHTML = "";
+    applet.setup(wel, deriveArgs(applet.argsMap, sets));
+
     let loop = () => {
-        let args = deriveArgs(applet.argsMap, sets);
-        grid.update(wel, { content: applet.draw(args) });
+        applet.update(wel, deriveArgs(applet.argsMap, sets));
         window.requestAnimationFrame(loop);
     };
 
