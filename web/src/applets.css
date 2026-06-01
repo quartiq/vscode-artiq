@@ -1,0 +1,5 @@
+@import "../node_modules/gridstack/dist/gridstack.min.css";
+
+.grid-stack-item > * {
+    height: 100% !important;
+}
