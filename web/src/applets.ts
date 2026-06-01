@@ -1,6 +1,6 @@
 import shellQuote from "shell-quote";
 import minimist from "minimist";
-import { GridItemHTMLElement, GridStack, Utils } from "gridstack";
+import { GridItemHTMLElement, GridStackWidget, GridStack, Utils } from "gridstack";
 import * as sync_struct from "sipyco/sync_struct";
 import * as broadcast from "sipyco/broadcast";
 
@@ -71,6 +71,7 @@ type ArgName = string;
 type ArgsMap = Record<ArgName, Keypath>;
 type Args = Record<ArgName, any>;
 type Applet = {
+    gridDefaults: GridStackWidget,
     argsMap: ArgsMap,
     setup: (wel: GridItemHTMLElement, args: Args) => void,
     update: (wel: GridItemHTMLElement, args: Args) => void,
@@ -109,7 +110,7 @@ let create = async (args: CCBKwargTypes["create_applet"]) => {
     let applet = await applets[name].from(minimist(argv));
 
     let node = Utils.find(grid.engine.nodes, args.name);
-    let wel = node?.el ?? grid.addWidget({ id: args.name, w: 10 });
+    let wel = node?.el ?? grid.addWidget({ id: args.name, ...applet.gridDefaults });
 
     wel.innerHTML = "";
     applet.setup(wel, deriveArgs(applet.argsMap, sets));
