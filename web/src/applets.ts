@@ -1,6 +1,6 @@
 import shellQuote from "shell-quote";
 import minimist from "minimist";
-import { GridItemHTMLElement, GridStackWidget, GridStack, Utils } from "gridstack";
+import { GridItemHTMLElement, GridStackWidget, GridStack, Utils, GridStackElementHandler } from "gridstack";
 import * as sync_struct from "sipyco/sync_struct";
 import * as broadcast from "sipyco/broadcast";
 
@@ -73,8 +73,9 @@ type Args = Record<ArgName, any>;
 type Applet = {
     gridDefaults: GridStackWidget,
     argsMap: ArgsMap,
-    setup: (wel: GridItemHTMLElement, args: Args) => void,
-    update: (wel: GridItemHTMLElement, args: Args) => void,
+    setup: (wel: HTMLElement, args: Args) => void,
+    update: (wel: HTMLElement, args: Args) => void,
+    onResize: GridStackElementHandler,
 };
 
 type AppletInterface = {
@@ -104,24 +105,41 @@ let loops: Record<AppletName, loopId> = {};
 let deriveArgs = (argsMap: ArgsMap, sets: Store) => Object.fromEntries(Object.entries(argsMap)
     .map(([ argName, keypath ]) => [ argName, sets.struct[keypath][1] ]));
 
+let newWidget = (name: string, defaults: GridStackWidget): HTMLElement => {
+    let el = grid.addWidget({ id: name, ...defaults });
+
+    let header = document.createElement("div");
+    header.classList.add("widget-header");
+    header.innerText = name;
+
+    let body = document.createElement("div");
+    body.classList.add("widget-body");
+
+    el.querySelector(".grid-stack-item-content")!.append(header, body);
+    return body;
+};
+
 let create = async (args: CCBKwargTypes["create_applet"]) => {
 
     let [name, ...argv] = shellQuote.parse(args.command) as string[];
     let applet = await applets[name].from(minimist(argv));
 
     let node = Utils.find(grid.engine.nodes, args.name);
-    let wel = node?.el ?? grid.addWidget({ id: args.name, ...applet.gridDefaults });
+    let wel = node?.el?.querySelector(".widget-body") ?? newWidget(args.name, applet.gridDefaults);
 
     wel.innerHTML = "";
-    applet.setup(wel, deriveArgs(applet.argsMap, sets));
+    applet.setup(wel as HTMLElement, deriveArgs(applet.argsMap, sets));
 
     let loop = () => {
-        applet.update(wel, deriveArgs(applet.argsMap, sets));
-        window.requestAnimationFrame(loop);
+        // TODO don't poll, only redraw on demand
+        applet.update(wel as HTMLElement, deriveArgs(applet.argsMap, sets));
+        loops[args.name] = window.requestAnimationFrame(loop);
     };
 
     window.cancelAnimationFrame(loops[args.name]);
     loops[args.name] = window.requestAnimationFrame(loop);
+
+    grid.on("resizestop", applet.onResize); // TODO tear this down when applet dies
 };
 
 let restart = (args: CCBKwargTypes["restart_applet"]) => {}; // TODO
@@ -131,4 +149,4 @@ let disableGroup = (args: CCBKwargTypes["disable_applet_group"]) => {}; // TODO
 let el = document.createElement("div");
 el.classList.add("grid-stack");
 document.body.append(el);
-let grid = GridStack.init();
+let grid = GridStack.init(); // TODO separate gridstack and plotly pointer UI

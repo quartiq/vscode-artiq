@@ -34,8 +34,10 @@ export let from = (args: minimist.ParsedArgs) => {
         showlegend: false
     };
 
+    let plotel: HTMLElement;
+
     let setup = (el: HTMLElement, args: Record<string, any>) => {
-        let plotel = document.createElement("div");
+        plotel = document.createElement("div");
         plotel.classList.add("plot_xy");
         el.append(plotel);
         Plotly.newPlot(plotel, data(args as Args), layout, {
@@ -46,9 +48,12 @@ export let from = (args: minimist.ParsedArgs) => {
 
     let update = (el: HTMLElement, args: Record<string, any>) => {
         // FIXME: grinding to a halt?
-        let plotel = el.querySelector(".plot_xy") as HTMLElement;
         Plotly.react(plotel, data(args as Args), layout);
     };
 
-    return { gridDefaults, argsMap, setup, update };
+    let onResize = (ev: Event, el: HTMLElement) => {
+        Plotly.Plots.resize(plotel);
+    };
+
+    return { gridDefaults, argsMap, setup, update, onResize };
 };
