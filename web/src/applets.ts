@@ -1,6 +1,6 @@
 import shellQuote from "shell-quote";
 import minimist from "minimist";
-import { GridItemHTMLElement, GridStackWidget, GridStack, Utils, GridStackElementHandler } from "gridstack";
+import { GridStackWidget, GridStack, GridStackElementHandler } from "gridstack";
 import * as sync_struct from "sipyco/sync_struct";
 import * as broadcast from "sipyco/broadcast";
 
@@ -124,8 +124,9 @@ let create = async (args: CCBKwargTypes["create_applet"]) => {
     let [name, ...argv] = shellQuote.parse(args.command) as string[];
     let applet = await applets[name].from(minimist(argv));
 
-    let node = Utils.find(grid.engine.nodes, args.name);
-    let wel = node?.el?.querySelector(".widget-body") ?? newWidget(args.name, applet.gridDefaults);
+    // can not make use of Utils.find() since it holds stale DOM references during drag
+    let wel = grid.el.querySelector(`[gs-id="${args.name}"] .widget-body`) as HTMLElement;
+    if (!wel) wel = newWidget(args.name, applet.gridDefaults);
 
     wel.innerHTML = "";
     applet.setup(wel as HTMLElement, deriveArgs(applet.argsMap, sets));
