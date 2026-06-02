@@ -101,6 +101,7 @@ let sets: Store = await sync_struct.from({
 type AppletName = string;
 type loopId = number;
 let loops: Record<AppletName, loopId> = {};
+let resizeHandlers: Record<AppletName, GridStackElementHandler> = {};
 
 let deriveArgs = (argsMap: ArgsMap, sets: Store) => Object.fromEntries(Object.entries(argsMap)
     .map(([ argName, keypath ]) => [ argName, sets.struct[keypath][1] ]));
@@ -140,7 +141,7 @@ let create = async (args: CCBKwargTypes["create_applet"]) => {
     window.cancelAnimationFrame(loops[args.name]);
     loops[args.name] = window.requestAnimationFrame(loop);
 
-    grid.on("resizestop", applet.onResize); // TODO tear this down when applet dies
+    resizeHandlers[args.name] = applet.onResize;
 };
 
 let restart = (args: CCBKwargTypes["restart_applet"]) => {}; // TODO
@@ -150,4 +151,6 @@ let disableGroup = (args: CCBKwargTypes["disable_applet_group"]) => {}; // TODO
 let el = document.createElement("div");
 el.classList.add("grid-stack");
 document.body.append(el);
+
 let grid = GridStack.init(); // TODO separate gridstack and plotly pointer UI
+grid.on("resizestop", (ev, el) => resizeHandlers[el.gridstackNode?.id as string](ev, el));
