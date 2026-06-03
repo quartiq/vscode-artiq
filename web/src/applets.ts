@@ -84,8 +84,44 @@ type AppletInterface = {
 
 import * as plot_xy from "./applets/plot_xy.js";
 
-export let applets: Record<string, AppletInterface> = {
+export let appletTypes: Record<string, AppletInterface> = {
     plot_xy,
+};
+
+let keypath = (mod: sync_struct.SetitemMod | sync_struct.DelitemMod) => {
+    if (mod.path.length !== 0) return mod.path[0];
+    return mod.key;
+};
+
+let findWidgetElement = (name: AppletName): HTMLElement => {
+    // can not make use of Utils.find() since it holds stale DOM references during drag
+    return grid.el.querySelector(`[gs-id="${name}"] .widget-body`) as HTMLElement;
+};
+
+let dirtyApplets = new Set<AppletName>();
+let flushScheduled = false;
+
+let scheduleUpdate = (name: AppletName) => {
+    dirtyApplets.add(name);
+    if (flushScheduled) return;
+
+    flushScheduled = true;
+    window.requestAnimationFrame(() => {
+        flushScheduled = false;
+
+        let pending = dirtyApplets;
+        dirtyApplets = new Set();
+
+        pending.forEach(name => {
+            let applet = applets[name];
+            let wel = findWidgetElement(name);
+            try {
+                applet.update(wel, deriveArgs(applet.argsMap, sets));
+            } catch (err) {
+                console.error(`applets: failed to update "${name}"`, err);
+            }
+        });
+    });
 };
 
 type Keypath = string;
@@ -95,13 +131,17 @@ type Store = sync_struct.Store & { struct: Record<Keypath, Dataset> };
 let sets: Store = await sync_struct.from({
     masterHostname: "localhost",
     notifierName: "datasets",
-    onReceive: (store: sync_struct.Store, mod: sync_struct.Mod) => {},
+    onReceive: (store: sync_struct.Store, mod: sync_struct.Mod) => {
+        if (mod.action === "init") return;
+
+        Object.entries(applets)
+            .filter(([_, applet]) => Object.values(applet.argsMap).includes(keypath(mod)))
+            .forEach(([name]) => scheduleUpdate(name));
+    },
 });
 
 type AppletName = string;
-type loopId = number;
-let loops: Record<AppletName, loopId> = {};
-let resizeHandlers: Record<AppletName, GridStackElementHandler> = {};
+let applets: Record<AppletName, Applet> = {};
 
 let deriveArgs = (argsMap: ArgsMap, sets: Store) => Object.fromEntries(Object.entries(argsMap)
     .map(([ argName, keypath ]) => [ argName, sets.struct[keypath][1] ]));
@@ -121,27 +161,19 @@ let newWidget = (name: string, defaults: GridStackWidget): HTMLElement => {
 };
 
 let create = async (args: CCBKwargTypes["create_applet"]) => {
+    // what "args" may consist of:
+    // { name: "code_applet_example", command: "code_applet_dataset", code: 'from PyQt6 import QtWidgets\n\nfrom artiq.applets.simple import SimpleApplet\n\n\nclass DemoWidget(QtWidgets.QLabel):\n    def __init__(self, args, ctl):\n        QtWidgets.QLabel.__init__(self)\n        self.dataset_name = args.dataset\n\n    def data_changed(self, value, metadata, persist, mods):\n        try:\n            n = str(value[self.dataset_name])\n        except (KeyError, ValueError, TypeError):\n            n = "---"\n        n = "<font size=15>" + n + "</font>"\n        self.setText(n)\n\n\ndef main():\n    applet = SimpleApplet(DemoWidget)\n    applet.add_dataset("dataset", "dataset to show")\n    applet.run()\n\nif __name__ == "__main__":\n    main()\n', group: "autoapplet" }
+    // { name: "flopping_f", command: "${artiq_applet}plot_xy flopping_f_brightness --x flopping_f_frequency --fit flopping_f_fit" }
 
     let [name, ...argv] = shellQuote.parse(args.command) as string[];
-    let applet = await applets[name].from(minimist(argv));
+    let applet = await appletTypes[name].from(minimist(argv));
 
-    // can not make use of Utils.find() since it holds stale DOM references during drag
-    let wel = grid.el.querySelector(`[gs-id="${args.name}"] .widget-body`) as HTMLElement;
+    let wel = findWidgetElement(args.name);
     if (!wel) wel = newWidget(args.name, applet.gridDefaults);
 
     wel.innerHTML = "";
     applet.setup(wel as HTMLElement, deriveArgs(applet.argsMap, sets));
-
-    let loop = () => {
-        // TODO don't poll, only redraw on demand
-        applet.update(wel as HTMLElement, deriveArgs(applet.argsMap, sets));
-        loops[args.name] = window.requestAnimationFrame(loop);
-    };
-
-    window.cancelAnimationFrame(loops[args.name]);
-    loops[args.name] = window.requestAnimationFrame(loop);
-
-    resizeHandlers[args.name] = applet.onResize;
+    applets[args.name] = applet; // after applet.setup() to omit race with applet.update()
 };
 
 let restart = (args: CCBKwargTypes["restart_applet"]) => {}; // TODO
@@ -153,4 +185,4 @@ el.classList.add("grid-stack");
 document.body.append(el);
 
 let grid = GridStack.init(); // TODO separate gridstack and plotly pointer UI
-grid.on("resizestop", (ev, el) => resizeHandlers[el.gridstackNode?.id as string](ev, el));
+grid.on("resizestop", (ev, el) => applets[el.gridstackNode?.id as string].onResize(ev, el));
