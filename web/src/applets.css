@@ -1,13 +1,28 @@
 @import "../node_modules/gridstack/dist/gridstack.min.css";
 
-.grid-stack-item-content {
-    top: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    left: 0 !important;
+.grid-stack-item {
+    border: 1px solid blue;
+}
+
+.grid-stack-item > .ui-resizable-se {
+    bottom: 0;
+    right: 0;
+}
+
+.grid-stack > .grid-stack-item > .grid-stack-item-content {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
 
     display: grid;
     grid-template-rows: auto 1fr;
+}
+
+.widget-header {
+    cursor: move;
+    background: blue;
+    color: white;
 }
 
 .widget-body {

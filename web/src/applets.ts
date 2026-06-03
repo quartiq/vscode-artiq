@@ -147,7 +147,11 @@ let deriveArgs = (argsMap: ArgsMap, sets: Store) => Object.fromEntries(Object.en
     .map(([ argName, keypath ]) => [ argName, sets.struct[keypath][1] ]));
 
 let newWidget = (name: string, defaults: GridStackWidget): HTMLElement => {
-    let el = grid.addWidget({ id: name, ...defaults });
+    let item = document.createElement("div");
+    item.classList.add("grid-stack-item");
+
+    let content = document.createElement("div");
+    content.classList.add("grid-stack-item-content");
 
     let header = document.createElement("div");
     header.classList.add("widget-header");
@@ -156,7 +160,13 @@ let newWidget = (name: string, defaults: GridStackWidget): HTMLElement => {
     let body = document.createElement("div");
     body.classList.add("widget-body");
 
-    el.querySelector(".grid-stack-item-content")!.append(header, body);
+    content.append(header, body);
+    item.append(content);
+    grid.el.append(item);
+
+    // need to do it this way opposed to .addWidget()
+    // to register drag area via "handle" option during init
+    grid.makeWidget(item, { id: name, ...defaults });
     return body;
 };
 
@@ -184,5 +194,5 @@ let el = document.createElement("div");
 el.classList.add("grid-stack");
 document.body.append(el);
 
-let grid = GridStack.init(); // TODO separate gridstack and plotly pointer UI
+let grid = GridStack.init({ handle: ".widget-header" });
 grid.on("resizestop", (ev, el) => applets[el.gridstackNode?.id as string].onResize(ev, el));
