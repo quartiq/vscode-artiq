@@ -176,7 +176,12 @@ let create = async (args: CCBKwargTypes["create_applet"]) => {
     // { name: "flopping_f", command: "${artiq_applet}plot_xy flopping_f_brightness --x flopping_f_frequency --fit flopping_f_fit" }
 
     let [name, ...argv] = shellQuote.parse(args.command) as string[];
-    let applet = await appletTypes[name].from(minimist(argv));
+    let type = appletTypes[name];
+    if (!type) {
+        console.error(`Applet type not yet implemented: ${name}`);
+        return;
+    }
+    let applet = await type.from(minimist(argv));
 
     let wel = findWidgetElement(args.name);
     if (!wel) wel = newWidget(args.name, applet.gridDefaults);
