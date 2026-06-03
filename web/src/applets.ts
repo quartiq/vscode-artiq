@@ -4,69 +4,6 @@ import { GridStackWidget, GridStack, GridStackElementHandler } from "gridstack";
 import * as sync_struct from "sipyco/sync_struct";
 import * as broadcast from "sipyco/broadcast";
 
-type CCBArgTypes = {
-    create_applet: [ AppletName, string, string, string ],
-    restart_applet: [ AppletName, string ],
-    disable_applet: [ AppletName, string ],
-    disable_applet_group: [ string ],
-};
-
-type CCBKwargTypes = {
-    create_applet: { name: AppletName, command: string, group: string, code: string },
-    restart_applet: { name: AppletName, group: string },
-    disable_applet: { name: AppletName, group: string },
-    disable_applet_group: { group: string },
-};
-
-let keyLists: { [K in CCBServiceName]: Array<keyof CCBKwargTypes[K]> } = {
-    create_applet: [ "name", "command", "group", "code" ],
-    restart_applet: [ "name", "group" ],
-    disable_applet: [ "name", "group" ],
-    disable_applet_group: [ "group" ],
-};
-
-type CCBServiceName = keyof CCBKwargTypes;
-
-type CCBMessage<S extends CCBServiceName> = {
-    service: S,
-    args: CCBArgTypes[S],
-    kwargs: CCBKwargTypes[S],
-};
-
-type AnyCCBMessage = {
-    [S in CCBServiceName]: CCBMessage<S>
-}[CCBServiceName]
-
-let normalize = <S extends CCBServiceName>(msg: CCBMessage<S>): CCBKwargTypes[S] => {
-    let keys = keyLists[msg.service] as (keyof CCBKwargTypes[S])[];
-    let args = msg.args.reduce((a, v, i) => ({ ...a, [keys[i]]: v}), {});
-    return { ...args, ...msg.kwargs } as CCBKwargTypes[S];
-};
-
-broadcast.subscribe({
-    masterHostname: "localhost",
-    targetName: "ccb",
-    onReceive: (msg: AnyCCBMessage) => {
-        switch (msg.service) {
-            case "create_applet":
-                create(normalize(msg));
-                break;
-            case "restart_applet":
-                restart(normalize(msg));
-                break;
-            case "disable_applet":
-                disable(normalize(msg));
-                break;
-            case "disable_applet_group":
-                disableGroup(normalize(msg));
-                break;
-            default:
-                console.error(`applets: unknown ccb service "${(msg as any).service}"`);
-        }
-    },
-    onError: err => console.error("applets: Connection error. Is ARTIQ server running?", err),
-});
-
 type ArgName = string;
 type ArgsMap = Record<ArgName, Keypath>;
 type Args = Record<ArgName, any>;
@@ -201,3 +138,66 @@ document.body.append(el);
 
 let grid = GridStack.init({ handle: ".widget-header" });
 grid.on("resizestop", (ev, el) => applets[el.gridstackNode?.id as string].onResize(ev, el));
+
+type CCBArgTypes = {
+    create_applet: [ AppletName, string, string, string ],
+    restart_applet: [ AppletName, string ],
+    disable_applet: [ AppletName, string ],
+    disable_applet_group: [ string ],
+};
+
+type CCBKwargTypes = {
+    create_applet: { name: AppletName, command: string, group: string, code: string },
+    restart_applet: { name: AppletName, group: string },
+    disable_applet: { name: AppletName, group: string },
+    disable_applet_group: { group: string },
+};
+
+let keyLists: { [K in CCBServiceName]: Array<keyof CCBKwargTypes[K]> } = {
+    create_applet: [ "name", "command", "group", "code" ],
+    restart_applet: [ "name", "group" ],
+    disable_applet: [ "name", "group" ],
+    disable_applet_group: [ "group" ],
+};
+
+type CCBServiceName = keyof CCBKwargTypes;
+
+type CCBMessage<S extends CCBServiceName> = {
+    service: S,
+    args: CCBArgTypes[S],
+    kwargs: CCBKwargTypes[S],
+};
+
+type AnyCCBMessage = {
+    [S in CCBServiceName]: CCBMessage<S>
+}[CCBServiceName]
+
+let normalize = <S extends CCBServiceName>(msg: CCBMessage<S>): CCBKwargTypes[S] => {
+    let keys = keyLists[msg.service] as (keyof CCBKwargTypes[S])[];
+    let args = msg.args.reduce((a, v, i) => ({ ...a, [keys[i]]: v}), {});
+    return { ...args, ...msg.kwargs } as CCBKwargTypes[S];
+};
+
+broadcast.subscribe({
+    masterHostname: "localhost",
+    targetName: "ccb",
+    onReceive: (msg: AnyCCBMessage) => {
+        switch (msg.service) {
+            case "create_applet":
+                create(normalize(msg));
+                break;
+            case "restart_applet":
+                restart(normalize(msg));
+                break;
+            case "disable_applet":
+                disable(normalize(msg));
+                break;
+            case "disable_applet_group":
+                disableGroup(normalize(msg));
+                break;
+            default:
+                console.error(`applets: unknown ccb service "${(msg as any).service}"`);
+        }
+    },
+    onError: err => console.error("applets: Connection error. Is ARTIQ server running?", err),
+});
