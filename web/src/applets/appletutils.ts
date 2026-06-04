@@ -13,5 +13,5 @@ export let normalize = (x: any): number[] => {
          // FIXME: this fails for actual BigInt's
         return Array.from(x, v => Number(v));
 
-    return Array.from(x);
+    return Array.from(x ?? []);
 };

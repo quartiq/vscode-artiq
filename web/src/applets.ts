@@ -83,6 +83,7 @@ let sets: Store = await sync_struct.from({
 let applets: Record<AppletName, Applet> = {};
 
 let deriveArgs = (argsMap: ArgsMap, sets: Store) => Object.fromEntries(Object.entries(argsMap)
+    // FIXME accessed as an Object, but can we be sure it's not a pyon.Dict?
     .map(([ argName, keypath ]) => [ argName, sets.struct[keypath]?.[1] ]));
 
 let newWidget = (name: string, defaults: GridStackWidget): HTMLElement => {
@@ -121,17 +122,12 @@ let create = async (args: CCBKwargTypes["create_applet"]) => {
         return;
     }
     let applet = await type.from(minimist(argv));
-    let appletArgs = deriveArgs(applet.argsMap, sets);
-    if (Object.values(appletArgs).includes(undefined)) {
-        console.error("Not all applet args available in datasets:", args.name, appletArgs);
-        return;
-    };
 
     let wel = findWidgetElement(args.name);
     if (!wel) wel = newWidget(args.name, applet.gridDefaults);
     wel.innerHTML = "";
 
-    applet.setup(wel as HTMLElement, appletArgs);
+    applet.setup(wel as HTMLElement, deriveArgs(applet.argsMap, sets));
     applets[args.name] = applet; // after applet.setup() to omit race with applet.update()
 };
 
