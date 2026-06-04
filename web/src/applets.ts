@@ -39,6 +39,7 @@ let dirtyApplets = new Set<AppletName>();
 let flushScheduled = false;
 
 let scheduleUpdate = (name: AppletName) => {
+    // TODO test this, review this
     dirtyApplets.add(name);
     if (flushScheduled) return;
 
@@ -81,7 +82,7 @@ type AppletName = string;
 let applets: Record<AppletName, Applet> = {};
 
 let deriveArgs = (argsMap: ArgsMap, sets: Store) => Object.fromEntries(Object.entries(argsMap)
-    .map(([ argName, keypath ]) => [ argName, sets.struct[keypath][1] ]));
+    .map(([ argName, keypath ]) => [ argName, sets.struct[keypath]?.[1] ]));
 
 let newWidget = (name: string, defaults: GridStackWidget): HTMLElement => {
     let item = document.createElement("div");
@@ -115,16 +116,21 @@ let create = async (args: CCBKwargTypes["create_applet"]) => {
     let [name, ...argv] = shellQuote.parse(args.command) as string[];
     let type = appletTypes[name];
     if (!type) {
-        console.error(`Applet type not yet implemented: ${name}`);
+        console.error("Applet type not yet implemented:", name);
         return;
     }
     let applet = await type.from(minimist(argv));
+    let appletArgs = deriveArgs(applet.argsMap, sets);
+    if (Object.values(appletArgs).includes(undefined)) {
+        console.error("Not all applet args available in datasets:", args.name, appletArgs);
+        return;
+    };
 
     let wel = findWidgetElement(args.name);
     if (!wel) wel = newWidget(args.name, applet.gridDefaults);
-
     wel.innerHTML = "";
-    applet.setup(wel as HTMLElement, deriveArgs(applet.argsMap, sets));
+
+    applet.setup(wel as HTMLElement, appletArgs);
     applets[args.name] = applet; // after applet.setup() to omit race with applet.update()
 };
 

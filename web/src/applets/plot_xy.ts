@@ -13,6 +13,7 @@ type Args = {
 let positionals = [ "y" ];
 
 let data = (args: Args): Plotly.Data[] => [{
+    // TODO make x and fit optional
     name: "data",
     x: normalize(args.x),
     y: normalize(args.y),
