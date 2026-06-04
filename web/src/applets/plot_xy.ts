@@ -2,7 +2,7 @@ import minimist from "minimist";
 import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 
-import { parsePositionals, normalize } from "../appletutils";
+import { parsePositionals, normalize } from "./appletutils";
 
 type Args = {
     y: pyon.NpArray,
