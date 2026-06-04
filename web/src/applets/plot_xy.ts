@@ -6,23 +6,24 @@ import { parsePositionals, normalize } from "./appletutils";
 
 type Args = {
     y: pyon.NpArray,
-    x: pyon.NpArray,
+    x: pyon.NpArray | number[],
     fit: pyon.NpArray,
 };
 
 let positionals = [ "y" ];
 
-let data = (args: Args): Plotly.Data[] => [{
-    // TODO make x and fit optional
-    name: "data",
-    x: normalize(args.x),
-    y: normalize(args.y),
-    mode: "markers",
-}, {
-    name: "fit",
-    x: normalize(args.x),
-    y: normalize(args.fit),
-}];
+let data = (args: Args): Plotly.Data[] => {
+    let x = args.x === undefined ? normalize(args.y).map((y, i) => Number.isNaN(y) ? y : i) : normalize(args.x);
+
+    return [{
+        name: "data",
+        x, y: normalize(args.y),
+        mode: "markers",
+    }, {
+        name: "fit",
+        x, y: normalize(args.fit),
+    }];
+};
 
 export let from = (args: minimist.ParsedArgs) => {
     let gridDefaults = { w: 5, h: 4 };
