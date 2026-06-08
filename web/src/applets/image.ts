@@ -2,27 +2,19 @@ import minimist from "minimist";
 import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 
-import { parsePositionals, normalize } from "./appletutils";
+import { parsePositionals, normalize, reshape } from "./appletutils";
 
 type Args = {
-    y: pyon.NpArray,
-    x: pyon.NpArray,
-    fit: pyon.NpArray,
+    image2d: pyon.NpArray,
 };
 
-let positionals = [ "y" ];
+let positionals = [ "image2d" ];
 
-let data = (args: Args): Plotly.Data[] => {
-    let y = normalize(args.y) as number[];
-    let indices = (y: number[]) => y.map((y, i) => Number.isNaN(y) ? y : i);
-    let x = args.x === undefined ? indices(y) : normalize(args.x) as number[];
-    let fit = normalize(args.fit) as number[];
-
-    return [
-        { name: "data", x, y, mode: "markers" },
-        { name: "fit", x, y: fit },
-    ];
-};
+let data = (args: Args): Plotly.Data[] => [{
+    type: "heatmap",
+    z: reshape(normalize(args.image2d), args.image2d.__shape__),
+    colorscale: "Greys",
+}];
 
 export let from = (args: minimist.ParsedArgs) => {
     let gridDefaults = { w: 5, h: 4 };
@@ -32,14 +24,13 @@ export let from = (args: minimist.ParsedArgs) => {
         margin: { l: 0, r: 0, t: 0, b: 0 },
         xaxis: { automargin: true },
         yaxis: { automargin: true },
-        showlegend: false,
     };
 
     let plotel: HTMLElement;
 
     let setup = (el: HTMLElement, args: Record<string, any>) => {
         plotel = document.createElement("div");
-        plotel.classList.add("plot_xy");
+        plotel.classList.add("image");
         el.append(plotel);
         Plotly.newPlot(plotel, data(args as Args), layout, {
             displayModeBar: false,

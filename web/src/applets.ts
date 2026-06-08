@@ -22,9 +22,11 @@ type AppletInterface = {
 };
 
 import * as plot_xy from "./applets/plot_xy.js";
+import * as image from "./applets/image.js";
 
 export let appletTypes: Record<string, AppletInterface> = {
     plot_xy,
+    image,
 };
 
 let keypath = (mod: sync_struct.SetitemMod | sync_struct.DelitemMod) => {

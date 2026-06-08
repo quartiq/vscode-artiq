@@ -7,11 +7,25 @@ export let parsePositionals = (args: minimist.ParsedArgs, names: string[]): Reco
     return { ...positionals, ...rest };
 };
 
-// plotly.js eats number[] only
+// plotly.js only eats number[]
 export let normalize = (x: any): number[] => {
     if (x instanceof BigInt64Array || x instanceof BigUint64Array)
-         // FIXME: this fails for actual BigInt's
+         // FIXME: this fails for BigInt values beyond the Number domain
         return Array.from(x, v => Number(v));
 
     return Array.from(x ?? []);
+};
+
+// FIXME: plotly.js only accepts nested arrays up to 3 levels
+// but pyon.Nparray may hold an arbitrary number of levels
+type NDArray = any;
+
+export let reshape = (data: number[], dims: number[]): NDArray => {
+    if (dims === undefined || dims.length === 0) return data;
+    if (dims.length === 1) return data.slice(0, dims[0]);
+
+    let [head, ...tail] = dims;
+    let stride = tail.reduce((a, b) => a * b, 1);
+    let slice = (i: number) => data.slice(i * stride, (i + 1) * stride);
+    return Array.from({ length: head }, (_, i) => reshape(slice(i), tail));
 };
