@@ -1,8 +1,89 @@
 import * as sync_struct from "sipyco/sync_struct";
 
-let store = sync_struct.from({
+type Keypath = string;
+type Metadata = { unit: string, scale: number, precision: number };
+type Dataset = [ persist: boolean, value: any, metadata: Metadata ];
+
+let setup = (): HTMLElement => {
+    let table = document.createElement("table");
+    let head = document.createElement("thead");
+    let row = document.createElement("tr");
+    let body = document.createElement("tbody");
+
+    table.append(head);
+    head.append(row);
+    table.append(body);
+    document.body.append(table);
+
+    [ "Keypath", "Persist", "Value" ].forEach(name => {
+        let cell = document.createElement("th");
+        cell.setAttribute("scope", "col");
+        cell.innerText = name;
+        row.append(cell);
+    });
+
+    return body;
+};
+
+// TODO: apply metadata and pyon's toHuman()
+let toHuman = (dataset: Dataset): string => dataset[1];
+// TODO: add fromHuman for pc_rpc update calls
+
+let create = (keypath: Keypath, dataset: Dataset) => {
+    // TODO: on user input invoke pc_rpc update calls
+    let row = document.createElement("tr");
+    row.dataset.keypath = keypath;
+    body.append(row);
+
+    let cellKeypath = document.createElement("th");
+    cellKeypath.setAttribute("scope", "row");
+    let inputKeypath = document.createElement("input");
+    inputKeypath.value = keypath;
+    cellKeypath.append(inputKeypath);
+    row.append(cellKeypath);
+
+    let cellPersist = document.createElement("td");
+    let inputPersist = document.createElement("input");
+    inputPersist.classList.add("persist");
+    inputPersist.setAttribute("type", "checkbox");
+    inputPersist.checked = dataset[0];
+    cellPersist.append(inputPersist);
+    row.append(cellPersist);
+
+    let cellValue = document.createElement("td");
+    let inputValue = document.createElement("input");
+    inputPersist.classList.add("value");
+    inputValue.value = toHuman(dataset);
+    cellValue.append(inputValue);
+    row.append(cellValue);
+};
+
+let update = (row: HTMLElement, dataset: Dataset) => {
+    let inputPersist = row.querySelector("input.persist");
+    (inputPersist as HTMLInputElement).checked = dataset[0];
+
+    let inputValue = row.querySelector("input.value");
+    (inputValue as HTMLInputElement).value = toHuman(dataset);
+};
+
+let keypath = (mod: sync_struct.SetitemMod | sync_struct.DelitemMod): Keypath => [ ...mod.path, mod.key ].join(".");
+
+let body = setup();
+
+sync_struct.from({
     masterHostname: "localhost",
     notifierName: "datasets",
-    onReceive: store => console.log(store.struct),
+    onReceive: (_: sync_struct.Store, mod: sync_struct.Mod) => {
+        if (mod.action === "init") Object.entries(mod.struct)
+            .forEach(([keypath, dataset]) => create(keypath, dataset));
+
+        if (mod.action === "setitem") {
+            let row = body.querySelector(`tr[data-keypath="${keypath(mod)}"]`);
+            if (row) return update((row as HTMLElement), mod.value);
+            create(keypath(mod), mod.value);
+        }
+
+        if (mod.action === "delitem") body.querySelector(`tr[data-keypath="${keypath(mod)}"]`)!.remove();
+    },
     onError: err => console.error("Connection error. Is ARTIQ server running?", err),
 });

@@ -9,9 +9,9 @@ type Struct = Record<string, any> | pyon.Dict;
 export type Store = { struct: Struct | undefined }; // we need to operate on object property singleton to utilize the mutable object pattern
 type UpdateHandler = (store: Store, mod: Mod) => void; // work on store directly, since onReceive's first run does not wait for init lock and local reference may be empty
 
-type InitMod = { action: "init", struct: Struct };
-type SetitemMod = { action: "setitem", path: any[], key: any, value: any };
-type DelitemMod = { action: "delitem", path: any[], key: any };
+export type InitMod = { action: "init", struct: Struct };
+export type SetitemMod = { action: "setitem", path: any[], key: any, value: any };
+export type DelitemMod = { action: "delitem", path: any[], key: any };
 export type Mod = InitMod | SetitemMod | DelitemMod;
 type Action = (target: Store, mod: Mod, initDone: mutex.Lock) => void;
 

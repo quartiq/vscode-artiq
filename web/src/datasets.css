@@ -1,0 +1,21 @@
+table {
+    border-collapse: collapse;
+    border: 2px solid gray;
+}
+
+thead {
+    background-color: lightblue;
+}
+
+tbody > tr:nth-of-type(even) {
+    background-color: gainsboro;
+}
+
+th,
+td {
+    border: 1px solid gray;
+}
+
+input {
+    background-color: transparent;
+}

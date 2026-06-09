@@ -12,8 +12,15 @@ import (
 func viewHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `
 		<!DOCTYPE html>
-		<script type="module" src="/static/%s.js"></script>
-	`, r.URL.Path[1:])
+		<html>
+			<head>
+				<link href="/static/%s.css" rel="stylesheet">
+			</head>
+			<body>
+				<script type="module" src="/static/%s.js"></script>
+			</body>
+		</html>
+	`, r.URL.Path[1:], r.URL.Path[1:])
 }
 
 func fileHandler(w http.ResponseWriter, r *http.Request) {
