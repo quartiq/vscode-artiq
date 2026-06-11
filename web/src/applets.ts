@@ -22,10 +22,12 @@ type AppletInterface = {
 };
 
 import * as plot_xy from "./applets/plot_xy.js";
+import * as plot_hist from "./applets/plot_hist.js";
 import * as image from "./applets/image.js";
 
 export let appletTypes: Record<string, AppletInterface> = {
     plot_xy,
+    plot_hist,
     image,
 };
 
