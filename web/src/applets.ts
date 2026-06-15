@@ -13,7 +13,7 @@ type Applet = {
     gridDefaults: GridStackWidget,
     argsMap: ArgsMap,
     setup: (wel: HTMLElement, args: Args) => void,
-    update: (wel: HTMLElement, args: Args) => void,
+    update: (args: Args) => void,
     onResize: GridStackElementHandler,
 };
 
@@ -58,9 +58,8 @@ let scheduleUpdate = (name: AppletName) => {
 
         pending.forEach(name => {
             let applet = applets[name];
-            let wel = findWidgetElement(name);
             try {
-                applet.update(wel, deriveArgs(applet.argsMap, sets));
+                applet.update(deriveArgs(applet.argsMap, sets));
             } catch (err) {
                 console.error(`applets: failed to update "${name}"`, err);
             }

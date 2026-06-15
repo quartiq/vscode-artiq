@@ -8,6 +8,7 @@ type Args = {
     y: pyon.NpArray,
     x: pyon.NpArray,
     fit: pyon.NpArray,
+    // TODO: add error arg
 };
 
 let positionals = [ "y" ];
@@ -39,7 +40,6 @@ export let from = (args: minimist.ParsedArgs) => {
 
     let setup = (el: HTMLElement, args: Record<string, any>) => {
         plotel = document.createElement("div");
-        plotel.classList.add("plot_xy");
         el.append(plotel);
         Plotly.newPlot(plotel, data(args as Args), layout, {
             displayModeBar: false,
@@ -47,11 +47,11 @@ export let from = (args: minimist.ParsedArgs) => {
         });
     };
 
-    let update = (el: HTMLElement, args: Record<string, any>) => {
+    let update = (args: Record<string, any>) => {
         Plotly.react(plotel, data(args as Args), layout);
     };
 
-    let onResize = (ev: Event, el: HTMLElement) => {
+    let onResize = (ev: Event) => {
         Plotly.Plots.resize(plotel);
     };
 
