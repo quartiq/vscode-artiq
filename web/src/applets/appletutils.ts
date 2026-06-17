@@ -29,3 +29,9 @@ export let reshape = (data: number[], dims: number[]): NDArray => {
     let slice = (i: number) => data.slice(i * stride, (i + 1) * stride);
     return Array.from({ length: head }, (_, i) => reshape(slice(i), tail));
 };
+
+export let createSection = (el: HTMLElement) => {
+    let section = document.createElement("div");
+    el.append(section);
+    return section;
+};

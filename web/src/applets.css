@@ -27,6 +27,14 @@
 
 .widget-body {
     min-height: 0;
+
+    display: flex;
+    min-width: 0;
+}
+
+.widget-body > * {
+    flex: 1 1 0;
+    min-width: 0;
 }
 
 .widget-body > .js-plotly-plot {
