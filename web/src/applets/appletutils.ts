@@ -30,8 +30,8 @@ export let reshape = (data: number[], dims: number[]): NDArray => {
     return Array.from({ length: head }, (_, i) => reshape(slice(i), tail));
 };
 
-export let createSection = (el: HTMLElement) => {
-    let section = document.createElement("div");
-    el.append(section);
-    return section;
+export let plotel = (parent: HTMLElement) => {
+    let el = document.createElement("div");
+    parent.append(el);
+    return el;
 };

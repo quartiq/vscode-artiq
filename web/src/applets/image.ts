@@ -2,7 +2,8 @@ import minimist from "minimist";
 import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 
-import { parsePositionals, normalize, reshape } from "./appletutils";
+import { parsePositionals, normalize, plotel, reshape } from "./appletutils";
+import { Trace, Plot, layout, config } from "./plotlyutils";
 
 type Args = {
     image2d: pyon.NpArray,
@@ -10,40 +11,26 @@ type Args = {
 
 let positionals = [ "image2d" ];
 
-let data = (args: Args): Plotly.Data[] => [{
+let trace = (args: Args): Plotly.Data[] => [{
     type: "heatmap",
     z: reshape(normalize(args.image2d), args.image2d.__shape__),
     colorscale: "Greys",
 }];
 
 export let from = (args: minimist.ParsedArgs) => {
-    let gridDefaults = { w: 5, h: 4 };
     let argsMap = parsePositionals(args, positionals);
 
-    let layout = {
-        margin: { l: 0, r: 0, t: 0, b: 0 },
-        xaxis: { automargin: true },
-        yaxis: { automargin: true },
-    };
-
-    let plotel: HTMLElement;
+    let plot: Plot<Trace<Args>>;
 
     let setup = (el: HTMLElement, args: Record<string, any>) => {
-        plotel = document.createElement("div");
-        el.append(plotel);
-        Plotly.newPlot(plotel, data(args as Args), layout, {
-            displayModeBar: false,
-            responsive: true,
-        });
+        plot = { trace, layout: layout(), el: plotel(el) };
+        Plotly.newPlot(plot.el, plot.trace(args as Args), plot.layout, config);
     };
 
-    let update = (args: Record<string, any>) => {
-        Plotly.react(plotel, data(args as Args), layout);
-    };
+    let update = (args: Record<string, any>) =>
+        Plotly.react(plot.el, plot.trace(args as Args), plot.layout);
 
-    let onResize = (ev: Event) => {
-        Plotly.Plots.resize(plotel);
-    };
+    let onResize = (ev: Event) => Plotly.Plots.resize(plot.el);
 
-    return { gridDefaults, argsMap, setup, update, onResize };
+    return { argsMap, setup, update, onResize };
 };

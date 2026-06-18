@@ -10,11 +10,11 @@ type ArgName = string;
 type ArgsMap = Record<ArgName, Keypath>;
 type Args = Record<ArgName, any>;
 type Applet = {
-    gridDefaults: GridStackWidget,
     argsMap: ArgsMap,
     setup: (wel: HTMLElement, args: Args) => void,
     update: (args: Args) => void,
     onResize: GridStackElementHandler,
+    gridDefaults?: GridStackWidget,
 };
 
 type AppletInterface = {
@@ -129,7 +129,7 @@ let create = async (args: CCBKwargTypes["create_applet"]) => {
     let applet = await type.from(minimist(argv));
 
     let wel = findWidgetElement(args.name);
-    if (!wel) wel = newWidget(args.name, applet.gridDefaults);
+    if (!wel) wel = newWidget(args.name, applet.gridDefaults ?? { w: 5, h: 4 });
     wel.innerHTML = "";
 
     applet.setup(wel as HTMLElement, deriveArgs(applet.argsMap, sets));

@@ -2,13 +2,16 @@ import minimist from "minimist";
 import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 
-import { parsePositionals, normalize, reshape, createSection } from "./appletutils";
+import { parsePositionals, normalize, reshape, plotel } from "./appletutils";
+import { Plot, layout, config } from "./plotlyutils";
 
 type Args = {
     xs: pyon.NpArray,
     histogram_bins: pyon.NpArray,
     histogram_counts: pyon.NpArray,
 };
+
+type Trace = (args: Args, selected: number) => Plotly.Data[];
 
 let positionals = [ "xs", "histogram_bins", "histogram_counts" ];
 
@@ -29,66 +32,45 @@ let sumBins = (counts: number[][]): number[] => {
     return totals;
 };
 
-let dataXy = (args: Args, selected: number): Plotly.Data[] => {
-    // TODO: validate that x.length === counts.length && every row has bins.length - 1
-    let x = normalize(args.xs) as number[];
-    let bins = normalize(args.histogram_bins) as number[];
-    let counts = reshape(normalize(args.histogram_counts), args.histogram_counts.__shape__) as number[][]; // FIXME: crashes sometimes
+let traces = [
+    (args: Args, selected: number): Plotly.Data[] => {
+        // TODO: validate that x.length === counts.length && every row has bins.length - 1
+        let x = normalize(args.xs) as number[];
+        let bins = normalize(args.histogram_bins) as number[];
+        let counts = reshape(normalize(args.histogram_counts), args.histogram_counts.__shape__) as number[][]; // FIXME: crashes sometimes
 
-    return [{ x, y: weightedMeans(bins, counts), mode: "markers", marker: {
-        color: x.map((_, i) => i === selected ? "red" : "blue"),
-    } }];
-};
+        return [{ x, y: weightedMeans(bins, counts), mode: "markers", marker: {
+            color: x.map((_, i) => i === selected ? "red" : "blue"),
+        } }];
+    },
 
-let dataHist = (args: Args, selected: number): Plotly.Data[] => {
-    // TODO: validate that x.length === counts.length && every row has bins.length - 1
-    let x = normalize(args.histogram_bins) as number[];
-    let counts = reshape(normalize(args.histogram_counts), args.histogram_counts.__shape__) as number[][];
-    let y = selected === -1 ? [ ...sumBins(counts), 0 ] : [ ...counts[selected], 0 ];
+    (args: Args, selected: number): Plotly.Data[] => {
+        // TODO: validate that x.length === counts.length && every row has bins.length - 1
+        let x = normalize(args.histogram_bins) as number[];
+        let counts = reshape(normalize(args.histogram_counts), args.histogram_counts.__shape__) as number[][];
+        let y = selected === -1 ? [ ...sumBins(counts), 0 ] : [ ...counts[selected], 0 ];
 
-    return [{ x, y, line: { shape: "hv", color: "red" } }];
-};
+        return [{ x, y, line: { shape: "hv", color: "red" } }];
+    },
+];
 
-// TODO: factor the duplication into multiplication pattern
 export let from = (args: minimist.ParsedArgs) => {
-    let gridDefaults = { w: 10, h: 4 };
     let argsMap = parsePositionals(args, positionals);
-
-    let baseLayout = {
-        margin: { l: 0, r: 0, t: 0, b: 0 },
-        xaxis: { automargin: true },
-        yaxis: { automargin: true },
-    };
-
-    let xyLayout = window.structuredClone(baseLayout);
-    let histLayout = window.structuredClone(baseLayout);
-
-    let xy: HTMLElement;
-    let hist: HTMLElement;
 
     let cached: Args;
     let selected: number = -1;
 
-    let setup = (el: HTMLElement, args: Record<string, any>) => {
-        // create widget sections first, so plotly knows widths on init
-        let plots: [ HTMLElement, Plotly.Data[], Partial<Plotly.Layout> ][] = [
-            [ createSection(el), dataXy(args as Args, selected), xyLayout ],
-            [ createSection(el), dataHist(args as Args, selected), histLayout ],
-        ];
+    let plots: Plot<Trace>[];
 
-        [xy, hist] = plots.map(([plotel, data, layout]) => {
-            Plotly.newPlot(plotel, data, layout, {
-                displayModeBar: false,
-                responsive: true,
-            });
-            return plotel;
-        });
+    let setup = (el: HTMLElement, args: Record<string, any>) => {
+        // create all widget partitions with plotel() before Plotly init, so width's are clear
+        plots = traces.map(trace => ({ trace, layout: layout(), el: plotel(el) }));
+        plots.forEach(p => Plotly.newPlot(p.el, p.trace(args as Args, selected), p.layout, config));
 
         cached = args as Args;
-        (xy as Plotly.PlotlyHTMLElement).on("plotly_hover", (ev: Plotly.PlotMouseEvent) => {
+        (plots[0].el as Plotly.PlotlyHTMLElement).on("plotly_hover", (ev: Plotly.PlotMouseEvent) => {
             selected = ev.points[0].pointIndex;
-            Plotly.react(xy, dataXy(cached, selected), xyLayout);
-            Plotly.react(hist, dataHist(cached, selected), histLayout);
+            plots.forEach(p => Plotly.react(p.el, p.trace(cached, selected), p.layout));
         });
     };
 
@@ -97,14 +79,10 @@ export let from = (args: minimist.ParsedArgs) => {
     let update = (args: Record<string, any>) => {
         cached = args as Args;
         selected = clamp(selected, -1, args.histogram_counts.length - 1);
-        Plotly.react(xy, dataXy(args as Args, selected), xyLayout);
-        Plotly.react(hist, dataHist(args as Args, selected), histLayout);
+        plots.forEach(p => Plotly.react(p.el, p.trace(args as Args, selected), p.layout));
     };
 
-    let onResize = (ev: Event) => {
-        Plotly.Plots.resize(xy);
-        Plotly.Plots.resize(hist);
-    };
+    let onResize = (ev: Event) => plots.forEach(p => Plotly.Plots.resize(p.el));
 
-    return { gridDefaults, argsMap, setup, update, onResize };
+    return { argsMap, setup, update, onResize, gridDefaults: { w: 10, h: 4 } };
 };
