@@ -16,7 +16,7 @@ document.head.appendChild(style);
 export let from: AppletInterface["from"] = args => {
     let { subs, locals } = parseArgs(args, {
         positionals: [ "scalar" ],
-        localnames: [ "digit-count" ], // TODO: is it nice to have keys with hyphen?
+        localnames: [ "digit-count" ],
     });
 
     let parent: HTMLElement;

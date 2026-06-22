@@ -9,7 +9,7 @@ type Args = {
     y: pyon.NpArray,
     x: pyon.NpArray,
     fit: pyon.NpArray,
-    // TODO: add error arg
+    error: pyon.NpArray,
 };
 
 let trace = (args: Args): Plotly.Data[] => {
@@ -19,7 +19,10 @@ let trace = (args: Args): Plotly.Data[] => {
     let fit = normalize(args.fit) as number[];
 
     return [
-        { name: "data", x, y, mode: "markers" },
+        { name: "data", x, y, mode: "markers", error_y: {
+            type: "data",
+            array: normalize(args.error),
+        } },
         { name: "fit", x, y: fit },
     ];
 };
