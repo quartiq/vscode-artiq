@@ -1,27 +1,13 @@
 import shellQuote from "shell-quote";
 import minimist from "minimist";
-import { GridStackWidget, GridStack, GridStackElementHandler } from "gridstack";
+import { GridStackWidget, GridStack } from "gridstack";
 import * as sync_struct from "sipyco/sync_struct";
 import * as broadcast from "sipyco/broadcast";
 
-import { ArgName, UnitaryArgs } from "./applets/appletutils";
 import { Keypath, Dataset } from "./datasets/types";
+import { Applet, AppletInterface, SubArgs } from "./applets/types";
 
 type AppletName = string;
-
-type SubArgs = Record<ArgName, Keypath>;
-type Args = UnitaryArgs;
-type Applet = {
-    subs: SubArgs,
-    setup: (wel: HTMLElement, args: Args) => void,
-    update: (args: Args) => void,
-    onResize: GridStackElementHandler,
-    gridDefaults?: GridStackWidget,
-};
-
-type AppletInterface = {
-    from: (args: minimist.ParsedArgs) => Applet,
-};
 
 import * as big_number from "./applets/big_number.js";
 import * as plot_xy from "./applets/plot_xy.js";
@@ -29,7 +15,7 @@ import * as plot_hist from "./applets/plot_hist.js";
 import * as plot_xy_hist from "./applets/plot_xy_hist.js";
 import * as image from "./applets/image.js";
 
-export let appletTypes: Record<string, AppletInterface> = {
+export let appletTypes: Record<AppletName, AppletInterface> = {
     big_number,
     plot_xy,
     plot_hist,

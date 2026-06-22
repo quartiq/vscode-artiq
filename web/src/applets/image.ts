@@ -1,7 +1,7 @@
-import minimist from "minimist";
 import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 
+import { AppletInterface } from "./types";
 import { parseArgs, normalize, reshape } from "./appletutils";
 import { single } from "./plotlyutils";
 
@@ -15,7 +15,7 @@ let trace = (args: Args): Plotly.Data[] => [{
     colorscale: "Greys",
 }];
 
-export let from = (args: minimist.ParsedArgs) => {
+export let from: AppletInterface["from"] = args => {
     let { subs } = parseArgs(args, { positionals: [ "image2d" ] });
     return { subs, ...single(trace) };
 };

@@ -1,7 +1,7 @@
-import minimist from "minimist";
 import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 
+import { AppletInterface } from "./types";
 import { parseArgs, normalize, reshape, plotel } from "./appletutils";
 import { Plot, layout, config } from "./plotlyutils";
 
@@ -52,7 +52,7 @@ let traces = [
     },
 ];
 
-export let from = (args: minimist.ParsedArgs) => {
+export let from: AppletInterface["from"] = args => {
     let { subs } = parseArgs(args, { positionals: [ "xs", "histogram_bins", "histogram_counts" ] });
 
     let cached: Args;

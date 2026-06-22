@@ -1,5 +1,4 @@
-import minimist from "minimist";
-
+import { AppletInterface } from "./types";
 import { parseArgs } from "./appletutils";
 
 type Subs = { scalar: number };
@@ -14,10 +13,7 @@ style.innerHTML = `
 `;
 document.head.appendChild(style);
 
-// FIXME: type "from" as AppletInterface, but
-// that needs refactoring of the type definitions
-// from applets.ts towards appletutils or something
-export let from = (args: minimist.ParsedArgs) => {
+export let from: AppletInterface["from"] = args => {
     let { subs, locals } = parseArgs(args, {
         positionals: [ "scalar" ],
         localnames: [ "digit-count" ], // TODO: is it nice to have keys with hyphen?

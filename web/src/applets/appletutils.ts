@@ -1,7 +1,6 @@
 import minimist from "minimist";
 
-export type ArgName = string;
-export type UnitaryArgs = Record<ArgName, any>;
+import { UnitaryArgs } from "./types";
 
 let parsePositionals = (args: minimist.ParsedArgs, names: string[]): UnitaryArgs => {
     let { _, ...rest } = args;

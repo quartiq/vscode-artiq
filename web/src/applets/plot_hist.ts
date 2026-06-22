@@ -1,7 +1,7 @@
-import minimist from "minimist";
 import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 
+import { AppletInterface } from "./types";
 import { parseArgs, normalize } from "./appletutils";
 import { single } from "./plotlyutils";
 
@@ -18,7 +18,7 @@ let trace = (args: Args): Plotly.Data[] => {
     return [{ x, y, line: { shape: "hv" } }];
 };
 
-export let from = (args: minimist.ParsedArgs) => {
+export let from: AppletInterface["from"] = args => {
     let { subs } = parseArgs(args, { positionals: [ "y" ] });
     return { subs, ...single(trace) };
 };
