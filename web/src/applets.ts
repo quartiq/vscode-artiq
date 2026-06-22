@@ -4,13 +4,14 @@ import { GridStackWidget, GridStack, GridStackElementHandler } from "gridstack";
 import * as sync_struct from "sipyco/sync_struct";
 import * as broadcast from "sipyco/broadcast";
 
+import { ArgName, UnitaryArgs } from "./applets/appletutils";
+
 type AppletName = string;
 
-type ArgName = string;
-type ArgsMap = Record<ArgName, Keypath>;
-type Args = Record<ArgName, any>;
+type SubArgs = Record<ArgName, Keypath>;
+type Args = UnitaryArgs;
 type Applet = {
-    argsMap: ArgsMap,
+    subs: SubArgs,
     setup: (wel: HTMLElement, args: Args) => void,
     update: (args: Args) => void,
     onResize: GridStackElementHandler,
@@ -61,7 +62,7 @@ let scheduleUpdate = (name: AppletName) => {
         pending.forEach(name => {
             let applet = applets[name];
             try {
-                applet.update(deriveArgs(applet.argsMap, sets));
+                applet.update(deriveArgs(applet.subs, sets));
             } catch (err) {
                 console.error(`applets: failed to update "${name}"`, err);
             }
@@ -80,14 +81,14 @@ let sets: Store = await sync_struct.from({
         if (mod.action === "init") return;
 
         Object.entries(applets)
-            .filter(([_, applet]) => Object.values(applet.argsMap).includes(keypath(mod)))
+            .filter(([_, applet]) => Object.values(applet.subs).includes(keypath(mod)))
             .forEach(([name]) => scheduleUpdate(name));
     },
 });
 
 let applets: Record<AppletName, Applet> = {};
 
-let deriveArgs = (argsMap: ArgsMap, sets: Store) => Object.fromEntries(Object.entries(argsMap)
+let deriveArgs = (argsMap: SubArgs, sets: Store) => Object.fromEntries(Object.entries(argsMap)
     // FIXME accessed as an Object, but can we be sure it's not a pyon.Dict?
     .map(([ argName, keypath ]) => [ argName, sets.struct[keypath]?.[1] ]));
 
@@ -132,7 +133,7 @@ let create = async (args: CCBKwargTypes["create_applet"]) => {
     if (!wel) wel = newWidget(args.name, applet.gridDefaults ?? { w: 5, h: 4 });
     wel.innerHTML = "";
 
-    applet.setup(wel as HTMLElement, deriveArgs(applet.argsMap, sets));
+    applet.setup(wel as HTMLElement, deriveArgs(applet.subs, sets));
     applets[args.name] = applet; // after applet.setup() to omit race with applet.update()
 };
 

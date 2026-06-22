@@ -2,7 +2,7 @@ import minimist from "minimist";
 import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 
-import { parsePositionals, normalize, reshape, plotel } from "./appletutils";
+import { parseArgs, normalize, reshape, plotel } from "./appletutils";
 import { Plot, layout, config } from "./plotlyutils";
 
 type Args = {
@@ -12,8 +12,6 @@ type Args = {
 };
 
 type Trace = (args: Args, selected: number) => Plotly.Data[];
-
-let positionals = [ "xs", "histogram_bins", "histogram_counts" ];
 
 let weightedMeans = (bins: number[], counts: number[][]): number[] => {
     let centers = bins.slice(0, -1).map((b, i) => (b + bins[i + 1]) / 2);
@@ -55,7 +53,7 @@ let traces = [
 ];
 
 export let from = (args: minimist.ParsedArgs) => {
-    let argsMap = parsePositionals(args, positionals);
+    let { subs } = parseArgs(args, { positionals: [ "xs", "histogram_bins", "histogram_counts" ] });
 
     let cached: Args;
     let selected: number = -1;
@@ -84,5 +82,5 @@ export let from = (args: minimist.ParsedArgs) => {
 
     let onResize = (ev: Event) => plots.forEach(p => Plotly.Plots.resize(p.el));
 
-    return { argsMap, setup, update, onResize, gridDefaults: { w: 10, h: 4 } };
+    return { subs, setup, update, onResize, gridDefaults: { w: 10, h: 4 } };
 };
