@@ -22,12 +22,14 @@ type AppletInterface = {
     from: (args: minimist.ParsedArgs) => Applet,
 };
 
+import * as big_number from "./applets/big_number.js";
 import * as plot_xy from "./applets/plot_xy.js";
 import * as plot_hist from "./applets/plot_hist.js";
 import * as plot_xy_hist from "./applets/plot_xy_hist.js";
 import * as image from "./applets/image.js";
 
 export let appletTypes: Record<string, AppletInterface> = {
+    big_number,
     plot_xy,
     plot_hist,
     plot_xy_hist,
