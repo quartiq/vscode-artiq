@@ -5,6 +5,7 @@ import * as sync_struct from "sipyco/sync_struct";
 import * as broadcast from "sipyco/broadcast";
 
 import { ArgName, UnitaryArgs } from "./applets/appletutils";
+import { Keypath, Dataset } from "./datasets/types";
 
 type AppletName = string;
 
@@ -72,9 +73,6 @@ let scheduleUpdate = (name: AppletName) => {
     });
 };
 
-type Keypath = string;
-type Metadata = { unit: string, scale: number, precision: number };
-type Dataset = [ persist: boolean, value: any, metadata: Metadata ];
 type Store = sync_struct.Store & { struct: Record<Keypath, Dataset> };
 let sets: Store = await sync_struct.from({
     masterHostname: "localhost",

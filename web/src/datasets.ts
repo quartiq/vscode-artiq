@@ -1,8 +1,5 @@
 import * as sync_struct from "sipyco/sync_struct";
-
-type Keypath = string;
-type Metadata = { unit: string, scale: number, precision: number };
-type Dataset = [ persist: boolean, value: any, metadata: Metadata ];
+import { Keypath, Dataset } from "./datasets/types";
 
 let setup = (): HTMLElement => {
     let table = document.createElement("table");
