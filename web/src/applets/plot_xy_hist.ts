@@ -2,8 +2,8 @@ import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 
 import { AppletInterface } from "./types";
-import { parseArgs, normalize, reshape2d, plotel } from "./appletutils";
-import { Plot, layout, config } from "./plotlyutils";
+import { parseArgs, plotel } from "./appletutils";
+import { Plot, layout, config, normalize, reshape2d } from "./plotlyutils";
 
 type Args = {
     xs: pyon.NpArray,
@@ -35,7 +35,7 @@ let traces = [
         // TODO: validate that x.length === counts.length && every row has bins.length - 1
         let x = normalize(args.xs) as number[];
         let bins = normalize(args.histogram_bins) as number[];
-        let counts = reshape2d(normalize(args.histogram_counts), args.histogram_counts.__shape__) as number[][]; // FIXME: crashes sometimes
+        let counts = reshape2d(args.histogram_counts); // FIXME: crashes sometimes
 
         return [{ x, y: weightedMeans(bins, counts), mode: "markers", marker: {
             color: x.map((_, i) => i === selected ? "red" : "blue"),
@@ -45,7 +45,7 @@ let traces = [
     (args: Args, selected: number): Plotly.Data[] => {
         // TODO: validate that x.length === counts.length && every row has bins.length - 1
         let x = normalize(args.histogram_bins) as number[];
-        let counts = reshape2d(normalize(args.histogram_counts), args.histogram_counts.__shape__) as number[][];
+        let counts = reshape2d(args.histogram_counts);
         let y = selected === -1 ? [ ...sumBins(counts), 0 ] : [ ...counts[selected], 0 ];
 
         return [{ x, y, line: { shape: "hv", color: "red" } }];

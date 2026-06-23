@@ -1,4 +1,6 @@
 import Plotly from "plotly.js-dist-min";
+import * as pyon from "sipyco/pyon";
+import { TypedArray } from "sipyco/pyonutils";
 
 import { plotel } from "./appletutils";
 
@@ -31,4 +33,32 @@ export let single = <Args>(trace: Trace<Args>) => {
     let onResize = (ev: Event) => Plotly.Plots.resize(plot.el);
 
     return { setup, update, onResize };
+};
+
+// plotly.js only eats number[]
+export let normalize = (arr: TypedArray): number[] => {
+    if (arr instanceof BigInt64Array || arr instanceof BigUint64Array)
+        // FIXME: this fails for BigInt values beyond the Number domain
+        return Array.from(arr, v => Number(v));
+
+    return Array.from(arr ?? []);
+};
+
+// FIXME: plotly.js only accepts nested arrays up to 3 levels
+// but pyon.Nparray may hold an arbitrary number of levels
+export let reshape2d = (
+    arr: pyon.NpArray,
+    dir: "row-major" | "col-major" = "row-major",
+): number[][] => {
+    let [ rows, cols ] = arr.__shape__;
+    let majorRows = Array.from(
+        { length: rows },
+        (_, r) => normalize(arr.slice(r * cols, (r + 1) * cols)),
+    );
+
+    if (dir === "row-major") return majorRows;
+    return Array.from(
+        { length: cols },
+        (_, c) => Array.from({ length: rows }, (_, r) => majorRows[r][c]),
+    );
 };

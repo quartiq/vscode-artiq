@@ -2,8 +2,8 @@ import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 
 import { AppletInterface } from "./types";
-import { parseArgs, normalize } from "./appletutils";
-import { single } from "./plotlyutils";
+import { parseArgs } from "./appletutils";
+import { single, normalize } from "./plotlyutils";
 
 type Args = {
     y: pyon.NpArray,

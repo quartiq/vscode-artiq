@@ -2,8 +2,8 @@ import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 
 import { AppletInterface } from "./types";
-import { parseArgs, normalize, reshape2d } from "./appletutils";
-import { single } from "./plotlyutils";
+import { parseArgs } from "./appletutils";
+import { single, reshape2d } from "./plotlyutils";
 
 type Args = {
     image2d: pyon.NpArray,
@@ -13,7 +13,7 @@ let trace = (args: Args): Plotly.Data[] => [{
     type: "heatmap",
     // reshape data in col-major fashion to create parity with PyQtGraph.ImageView
     // see: artiq/applets/image.py
-    z: reshape2d(normalize(args.image2d), args.image2d.__shape__, "col-major") as number[][],
+    z: reshape2d(args.image2d, "col-major"),
     colorscale: "Greys",
 }];
 

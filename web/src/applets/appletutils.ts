@@ -30,36 +30,6 @@ export let parseArgs = (args: minimist.ParsedArgs, argsinfo: ArgsInfo): ParsedAr
     };
 };
 
-// plotly.js only eats number[]
-export let normalize = (x: any): number[] => {
-    if (x instanceof BigInt64Array || x instanceof BigUint64Array)
-         // FIXME: this fails for BigInt values beyond the Number domain
-        return Array.from(x, v => Number(v));
-
-    return Array.from(x ?? []);
-};
-
-// FIXME: plotly.js only accepts nested arrays up to 3 levels
-// but pyon.Nparray may hold an arbitrary number of levels
-// FIXME: eat TypedArray and integrate normalize
-export let reshape2d = (
-    data: number[],
-    shape: number[],
-    dir: "row-major" | "col-major" = "row-major",
-): number[][] => {
-    let [ rows, cols ] = shape;
-
-    if (dir === "row-major") return Array.from(
-        { length: rows },
-        (_, r) => data.slice(r * cols, (r + 1) * cols),
-    );
-
-    return Array.from(
-        { length: cols },
-        (_, c) => Array.from({ length: rows }, (_, r) => data[r * cols + c]),
-    );
-};
-
 export let plotel = (parent: HTMLElement) => {
     let el = document.createElement("div");
     parent.append(el);
