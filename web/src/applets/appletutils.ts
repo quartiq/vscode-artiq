@@ -41,16 +41,23 @@ export let normalize = (x: any): number[] => {
 
 // FIXME: plotly.js only accepts nested arrays up to 3 levels
 // but pyon.Nparray may hold an arbitrary number of levels
-type NDArray = any;
+// FIXME: eat TypedArray and integrate normalize
+export let reshape2d = (
+    data: number[],
+    shape: number[],
+    dir: "row-major" | "col-major" = "row-major",
+): number[][] => {
+    let [ rows, cols ] = shape;
 
-export let reshape = (data: number[], dims: number[]): NDArray => {
-    if (dims === undefined || dims.length === 0) return data;
-    if (dims.length === 1) return data.slice(0, dims[0]);
+    if (dir === "row-major") return Array.from(
+        { length: rows },
+        (_, r) => data.slice(r * cols, (r + 1) * cols),
+    );
 
-    let [head, ...tail] = dims;
-    let stride = tail.reduce((a, b) => a * b, 1);
-    let slice = (i: number) => data.slice(i * stride, (i + 1) * stride);
-    return Array.from({ length: head }, (_, i) => reshape(slice(i), tail));
+    return Array.from(
+        { length: cols },
+        (_, c) => Array.from({ length: rows }, (_, r) => data[r * cols + c]),
+    );
 };
 
 export let plotel = (parent: HTMLElement) => {
