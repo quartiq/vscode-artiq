@@ -20,14 +20,14 @@ export const types: Record<string, TypeInterface> = {
     bytes,
     slice,
     npscalar,
-    complex
+    complex,
 };
 
 export type TypeName = keyof typeof types;
 
 // TODO: export all types?
-export { Dict } from "./dict.js"; // FIXME: this lacks something like `& { __jsonclass__: "dict" }`
-export { NpArray } from "./nparray.js"; // FIXME: this lacks something like `& { __jsonclass__: "nparray" }`
+export type Dict<K = any, V = any> = dict.Dict<K, V> & { [marker]: "dict" };
+export type NpArray = nparray.NpArray & { [marker]: "nparray" };
 
 let isMarked = (v: any): boolean => v &&
     typeof v === "object" &&
