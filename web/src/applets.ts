@@ -4,7 +4,7 @@ import { GridStackWidget, GridStack } from "gridstack";
 import * as sync_struct from "sipyco/sync_struct";
 import * as broadcast from "sipyco/broadcast";
 
-import { Keypath, Dataset } from "./datasets/types";
+import { Datasets } from "./datasets/types";
 import { Applet, AppletInterface, SubArgs } from "./applets/types";
 
 type AppletName = string;
@@ -51,7 +51,7 @@ let scheduleUpdate = (name: AppletName) => {
         pending.forEach(name => {
             let applet = applets[name];
             try {
-                applet.update(deriveArgs(applet.subs, sets));
+                applet.update(deriveArgs(applet.subs, store.struct));
             } catch (err) {
                 console.error(`applets: failed to update "${name}"`, err);
             }
@@ -59,11 +59,11 @@ let scheduleUpdate = (name: AppletName) => {
     });
 };
 
-type Store = sync_struct.Store & { struct: Record<Keypath, Dataset> };
-let sets: Store = await sync_struct.from({
+type Store = sync_struct.Store & { struct: Datasets };
+let store: Store = await sync_struct.from({
     masterHostname: "localhost",
     notifierName: "datasets",
-    onReceive: (store: sync_struct.Store, mod: sync_struct.Mod) => {
+    onReceive: (_: sync_struct.Store, mod: sync_struct.Mod) => {
         if (mod.action === "init") return;
 
         Object.entries(applets)
@@ -74,9 +74,8 @@ let sets: Store = await sync_struct.from({
 
 let applets: Record<AppletName, Applet> = {};
 
-let deriveArgs = (argsMap: SubArgs, sets: Store) => Object.fromEntries(Object.entries(argsMap)
-    // FIXME accessed as an Object, but can we be sure it's not a pyon.Dict?
-    .map(([ argName, keypath ]) => [ argName, sets.struct[keypath]?.[1] ]));
+let deriveArgs = (argsMap: SubArgs, sets: Datasets) => Object.fromEntries(Object.entries(argsMap)
+    .map(([ argName, keypath ]) => [ argName, sets.get(keypath)?.[1] ]));
 
 let newWidget = (name: string, defaults: GridStackWidget): HTMLElement => {
     let item = document.createElement("div");
@@ -119,7 +118,7 @@ let create = async (args: CCBKwargTypes["create_applet"]) => {
     if (!wel) wel = newWidget(args.name, applet.gridDefaults ?? { w: 5, h: 4 });
     wel.innerHTML = "";
 
-    applet.setup(wel as HTMLElement, deriveArgs(applet.subs, sets));
+    applet.setup(wel as HTMLElement, deriveArgs(applet.subs, store.struct));
     applets[args.name] = applet; // after applet.setup() to omit race with applet.update()
 };
 

@@ -1,4 +1,5 @@
 // TODO: clarify and distinguish between keypath, setpath and leafpath
+// TODO: one day, let this view derive directly from web-artiq's dataset view
 
 import * as vscode from "vscode";
 import * as pyon from "sipyco/pyon";
@@ -6,7 +7,7 @@ import * as pyonutils from "sipyco/pyonutils";
 import * as sync_struct from "sipyco/sync_struct";
 import * as pc_rpc from "sipyco/pc_rpc";
 
-import * as utils from "../utils.js";
+import { getByPath, setByPath, splitOnLast, clamp, arrayFrom } from "../utils.js";
 import * as units from "../units.js";
 
 let provider: DatasetsProvider;
@@ -15,8 +16,10 @@ export let view: vscode.TreeView<string>;
 type Keypath = string;
 type Metadata = { unit: string, scale: number, precision: number };
 type Dataset = [ persist: boolean, value: any, metadata: Metadata ];
-type Store = sync_struct.Store & { struct: Record<Keypath, Dataset> };
-let sets: Store = { struct: {} };
+type Datasets = pyon.Dict<Keypath, Dataset>;
+
+type Store = sync_struct.Store & { struct: Datasets };
+export let store: Store = { struct: pyonutils.create("dict", [[]]) as any as Datasets }; // FIXME: bad typing
 
 type InputProperty = { path: any[], desc: string, test: (s: string) => boolean, parse: (s: string) => any };
 let inputProps: Record<string, InputProperty> = {
@@ -40,12 +43,16 @@ let findChildren = (keypaths: string[], prefix: string[], depth?: number): strin
     .filter(keys => startsWith(keys, prefix))
     .filter(keys => keys.length >= prefix.length + (depth ?? 0));
 
-let isNode = (keypath: string): boolean => findChildren(Object.keys(sets.struct), keypath.split(".")).length > 0;
+let isNode = (keypath: string): boolean => {
+    let keypaths = arrayFrom(store.struct, "keys");
+    return findChildren(keypaths, keypath.split(".")).length > 0;
+};
 
 let closestParent = (keypath: string | undefined): string | undefined => {
-    if (!keypath || Object.keys(sets.struct).length === 0) { return undefined; }
+    let keypaths = arrayFrom(store.struct, "keys");
+    if (!keypath || keypaths.length === 0) { return undefined; }
 
-    let ancestors = Object.keys(sets.struct).filter(path => path !== keypath); // exclude self
+    let ancestors = keypaths.filter(path => path !== keypath); // exclude self
     let target = keypath.split(".");
 
     while (true) {
@@ -76,7 +83,7 @@ let applyScale = (value: any, meta: Metadata, inverse?: boolean): any => {
 let applyPrecision = (value: any, precision: number): any => {
     if (!Number.isFinite(precision)) { return value; }
     // see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/toPrecision#exceptions
-    return value.toPrecision(utils.clamp(precision, 1, 100));
+    return value.toPrecision(clamp(precision, 1, 100));
 };
 
 let fmtNumber = (set: Dataset): string => {
@@ -97,7 +104,7 @@ class DatasetTreeItem extends vscode.TreeItem {
     ) {
         super(name(keypath));
 
-        let set = sets.struct[keypath];
+        let set = store.struct.get(keypath);
         if (set) {
             this.description = String(fmt(set, pyon.preview));
             this.contextValue = "dataset";
@@ -117,8 +124,8 @@ class DatasetTreeItem extends vscode.TreeItem {
 
         // only metadata nodes (= leafs) left at this point
         let propname;
-        [keypath, propname] = utils.splitOnLast(keypath, ".");
-        this.description = String(utils.getByPath(sets.struct[keypath], inputProps[propname!].path));
+        [keypath, propname] = splitOnLast(keypath, ".");
+        this.description = String(getByPath(store.struct.get(keypath), inputProps[propname!].path));
         let color = new vscode.ThemeColor("symbolIcon.variableForeground");
         this.iconPath = new vscode.ThemeIcon("edit", color);
         this.command = {
@@ -149,14 +156,15 @@ class DatasetsProvider implements vscode.TreeDataProvider<string> {
         return keypath.split(".").slice(0, -1).join(".");
     }
 
-    async getChildren(keypath?: string): Promise<string[]> {
+    getChildren(keypath?: string): string[] {
         let parentKeys = keypath ? keypath.split(".") : [];
-        let dups = findChildren(Object.keys(sets.struct), parentKeys, 1)
+        let keypaths = arrayFrom(store.struct, "keys");
+        let dups = findChildren(keypaths, parentKeys, 1)
             .map(keys => keys.slice(0, parentKeys.length + 1).join("."))
             .sort((a, b) => name(a).localeCompare(name(b)));
 
         let leafs: string[] = [];
-        if (keypath && keypath in sets.struct) {
+        if (keypath && store.struct.has(keypath)) {
             leafs = Object.keys(inputProps)
                 .filter(name => name !== "Value")
                 .map(name => [keypath, name].join("."));
@@ -176,15 +184,15 @@ export let init = async () => {
 
     view.onDidChangeCheckboxState(ev => ev.items.forEach(item => {
         let [keypath, checked] = item;
-        let set = sets.struct[keypath];
+        let set = store.struct.get(keypath);
         set[0] = Boolean(checked);
         submit(keypath, set);
     }));
 
-    sets = await sync_struct.from({
+    store = await sync_struct.from({
         masterHostname: vscode.workspace.getConfiguration("artiq").get("host")!,
         notifierName: "datasets",
-        onReceive: (store: sync_struct.Store, mod: sync_struct.Mod) => {
+        onReceive: (_: sync_struct.Store, mod: sync_struct.Mod) => {
             if (mod.action === "init") {
                 provider.refresh(undefined);
                 return;
@@ -207,7 +215,7 @@ export let create = async () => {
 export let move = async (keypath: string) => {
     let newPath = await vscode.window.showInputBox({ prompt: "New path:", value: keypath });
     if (newPath && newPath !== keypath) {
-        let set = sets.struct[keypath];
+        let set = store.struct.get(keypath);
         pc_rpc.from({
             masterHostname: vscode.workspace.getConfiguration("artiq").get("host")!,
             targetName: "dataset_db",
@@ -239,7 +247,7 @@ export let del = async (keypath: string) => {
 
 // see: m-labs/artiq/dashboard/datasets:CreateEditDialog.accept
 export let edit = async (keypath: string, propname: string) => {
-    let set = structuredClone(sets.struct[keypath]);
+    let set = structuredClone(store.struct.get(keypath));
     set[1] = applyScale(set[1], set[2], true);
 
     let prop = inputProps[propname];
@@ -249,14 +257,14 @@ export let edit = async (keypath: string, propname: string) => {
         return `Please enter a valid ${prop.desc}`;
     };
 
-    let value = propname === "Value" ? fmt(set) : utils.getByPath(set, prop.path);
+    let value = propname === "Value" ? fmt(set) : getByPath(set, prop.path);
     let newValue = await vscode.window.showInputBox({ prompt: `Edit ${propname}:`, validateInput, value });
     if (newValue === undefined) { return; }
 
     newValue = newValue === "" ? undefined : prop.parse(newValue);
     if (newValue === value) { return; }
 
-    utils.setByPath(set, prop.path, newValue);
+    setByPath(set, prop.path, newValue);
     set[1] = applyScale(set[1], set[2]);
     submit(keypath, set);
 };

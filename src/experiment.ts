@@ -2,7 +2,9 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as sync_struct from "sipyco/sync_struct";
 import * as pc_rpc from "sipyco/pc_rpc";
+import { Dict } from "sipyco/pyon";
 
+import { arrayFrom } from "./utils.js";
 import * as dbio from "./dbio.js";
 import * as argument from "./argument.js";
 import * as entries from "./entries.js";
@@ -47,18 +49,19 @@ export type SyncInfo = {
     scheduler_defaults: SchedulerInfo,
 }
 
-type SyncDict = Record<Name, SyncInfo>
+type Repo = Dict<Name, SyncInfo>
 
-export type Store = sync_struct.Store & { struct: SyncDict };
-export let repo: Promise<Store> = new Promise(resolve => {
-    sync_struct.from<SyncDict>({
+export type Store = sync_struct.Store & { struct: Repo };
+export let store: Promise<Store> = new Promise(resolve => {
+    sync_struct.from<Repo>({
         masterHostname: vscode.workspace.getConfiguration("artiq").get("host")!,
         notifierName: "explist",
-        onReceive: async (store: sync_struct.Store) => {
+        onReceive: async (_: sync_struct.Store) => {
             let basepath = await repoRoot;
             // update "softly" to provide what is new
             // yet to sustain what was known and customized
-            createAllDb(Object.entries(store.struct as SyncDict).map(([name, syncinfo]: [string, SyncInfo]) => ({
+            let repo = (await store).struct as Repo;
+            createAllDb(arrayFrom(repo, "entries").map(([name, syncinfo]: [string, SyncInfo]) => ({
                 ...scheduler_defaults, ...syncinfo.scheduler_defaults,
 
                 path: path.posix.join(basepath, syncinfo.file),
@@ -94,7 +97,7 @@ let initArgstates: (arginfo: argument.SyncInfo<argument.Procdesc>) => argument.S
         return [name, arg];
     }));
 
-export let inRepo: (exp: DbInfo) => Promise<Boolean> = async exp => exp.name in (await repo).struct;
+export let inRepo: (exp: DbInfo) => Promise<Boolean> = async exp => ((await store).struct as Repo).has(exp.name);
 
 type ExamineInfo = {
     name: Name,

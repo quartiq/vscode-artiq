@@ -1,3 +1,5 @@
+import { Dict } from "sipyco/pyon";
+
 export let splitOnLast = (str: string, delimiter: string): [string, string | undefined] => {
     let i = str.lastIndexOf(delimiter);
     if (i === -1) { return [str, undefined]; }
@@ -49,3 +51,6 @@ export let bytesFrom = (base64: string): Uint8Array =>
 // see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array/toBase64
 export let base64From = (bytes: Uint8Array): string =>
     btoa(String.fromCharCode(...bytes));
+
+// FIXME: wait for Iterator.prototype.map() to ship for MapIterator, e.g. entries(), keys(), ...
+export let arrayFrom = (dict: Dict, method: "entries" | "keys"): any[] => [ ...dict[method]() ];
