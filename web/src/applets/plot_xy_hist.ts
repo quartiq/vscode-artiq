@@ -35,7 +35,7 @@ let traces = [
         // TODO: validate that x.length === counts.length && every row has bins.length - 1
         let x = normalize(args.xs) as number[];
         let bins = normalize(args.histogram_bins) as number[];
-        let counts = reshape2d(args.histogram_counts); // FIXME: crashes sometimes
+        let counts = reshape2d(args.histogram_counts);
 
         return [{ x, y: weightedMeans(bins, counts), mode: "markers", marker: {
             color: x.map((_, i) => i === selected ? "red" : "blue"),
@@ -77,6 +77,7 @@ export let from: AppletInterface["from"] = args => {
     let update = (args: Record<string, any>) => {
         cached = args as Args;
         selected = clamp(selected, -1, args.histogram_counts.length - 1);
+        if (Number.isNaN(selected)) selected = -1;
         plots.forEach(p => Plotly.react(p.el, p.trace(args as Args, selected), p.layout));
     };
 

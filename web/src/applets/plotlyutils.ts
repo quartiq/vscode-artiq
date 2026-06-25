@@ -50,6 +50,8 @@ export let reshape2d = (
     arr: pyon.NpArray,
     dir: "row-major" | "col-major" = "row-major",
 ): number[][] => {
+    if (arr === undefined) return [];
+
     let [ rows, cols ] = arr.__shape__;
     let majorRows = Array.from(
         { length: rows },
