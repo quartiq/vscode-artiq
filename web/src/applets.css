@@ -20,16 +20,18 @@
 }
 
 .widget-header {
+    overflow: hidden;
+    text-overflow: ellipsis;
     cursor: move;
     background: blue;
     color: white;
 }
 
 .widget-body {
-    min-height: 0;
-
+    position: relative;
     display: flex;
     min-width: 0;
+    min-height: 0;
 }
 
 .widget-body > * {

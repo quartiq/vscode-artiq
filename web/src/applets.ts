@@ -1,3 +1,5 @@
+// TODO: implement CCB policies, group and global
+
 import shellQuote from "shell-quote";
 import minimist from "minimist";
 import { GridStackWidget, GridStack } from "gridstack";
@@ -10,6 +12,7 @@ import { Applet, AppletInterface, SubArgs } from "./applets/types";
 type AppletName = string;
 
 import * as big_number from "./applets/big_number.js";
+import * as progress_bar from "./applets/progress_bar.js";
 import * as plot_xy from "./applets/plot_xy.js";
 import * as plot_hist from "./applets/plot_hist.js";
 import * as plot_xy_hist from "./applets/plot_xy_hist.js";
@@ -17,6 +20,7 @@ import * as image from "./applets/image.js";
 
 export let appletTypes: Record<AppletName, AppletInterface> = {
     big_number,
+    progress_bar,
     plot_xy,
     plot_hist,
     plot_xy_hist,
