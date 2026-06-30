@@ -11,4 +11,9 @@ done
 
 npm install
 npm run build
-go run main.go localhost:1071 # FIXME: standardize this port via ARTIQ repo
+
+# whitelist standard sipyco ports for broadcast, sync_struct and pc_rpc
+# see: https://git.m-labs.hk/M-Labs/artiq/src/branch/master/doc/manual/default_network_ports.rst
+
+# FIXME: standardize wsproxy port via ARTIQ repo
+go run main.go --whitelist wsproxy.json localhost:1071

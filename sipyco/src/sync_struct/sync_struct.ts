@@ -21,7 +21,6 @@ let traverse = (tree: any, path: any[]): any => path.reduce((node, key) => {
     return node[key];
 }, tree);
 
-
 // empty dicts are sent as {}, so we auto-upgrade every Object (that is: string-keyed stores)
 // to Dict for now; may occur with setitem's value property as well, but was never observed yet
 let struct = (s: InitMod["struct"]): Struct => {
