@@ -19,20 +19,33 @@ export let config: Partial<Plotly.Config> = {
     responsive: true,
 };
 
+export let resize = (el: HTMLElement) => {
+    let queued = false;
+    let observer = new window.ResizeObserver(() => {
+        if (queued) return;
+        queued = true;
+        window.requestAnimationFrame(() => {
+            queued = false;
+            Plotly.Plots.resize(el);
+        });
+    });
+
+    observer.observe(el);
+};
+
 export let single = <Args>(trace: Trace<Args>) => {
     let plot: Plot<Trace<Args>>;
 
     let setup = (el: HTMLElement, args: Record<string, any>) => {
         plot = { trace, layout: layout(), el: plotel(el) };
         Plotly.newPlot(plot.el, plot.trace(args as Args), plot.layout, config);
+        resize(plot.el);
     };
 
     let update = (args: Record<string, any>) =>
         Plotly.react(plot.el, plot.trace(args as Args), plot.layout);
 
-    let onResize = (ev: Event) => Plotly.Plots.resize(plot.el);
-
-    return { setup, update, onResize };
+    return { setup, update };
 };
 
 // plotly.js only eats number[]

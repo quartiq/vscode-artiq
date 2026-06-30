@@ -33,7 +33,5 @@ export let from: AppletInterface["from"] = args => {
     let update = (subs: Record<string, any>) =>
         parent.innerText = fmt((subs as Subs).scalar, (locals as Locals)["digit-count"]);
 
-    let onResize = (ev: Event) => {};
-
-    return { subs, setup, update, onResize, gridDefaults: { w: 5, h: 2 } };
+    return { subs, setup, update, gridDefaults: { w: 5, h: 2 } };
 };

@@ -11,7 +11,6 @@ export type Applet = {
     subs: SubArgs,
     setup: (wel: HTMLElement, args: UnitaryArgs) => void,
     update: (args: UnitaryArgs) => void,
-    onResize: GridStackElementHandler,
     gridDefaults?: GridStackWidget,
 };
 

@@ -3,7 +3,7 @@ import * as pyon from "sipyco/pyon";
 
 import { AppletInterface } from "./types";
 import { parseArgs, plotel } from "./appletutils";
-import { Plot, layout, config, normalize, reshape2d } from "./plotlyutils";
+import { Plot, layout, config, resize, normalize, reshape2d } from "./plotlyutils";
 
 type Args = {
     xs: pyon.NpArray,
@@ -63,7 +63,10 @@ export let from: AppletInterface["from"] = args => {
     let setup = (el: HTMLElement, args: Record<string, any>) => {
         // create all widget partitions with plotel() before Plotly init, so width's are clear
         plots = traces.map(trace => ({ trace, layout: layout(), el: plotel(el) }));
-        plots.forEach(p => Plotly.newPlot(p.el, p.trace(args as Args, selected), p.layout, config));
+        plots.forEach(p => {
+            Plotly.newPlot(p.el, p.trace(args as Args, selected), p.layout, config);
+            resize(p.el);
+        });
 
         cached = args as Args;
         (plots[0].el as Plotly.PlotlyHTMLElement).on("plotly_hover", (ev: Plotly.PlotMouseEvent) => {
@@ -81,7 +84,5 @@ export let from: AppletInterface["from"] = args => {
         plots.forEach(p => Plotly.react(p.el, p.trace(args as Args, selected), p.layout));
     };
 
-    let onResize = (ev: Event) => plots.forEach(p => Plotly.Plots.resize(p.el));
-
-    return { subs, setup, update, onResize, gridDefaults: { w: 10, h: 4 } };
+    return { subs, setup, update, gridDefaults: { w: 10, h: 4 } };
 };

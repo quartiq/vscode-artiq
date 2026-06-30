@@ -135,7 +135,6 @@ el.classList.add("grid-stack");
 document.body.append(el);
 
 let grid = GridStack.init({ handle: ".widget-header" });
-grid.on("resizestop", (ev, el) => applets[el.gridstackNode?.id as string].onResize(ev, el));
 
 let keyLists: { [K in CCBServiceName]: Array<keyof CCBKwargTypes[K]> } = {
     create_applet: [ "name", "command", "group", "code" ],

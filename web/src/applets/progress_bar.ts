@@ -57,7 +57,5 @@ export let from: AppletInterface["from"] = args => {
         label.innerText = `${v * 100}%`;
     };
 
-    let onResize = (ev: Event) => {};
-
-    return { subs, setup, update, onResize, gridDefaults: { w: 7, h: 1 } };
+    return { subs, setup, update, gridDefaults: { w: 7, h: 1 } };
 };
