@@ -19,6 +19,12 @@ export let config: Partial<Plotly.Config> = {
     responsive: true,
 };
 
+let displayed = (el: HTMLElement) =>
+    el.isConnected &&
+    el.offsetParent !== null &&
+    el.clientWidth > 0 &&
+    el.clientHeight > 0;
+
 export let resize = (el: HTMLElement) => {
     let queued = false;
     let observer = new window.ResizeObserver(() => {
@@ -26,6 +32,7 @@ export let resize = (el: HTMLElement) => {
         queued = true;
         window.requestAnimationFrame(() => {
             queued = false;
+            if (!displayed(el)) return;
             Plotly.Plots.resize(el);
         });
     });
