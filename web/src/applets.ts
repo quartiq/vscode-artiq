@@ -1,5 +1,3 @@
-// TODO: implement CCB policies, group and global
-
 import shellQuote from "shell-quote";
 import minimist from "minimist";
 import { GridStackWidget, GridStack } from "gridstack";

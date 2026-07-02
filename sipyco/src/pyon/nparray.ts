@@ -37,8 +37,15 @@ export let copy = (src: any): NpArray => {
 // TODO: support tuple indices like [1, [2, 3]] and such
 export let get = (tagged: any, key: any): any => (tagged as NpArray)[key];
 
-export let set = (tagged: any, key: any, value: any) => {
+export let set = (tagged: any, key: any, value: any): void => {
     let [ , ...tail ] = tagged.__shape__;
     let stride = tail.reduce((a: number, b: number) => a * b, 1);
-    tagged.set(value, key * stride);
+    let offset = key * stride;
+
+    if (value.__jsonclass__ === "nparray") {
+        tagged.set(value, offset);
+        return;
+    }
+
+    tagged[offset] = value;
 };
