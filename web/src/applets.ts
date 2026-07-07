@@ -6,6 +6,7 @@ import * as broadcast from "sipyco/broadcast";
 
 import { Datasets } from "./datasets/types";
 import { Applet, AppletInterface, SubArgs } from "./applets/types";
+import * as manager from "./applets/manager";
 
 type AppletName = string;
 
@@ -79,9 +80,10 @@ let applets: Record<AppletName, Applet> = {};
 let deriveArgs = (argsMap: SubArgs, sets: Datasets) => Object.fromEntries(Object.entries(argsMap)
     .map(([ argName, keypath ]) => [ argName, sets.get(keypath)?.[1] ]));
 
-let newWidget = (name: string, defaults: GridStackWidget): HTMLElement => {
+let newWidget = (name: string, defaults: GridStackWidget, className?: string): HTMLElement => {
     let item = document.createElement("div");
     item.classList.add("grid-stack-item");
+    if (className) item.classList.add(className);
 
     let content = document.createElement("div");
     content.classList.add("grid-stack-item-content");
@@ -103,6 +105,11 @@ let newWidget = (name: string, defaults: GridStackWidget): HTMLElement => {
     return body;
 };
 
+let createManager = () => {
+    let wel = newWidget("🛠️ manager", { w: 9, h: 3});
+    manager.setup(wel as HTMLElement);
+};
+
 let create = async (args: CCBKwargTypes["create_applet"]) => {
     // what "args" may consist of:
     // { name: "code_applet_example", command: "code_applet_dataset", code: 'from PyQt6 import QtWidgets\n\nfrom artiq.applets.simple import SimpleApplet\n\n\nclass DemoWidget(QtWidgets.QLabel):\n    def __init__(self, args, ctl):\n        QtWidgets.QLabel.__init__(self)\n        self.dataset_name = args.dataset\n\n    def data_changed(self, value, metadata, persist, mods):\n        try:\n            n = str(value[self.dataset_name])\n        except (KeyError, ValueError, TypeError):\n            n = "---"\n        n = "<font size=15>" + n + "</font>"\n        self.setText(n)\n\n\ndef main():\n    applet = SimpleApplet(DemoWidget)\n    applet.add_dataset("dataset", "dataset to show")\n    applet.run()\n\nif __name__ == "__main__":\n    main()\n', group: "autoapplet" }
@@ -117,7 +124,7 @@ let create = async (args: CCBKwargTypes["create_applet"]) => {
     let applet = await type.from(minimist(argv));
 
     let wel = findWidgetElement(args.name);
-    if (!wel) wel = newWidget(args.name, applet.gridDefaults ?? { w: 5, h: 4 });
+    if (!wel) wel = newWidget(args.name, applet.gridDefaults ?? { w: 5, h: 4 }, "applet");
     wel.innerHTML = "";
 
     applet.setup(wel as HTMLElement, deriveArgs(applet.subs, store.struct));
@@ -133,6 +140,7 @@ el.classList.add("grid-stack");
 document.body.append(el);
 
 let grid = GridStack.init({ handle: ".widget-header" });
+createManager();
 
 let keyLists: { [K in CCBServiceName]: Array<keyof CCBKwargTypes[K]> } = {
     create_applet: [ "name", "command", "group", "code" ],
@@ -147,18 +155,20 @@ let normalize = <S extends CCBServiceName>(msg: CCBMessage<S>): CCBKwargTypes[S]
     return { ...args, ...msg.kwargs } as CCBKwargTypes[S];
 };
 
+type Group = string | string[];
+
 type CCBArgTypes = {
-    create_applet: [ AppletName, string, string, string ],
-    restart_applet: [ AppletName, string ],
-    disable_applet: [ AppletName, string ],
-    disable_applet_group: [ string ],
+    create_applet: [ AppletName, string, Group, string ],
+    restart_applet: [ AppletName, Group ],
+    disable_applet: [ AppletName, Group ],
+    disable_applet_group: [ Group ],
 };
 
 type CCBKwargTypes = {
-    create_applet: { name: AppletName, command: string, group: string, code: string },
-    restart_applet: { name: AppletName, group: string },
-    disable_applet: { name: AppletName, group: string },
-    disable_applet_group: { group: string },
+    create_applet: { name: AppletName, command: string, group: Group, code: string },
+    restart_applet: { name: AppletName, group: Group },
+    disable_applet: { name: AppletName, group: Group },
+    disable_applet_group: { group: Group },
 };
 
 type CCBServiceName = keyof CCBKwargTypes;
@@ -180,6 +190,7 @@ broadcast.subscribe({
         switch (msg.service) {
             case "create_applet":
                 create(normalize(msg));
+                manager.create(normalize(msg));
                 break;
             case "restart_applet":
                 restart(normalize(msg));
