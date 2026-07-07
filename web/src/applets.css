@@ -1,5 +1,9 @@
 @import "../node_modules/gridstack/dist/gridstack.min.css";
 
+.hidden {
+    display: none !important;
+}
+
 .grid-stack-item {
     border: 1px solid blue;
 }

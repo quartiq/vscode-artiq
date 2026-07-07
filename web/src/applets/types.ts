@@ -1,5 +1,5 @@
 import minimist from "minimist";
-import { GridStackWidget, GridStackElementHandler } from "gridstack";
+import { GridStackWidget } from "gridstack";
 
 import { Keypath } from "../datasets/types";
 
@@ -17,3 +17,5 @@ export type Applet = {
 export type AppletInterface = {
     from: (args: minimist.ParsedArgs) => Applet,
 };
+
+export type AppletName = string;

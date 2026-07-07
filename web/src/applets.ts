@@ -5,10 +5,9 @@ import * as sync_struct from "sipyco/sync_struct";
 import * as broadcast from "sipyco/broadcast";
 
 import { Datasets } from "./datasets/types";
-import { Applet, AppletInterface, SubArgs } from "./applets/types";
+import { Applet, AppletName, AppletInterface, SubArgs } from "./applets/types";
+import { findWidgetElement } from "./applets/utils";
 import * as manager from "./applets/manager";
-
-type AppletName = string;
 
 import * as big_number from "./applets/big_number.js";
 import * as progress_bar from "./applets/progress_bar.js";
@@ -29,11 +28,6 @@ export let appletTypes: Record<AppletName, AppletInterface> = {
 let keypath = (mod: sync_struct.SetitemMod | sync_struct.DelitemMod) => {
     if (mod.path.length !== 0) return mod.path[0];
     return mod.key;
-};
-
-let findWidgetElement = (name: AppletName): HTMLElement => {
-    // can not make use of Utils.find() since it holds stale DOM references during drag
-    return grid.el.querySelector(`[gs-id="${name}"] .widget-body`) as HTMLElement;
 };
 
 let dirtyApplets = new Set<AppletName>();
@@ -105,9 +99,9 @@ let newWidget = (name: string, defaults: GridStackWidget, className?: string): H
     return body;
 };
 
-let createManager = () => {
+let createManager = (grid: GridStack) => {
     let wel = newWidget("🛠️ manager", { w: 9, h: 3});
-    manager.setup(wel as HTMLElement);
+    manager.setup(wel as HTMLElement, grid);
 };
 
 let create = async (args: CCBKwargTypes["create_applet"]) => {
@@ -123,7 +117,7 @@ let create = async (args: CCBKwargTypes["create_applet"]) => {
     }
     let applet = await type.from(minimist(argv));
 
-    let wel = findWidgetElement(args.name);
+    let wel = findWidgetElement(args.name, grid)?.querySelector(".widget-body");
     if (!wel) wel = newWidget(args.name, applet.gridDefaults ?? { w: 5, h: 4 }, "applet");
     wel.innerHTML = "";
 
@@ -140,7 +134,7 @@ el.classList.add("grid-stack");
 document.body.append(el);
 
 let grid = GridStack.init({ handle: ".widget-header" });
-createManager();
+createManager(grid);
 
 let keyLists: { [K in CCBServiceName]: Array<keyof CCBKwargTypes[K]> } = {
     create_applet: [ "name", "command", "group", "code" ],
