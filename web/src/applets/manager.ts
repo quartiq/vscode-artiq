@@ -4,30 +4,28 @@ import {
 } from "@tanstack/table-core";
 import { GridStack } from "gridstack";
 
+import { Name, GroupEl, Group } from "./types";
 import { findWidgetElement } from "./utils";
 
-type Node = { name: string, visible: boolean, children: Node[] };
-
-type Group = any;
+type Node = { name: Name | GroupEl, visible: boolean, children: Node[] };
+type Leaf = Node & { name: Name, group: Group, children: [] };
+let isLeaf = (n: Node): n is Leaf => "group" in n;
 
 let data: Node[] = [{ name: "root", visible: true, children: [] }];
 let expanded: ExpandedState = { "0": true };
 
 let siblings = (path: string[]): Node[] => path.reduce((acc, curr) => {
-    let n = acc.find(n => n.name === curr);
+    let n = acc.find(n => n.name === curr && !isLeaf(n));
     if (!n) {
-        n = { name: curr, visible: true, children: [] };
+        n = { name: curr, visible: true, children: [] } as Node;
         acc.push(n);
     }
     return n.children;
 }, data[0].children);
 
-let addNode = (group: Group, leaf: Node) => {
-    if (!group) group = [];
-    if (typeof group === "string") group = [ group ];
+let addNode = (group: Group, leaf: Leaf) => {
     let s = siblings(group);
-
-    if (s.some(n => n.name === leaf.name)) return;
+    if (s.some(n => n.name === leaf.name && isLeaf(n))) return;
     s.push(leaf);
 };
 
@@ -40,8 +38,9 @@ export let setup = (_host: HTMLElement, _grid: GridStack) => {
     render();
 };
 
+// FIXME: msg is of type CCBMessage<"create_applet">
 export let create = (msg: any) => {
-    let leaf = { name: msg.name, visible: true, children: [] };
+    let leaf: Leaf = { name: msg.name, group: msg.group, visible: true, children: [] };
     addNode(msg.group, leaf);
     render();
 };
@@ -90,11 +89,12 @@ let table = () => createTable<Node>({
     getExpandedRowModel: getExpandedRowModel(),
 });
 
-let setVisible = (node: Node, visible: boolean) => {
+let setVisible = (node: Node | Leaf, visible: boolean) => {
     node.visible = visible;
     node.children.forEach(child => setVisible(child, visible));
+    if (!isLeaf(node)) return;
 
-    let wel = findWidgetElement(node.name, grid);
+    let wel = findWidgetElement([ node.group, node.name ], grid);
     if (!wel) return;
 
     let reveal = () => {

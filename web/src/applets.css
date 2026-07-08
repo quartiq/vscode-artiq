@@ -27,6 +27,7 @@
 .widget-header {
     flex: 0 0 auto;
     overflow: hidden;
+    white-space: nowrap;
     text-overflow: ellipsis;
     cursor: move;
     background: red;

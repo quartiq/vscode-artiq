@@ -2,7 +2,7 @@ import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 
 import { AppletInterface } from "./types";
-import { parseArgs } from "./appletutils";
+import { parseArgs } from "./utils";
 import { single, reshape2d } from "./plotlyutils";
 
 type Args = {

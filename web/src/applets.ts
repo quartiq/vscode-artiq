@@ -5,7 +5,7 @@ import * as sync_struct from "sipyco/sync_struct";
 import * as broadcast from "sipyco/broadcast";
 
 import { Datasets } from "./datasets/types";
-import { Applet, AppletName, AppletInterface, SubArgs } from "./applets/types";
+import { Applet, Name, Group, Key, KeyString, keystr, AppletInterface, SubArgs } from "./applets/types";
 import { findWidgetElement } from "./applets/utils";
 import * as manager from "./applets/manager";
 
@@ -16,7 +16,17 @@ import * as plot_hist from "./applets/plot_hist.js";
 import * as plot_xy_hist from "./applets/plot_xy_hist.js";
 import * as image from "./applets/image.js";
 
-export let appletTypes: Record<AppletName, AppletInterface> = {
+type TypeName =
+    | "big_number"
+    | "progress_bar"
+    | "plot_xy"
+    | "plot_hist"
+    | "plot_xy_hist"
+    | "image";
+
+let isTypeName = (s: string): s is TypeName => s in appletTypes;
+
+export let appletTypes: Record<TypeName, AppletInterface> = {
     big_number,
     progress_bar,
     plot_xy,
@@ -30,12 +40,12 @@ let keypath = (mod: sync_struct.SetitemMod | sync_struct.DelitemMod) => {
     return mod.key;
 };
 
-let dirtyApplets = new Set<AppletName>();
+let dirtyApplets = new Set<KeyString>();
 let flushScheduled = false;
 
-let scheduleUpdate = (name: AppletName) => {
+let scheduleUpdate = (key: KeyString) => {
     // TODO test this, review this
-    dirtyApplets.add(name);
+    dirtyApplets.add(key);
     if (flushScheduled) return;
 
     flushScheduled = true;
@@ -45,12 +55,12 @@ let scheduleUpdate = (name: AppletName) => {
         let pending = dirtyApplets;
         dirtyApplets = new Set();
 
-        pending.forEach(name => {
-            let applet = applets[name];
+        pending.forEach(k => {
+            let applet = applets[k];
             try {
                 applet.update(deriveArgs(applet.subs, store.struct));
             } catch (err) {
-                console.error(`applets: failed to update "${name}"`, err);
+                console.error(`applets: failed to update "${k}"`, err);
             }
         });
     });
@@ -64,17 +74,17 @@ let store: Store = await sync_struct.from({
         if (mod.action === "init") return;
 
         Object.entries(applets)
-            .filter(([_, applet]) => Object.values(applet.subs).includes(keypath(mod)))
-            .forEach(([name]) => scheduleUpdate(name));
+            .filter(([ _, applet ]) => Object.values(applet.subs).includes(keypath(mod)))
+            .forEach(([ k ]) => scheduleUpdate(k));
     },
 });
 
-let applets: Record<AppletName, Applet> = {};
+let applets: Record<KeyString, Applet> = {};
 
 let deriveArgs = (argsMap: SubArgs, sets: Datasets) => Object.fromEntries(Object.entries(argsMap)
     .map(([ argName, keypath ]) => [ argName, sets.get(keypath)?.[1] ]));
 
-let newWidget = (name: string, defaults: GridStackWidget, className?: string): HTMLElement => {
+let newWidget = (id: string, title: string, defaults: GridStackWidget, className?: string): HTMLElement => {
     let item = document.createElement("div");
     item.classList.add("grid-stack-item");
     if (className) item.classList.add(className);
@@ -84,7 +94,7 @@ let newWidget = (name: string, defaults: GridStackWidget, className?: string): H
 
     let header = document.createElement("div");
     header.classList.add("widget-header");
-    header.innerText = name;
+    header.innerText = title;
 
     let body = document.createElement("div");
     body.classList.add("widget-body");
@@ -94,13 +104,13 @@ let newWidget = (name: string, defaults: GridStackWidget, className?: string): H
     grid.el.append(item);
 
     // need to do it this way opposed to .addWidget()
-    // to register drag area via "handle" option during init
-    grid.makeWidget(item, { id: name, ...defaults });
+    // to register drag area via "handle" option during init, further down
+    grid.makeWidget(item, { id, ...defaults });
     return body;
 };
 
 let createManager = (grid: GridStack) => {
-    let wel = newWidget("🛠️ manager", { w: 9, h: 3});
+    let wel = newWidget("manager", "🛠️ Manage Applets", { w: 9, h: 3});
     manager.setup(wel as HTMLElement, grid);
 };
 
@@ -109,20 +119,23 @@ let create = async (args: CCBKwargTypes["create_applet"]) => {
     // { name: "code_applet_example", command: "code_applet_dataset", code: 'from PyQt6 import QtWidgets\n\nfrom artiq.applets.simple import SimpleApplet\n\n\nclass DemoWidget(QtWidgets.QLabel):\n    def __init__(self, args, ctl):\n        QtWidgets.QLabel.__init__(self)\n        self.dataset_name = args.dataset\n\n    def data_changed(self, value, metadata, persist, mods):\n        try:\n            n = str(value[self.dataset_name])\n        except (KeyError, ValueError, TypeError):\n            n = "---"\n        n = "<font size=15>" + n + "</font>"\n        self.setText(n)\n\n\ndef main():\n    applet = SimpleApplet(DemoWidget)\n    applet.add_dataset("dataset", "dataset to show")\n    applet.run()\n\nif __name__ == "__main__":\n    main()\n', group: "autoapplet" }
     // { name: "flopping_f", command: "${artiq_applet}plot_xy flopping_f_brightness --x flopping_f_frequency --fit flopping_f_fit" }
 
-    let [name, ...argv] = shellQuote.parse(args.command) as string[];
-    let type = appletTypes[name];
-    if (!type) {
-        console.error("Applet type not yet implemented:", name);
+    let [tname, ...argv] = shellQuote.parse(args.command) as string[];
+    if (!isTypeName(tname)) {
+        console.error("Applet type not yet implemented:", tname);
         return;
     }
-    let applet = await type.from(minimist(argv));
+    let applet = await appletTypes[tname].from(minimist(argv));
 
-    let wel = findWidgetElement(args.name, grid)?.querySelector(".widget-body");
-    if (!wel) wel = newWidget(args.name, applet.gridDefaults ?? { w: 5, h: 4 }, "applet");
+    let key: Key = [ args.group, args.name ];
+    let wel = findWidgetElement(key, grid)?.querySelector(".widget-body");
+    if (!wel) {
+        let breadcrumb = [ ...args.group, args.name ].reverse().join(" — ");
+        wel = newWidget(keystr(key), breadcrumb, applet.gridDefaults ?? { w: 5, h: 4 }, "applet");
+    }
     wel.innerHTML = "";
 
     applet.setup(wel as HTMLElement, deriveArgs(applet.subs, store.struct));
-    applets[args.name] = applet; // after applet.setup() to omit race with applet.update()
+    applets[keystr(key)] = applet; // after applet.setup() to omit race with applet.update()
 };
 
 let restart = (args: CCBKwargTypes["restart_applet"]) => {}; // TODO
@@ -146,22 +159,24 @@ let keyLists: { [K in CCBServiceName]: Array<keyof CCBKwargTypes[K]> } = {
 let normalize = <S extends CCBServiceName>(msg: CCBMessage<S>): CCBKwargTypes[S] => {
     let keys = keyLists[msg.service] as (keyof CCBKwargTypes[S])[];
     let args = msg.args.reduce((a, v, i) => ({ ...a, [keys[i]]: v}), {});
-    return { ...args, ...msg.kwargs } as CCBKwargTypes[S];
+
+    let union: CCBKwargTypes[S] = { ...args, ...msg.kwargs };
+    if (union.group === undefined) union.group = [];
+    if (typeof union.group === "string") union.group = [ union.group ];
+    return union;
 };
 
-type Group = string | string[];
-
 type CCBArgTypes = {
-    create_applet: [ AppletName, string, Group, string ],
-    restart_applet: [ AppletName, Group ],
-    disable_applet: [ AppletName, Group ],
+    create_applet: [ Name, string, Group, string ],
+    restart_applet: [ Name, Group ],
+    disable_applet: [ Name, Group ],
     disable_applet_group: [ Group ],
 };
 
 type CCBKwargTypes = {
-    create_applet: { name: AppletName, command: string, group: Group, code: string },
-    restart_applet: { name: AppletName, group: Group },
-    disable_applet: { name: AppletName, group: Group },
+    create_applet: { name: Name, command: string, group: Group, code: string },
+    restart_applet: { name: Name, group: Group },
+    disable_applet: { name: Name, group: Group },
     disable_applet_group: { group: Group },
 };
 

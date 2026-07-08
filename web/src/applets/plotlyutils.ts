@@ -2,7 +2,7 @@ import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 import { TypedArray } from "sipyco/pyonutils";
 
-import { plotel } from "./appletutils";
+import { plotel } from "./utils";
 
 export type Trace<Args> = (args: Args) => Plotly.Data[];
 export type Plot<Trace> = { trace: Trace, layout: Partial<Plotly.Layout>, el: HTMLElement };

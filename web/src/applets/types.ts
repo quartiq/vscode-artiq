@@ -18,4 +18,11 @@ export type AppletInterface = {
     from: (args: minimist.ParsedArgs) => Applet,
 };
 
-export type AppletName = string;
+export type Name = string;
+export type GroupEl = string;
+export type Group = string[];
+export type Key = [ Group, Name ];
+export type KeyString = string;
+
+export let keystr = ([ group, name ]: Key): KeyString => JSON.stringify([ group, name ]);
+export let key = (s: KeyString): Key => JSON.parse(s) as Key;

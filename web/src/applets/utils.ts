@@ -1,7 +1,43 @@
+import minimist from "minimist";
 import { GridStack } from "gridstack";
-import { AppletName } from "./types";
 
-export let findWidgetElement = (name: AppletName, grid: GridStack): HTMLElement => {
+import { UnitaryArgs, Key, keystr } from "./types";
+
+let parsePositionals = (args: minimist.ParsedArgs, names: string[]): UnitaryArgs => {
+    let { _, ...rest } = args;
+    let positionals: UnitaryArgs = {};
+    _.forEach((v, i) => positionals[names[i]] = v);
+    return { ...positionals, ...rest };
+};
+
+type ArgsInfo = {
+    positionals: string[],
+    localnames?: string[],
+};
+
+type ParsedArgs = {
+    subs: UnitaryArgs,
+    locals: UnitaryArgs,
+};
+
+export let parseArgs = (args: minimist.ParsedArgs, argsinfo: ArgsInfo): ParsedArgs => {
+    let unit = Object.entries(parsePositionals(args, argsinfo.positionals));
+    let filter = (fn: (v: [ string, any ]) => boolean) => Object.fromEntries(unit.filter(fn));
+    let localnames = argsinfo.localnames ?? [];
+
+    return {
+        subs: filter(([k]) => !localnames.includes(k)),
+        locals: filter(([k]) => localnames.includes(k)),
+    };
+};
+
+export let plotel = (parent: HTMLElement) => {
+    let el = document.createElement("div");
+    parent.append(el);
+    return el;
+};
+
+export let findWidgetElement = (key: Key, grid: GridStack): HTMLElement => {
     // can not make use of Utils.find() since it holds stale DOM references during drag
-    return grid.el.querySelector(`[gs-id="${name}"]`) as HTMLElement;
+    return grid.el.querySelector(`[gs-id="${CSS.escape(keystr(key))}"]`) as HTMLElement;
 };

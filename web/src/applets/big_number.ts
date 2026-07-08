@@ -1,5 +1,5 @@
 import { AppletInterface } from "./types";
-import { parseArgs } from "./appletutils";
+import { parseArgs } from "./utils";
 
 type Subs = { scalar: number };
 type Locals = { "digit-count": number };
