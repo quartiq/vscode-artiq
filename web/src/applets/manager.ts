@@ -14,19 +14,20 @@ let isLeaf = (n: Node): n is Leaf => "group" in n;
 let data: Node[] = [{ name: "root", visible: true, children: [] }];
 let expanded: ExpandedState = { "0": true };
 
-let siblings = (path: string[]): Node[] => path.reduce((acc, curr) => {
-    let n = acc.find(n => n.name === curr && !isLeaf(n));
+let siblings = (path: Group): [ Node[], boolean ] => path.reduce((acc, curr) => {
+    let [ sibs, visible ] = acc;
+    let n = sibs.find(n => n.name === curr && !isLeaf(n));
     if (!n) {
-        n = { name: curr, visible: true, children: [] } as Node;
-        acc.push(n);
+        n = { name: curr, visible, children: [] } as Node;
+        sibs.push(n);
     }
-    return n.children;
-}, data[0].children);
+    return [ n.children, n.visible ];
+}, [ data[0].children, data[0].visible ]);
 
 let addNode = (group: Group, leaf: Leaf) => {
-    let s = siblings(group);
-    if (s.some(n => n.name === leaf.name && isLeaf(n))) return;
-    s.push(leaf);
+    let [ sibs, visible ] = siblings(group);
+    if (sibs.some(n => n.name === leaf.name && isLeaf(n))) return;
+    sibs.push({ ...leaf, visible });
 };
 
 let host: HTMLElement;
