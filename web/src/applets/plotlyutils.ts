@@ -25,19 +25,19 @@ let displayed = (el: HTMLElement) =>
     el.clientWidth > 0 &&
     el.clientHeight > 0;
 
-export let resize = (el: HTMLElement) => {
+export let resize = (plot: HTMLElement, observed: HTMLElement) => {
     let queued = false;
     let observer = new window.ResizeObserver(() => {
         if (queued) return;
         queued = true;
         window.requestAnimationFrame(() => {
             queued = false;
-            if (!displayed(el)) return;
-            Plotly.Plots.resize(el);
+            if (!displayed(plot)) return;
+            Plotly.Plots.resize(plot);
         });
     });
 
-    observer.observe(el);
+    observer.observe(observed);
 };
 
 export let single = <Args>(trace: Trace<Args>) => {
@@ -46,7 +46,7 @@ export let single = <Args>(trace: Trace<Args>) => {
     let setup = (el: HTMLElement, args: Record<string, any>) => {
         plot = { trace, layout: layout(), el: plotel(el) };
         Plotly.newPlot(plot.el, plot.trace(args as Args), plot.layout, config);
-        resize(plot.el);
+        resize(plot.el, el);
     };
 
     let update = (args: Record<string, any>) =>

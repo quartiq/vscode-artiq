@@ -65,7 +65,7 @@ export let from: AppletInterface["from"] = args => {
         plots = traces.map(trace => ({ trace, layout: layout(), el: plotel(el) }));
         plots.forEach(p => {
             Plotly.newPlot(p.el, p.trace(args as Args, selected), p.layout, config);
-            resize(p.el);
+            resize(p.el, el);
         });
 
         cached = args as Args;
