@@ -1,12 +1,11 @@
 import shellQuote from "shell-quote";
 import minimist from "minimist";
-import { GridStackWidget, GridStack } from "gridstack";
+import { GridStack, GridStackWidget, GridItemHTMLElement } from "gridstack";
 import * as sync_struct from "sipyco/sync_struct";
 import * as broadcast from "sipyco/broadcast";
 
 import { Datasets } from "./datasets/types";
 import { Applet, Name, Group, Key, KeyString, keystr, AppletInterface, SubArgs } from "./applets/types";
-import { findWidgetElement } from "./applets/utils";
 import * as manager from "./applets/manager";
 
 import * as big_number from "./applets/big_number.js";
@@ -84,7 +83,7 @@ let applets: Record<KeyString, Applet> = {};
 let deriveArgs = (argsMap: SubArgs, sets: Datasets) => Object.fromEntries(Object.entries(argsMap)
     .map(([ argName, keypath ]) => [ argName, sets.get(keypath)?.[1] ]));
 
-let newWidget = (id: string, title: string, defaults: GridStackWidget, className?: string): HTMLElement => {
+let newWidget = (id: string, title: string, defaults: GridStackWidget, className?: string): GridItemHTMLElement => {
     let item = document.createElement("div");
     item.classList.add("grid-stack-item");
     if (className) item.classList.add(className);
@@ -106,15 +105,61 @@ let newWidget = (id: string, title: string, defaults: GridStackWidget, className
     // need to do it this way opposed to .addWidget()
     // to register drag area via "handle" option during init, further down
     grid.makeWidget(item, { id, ...defaults });
-    return body;
+    return item;
+};
+
+let cacheGeometry = (wel: GridItemHTMLElement, l: manager.Leaf) => {
+    if (wel.gridstackNode === undefined) return;
+    let { x, y, w, h } = wel.gridstackNode;
+    l.geometry = { x, y, w, h };
+};
+
+let hideWidget = (wel: GridItemHTMLElement, l: manager.Leaf) => {
+    grid.removeWidget(wel, false);
+    wel.classList.add("hidden");
+};
+
+let revealWidget = (wel: GridItemHTMLElement, l: manager.Leaf) => {
+    let id = keystr([ l.group, l.name ]);
+    grid.makeWidget(wel, { id, ...l.geometry});
+    wel.classList.remove("hidden");
+};
+
+let syncVis = (wel: GridItemHTMLElement, leaf: manager.Leaf) => {
+    if (leaf.visible && wel.classList.contains("hidden")) {
+        revealWidget(wel, leaf);
+        return;
+    }
+
+    if (!leaf.visible && !wel.classList.contains("hidden")) {
+        hideWidget(wel, leaf);
+    }
+};
+
+let findWidgetElement = (key: Key, grid: GridStack): GridItemHTMLElement | undefined => {
+    // can not make use of Utils.find() since it holds stale DOM references during drag
+    let el = grid.el.querySelector(`[gs-id="${CSS.escape(keystr(key))}"]`);
+    return el as GridItemHTMLElement | undefined;
 };
 
 let createManager = (grid: GridStack) => {
-    let wel = newWidget("manager", "🛠️ Manage Applets", { w: 9, h: 3});
-    manager.setup(wel as HTMLElement, grid);
+    let host = newWidget("manager", "🛠️ Manage Applets", { w: 9, h: 3})
+        .querySelector(".widget-body") as HTMLElement;
+    manager.setup({ host, handler: (leafs: manager.Leaf[]) => {
+        let tuples = leafs
+            // insert new widgets bottom-right first, top-left last
+            // don't push residing widgets all the way down
+            .sort((a, b) => (b.geometry?.y ?? 0) - (a.geometry?.y ?? 0)
+                || (b.geometry?.x ?? 0) - (a.geometry?.x ?? 0))
+            .map((l): [ GridItemHTMLElement | undefined, manager.Leaf ] => [ findWidgetElement([ l.group, l.name ], grid), l ])
+            .filter((t): t is [ GridItemHTMLElement, manager.Leaf ] => t[0] !== undefined);
+
+        tuples.forEach(([ wel, l ]) => cacheGeometry(wel, l));
+        tuples.forEach(([ wel, l ]) => syncVis(wel, l));
+    }});
 };
 
-let create = async (args: CCBKwargTypes["create_applet"]) => {
+let create = async (args: CCBKwargTypes["create_applet"], leaf: manager.Leaf) => {
     // what "args" may consist of:
     // { name: "code_applet_example", command: "code_applet_dataset", code: 'from PyQt6 import QtWidgets\n\nfrom artiq.applets.simple import SimpleApplet\n\n\nclass DemoWidget(QtWidgets.QLabel):\n    def __init__(self, args, ctl):\n        QtWidgets.QLabel.__init__(self)\n        self.dataset_name = args.dataset\n\n    def data_changed(self, value, metadata, persist, mods):\n        try:\n            n = str(value[self.dataset_name])\n        except (KeyError, ValueError, TypeError):\n            n = "---"\n        n = "<font size=15>" + n + "</font>"\n        self.setText(n)\n\n\ndef main():\n    applet = SimpleApplet(DemoWidget)\n    applet.add_dataset("dataset", "dataset to show")\n    applet.run()\n\nif __name__ == "__main__":\n    main()\n', group: "autoapplet" }
     // { name: "flopping_f", command: "${artiq_applet}plot_xy flopping_f_brightness --x flopping_f_frequency --fit flopping_f_fit" }
@@ -127,15 +172,19 @@ let create = async (args: CCBKwargTypes["create_applet"]) => {
     let applet = await appletTypes[tname].from(minimist(argv));
 
     let key: Key = [ args.group, args.name ];
-    let wel = findWidgetElement(key, grid)?.querySelector(".widget-body");
+    let wel = findWidgetElement(key, grid);
     if (!wel) {
         let breadcrumb = [ ...args.group, args.name ].reverse().join(" — ");
         wel = newWidget(keystr(key), breadcrumb, applet.gridDefaults ?? { w: 5, h: 4 }, "applet");
     }
-    wel.innerHTML = "";
 
-    applet.setup(wel as HTMLElement, deriveArgs(applet.subs, store.struct));
+    let body = wel.querySelector(".widget-body") as HTMLElement;
+    body.innerHTML = "";
+
+    applet.setup(body, deriveArgs(applet.subs, store.struct));
     applets[keystr(key)] = applet; // after applet.setup() to omit race with applet.update()
+    cacheGeometry(wel, leaf);
+    syncVis(wel, leaf);
 };
 
 let restart = (args: CCBKwargTypes["restart_applet"]) => {}; // TODO
@@ -198,8 +247,9 @@ broadcast.subscribe({
     onReceive: (msg: AnyCCBMessage) => {
         switch (msg.service) {
             case "create_applet":
-                create(normalize(msg));
-                manager.create(normalize(msg));
+                let args = normalize(msg);
+                let leaf = manager.create(args);
+                create(args, leaf);
                 break;
             case "restart_applet":
                 restart(normalize(msg));

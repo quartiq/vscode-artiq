@@ -1,7 +1,6 @@
 import minimist from "minimist";
-import { GridStack } from "gridstack";
 
-import { UnitaryArgs, Key, keystr } from "./types";
+import { UnitaryArgs } from "./types";
 
 let parsePositionals = (args: minimist.ParsedArgs, names: string[]): UnitaryArgs => {
     let { _, ...rest } = args;
@@ -35,9 +34,4 @@ export let plotel = (parent: HTMLElement) => {
     let el = document.createElement("div");
     parent.append(el);
     return el;
-};
-
-export let findWidgetElement = (key: Key, grid: GridStack): HTMLElement => {
-    // can not make use of Utils.find() since it holds stale DOM references during drag
-    return grid.el.querySelector(`[gs-id="${CSS.escape(keystr(key))}"]`) as HTMLElement;
 };

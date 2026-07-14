@@ -2,17 +2,19 @@
 import {
     createTable, getCoreRowModel, ExpandedState, getExpandedRowModel, TableState, Row, Cell,
 } from "@tanstack/table-core";
-import { GridStack } from "gridstack";
 
 import { Name, GroupEl, Group } from "./types";
-import { findWidgetElement } from "./utils";
 
 type Node = { name: Name | GroupEl, visible: boolean, children: Node[] };
-type Leaf = Node & { name: Name, group: Group, children: [] };
+type Coord = number | undefined;
+type Geometry = { x: Coord, y: Coord, w: Coord, h: Coord };
+export type Leaf = Node & { name: Name, group: Group, geometry?: Geometry, children: [] };
 let isLeaf = (n: Node): n is Leaf => "group" in n;
+type VisibilityHandler = (leafs: Leaf[]) => void;
 
 let data: Node[] = [{ name: "root", visible: true, children: [] }];
 let expanded: ExpandedState = { "0": true };
+let onVisibilityChanged: VisibilityHandler;
 
 let siblings = (path: Group): [ Node[], boolean ] => path.reduce((acc, curr) => {
     let [ sibs, visible ] = acc;
@@ -31,19 +33,28 @@ let addNode = (group: Group, leaf: Leaf) => {
 };
 
 let host: HTMLElement;
-let grid: GridStack;
 
-export let setup = (_host: HTMLElement, _grid: GridStack) => {
-    host = _host;
-    grid = _grid;
+export let setup = (args: { host: HTMLElement, handler: VisibilityHandler }) => {
+    host = args.host;
+    onVisibilityChanged = args.handler;
     render();
 };
 
+let find = (group: Group, name: Name): Leaf | undefined => {
+    let [ sibs ] = siblings(group);
+    return sibs.find(n => n.name === name && isLeaf(n)) as Leaf | undefined;
+};
+
 // FIXME: msg is of type CCBMessage<"create_applet">
-export let create = (msg: any) => {
-    let leaf: Leaf = { name: msg.name, group: msg.group, visible: true, children: [] };
-    addNode(msg.group, leaf);
+export let create = (msg: any): Leaf => {
+    let leaf = find(msg.group, msg.name);
+    if (!leaf) {
+        leaf = { name: msg.name, group: msg.group, visible: true, children: [] };
+        addNode(msg.group, leaf);
+    }
+
     render();
+    return leaf;
 };
 
 let state: TableState = {
@@ -90,25 +101,18 @@ let table = () => createTable<Node>({
     getExpandedRowModel: getExpandedRowModel(),
 });
 
-let setVisible = (node: Node | Leaf, visible: boolean) => {
-    node.visible = visible;
-    node.children.forEach(child => setVisible(child, visible));
-    if (!isLeaf(node)) return;
+let setVisible = (n: Node, visible: boolean): void => {
+    n.visible = visible;
+    n.children.forEach(c => setVisible(c, visible));
+};
 
-    let wel = findWidgetElement([ node.group, node.name ], grid);
-    if (!wel) return;
+let leafs = (n: Node): Leaf[] => {
+    if (isLeaf(n)) return [ n ];
 
-    let reveal = () => {
-        grid.makeWidget(wel);
-        wel.classList.remove("hidden");
-    };
-
-    let hide = () => {
-        grid.removeWidget(wel, false);
-        wel.classList.add("hidden");
-    };
-
-    visible ? reveal() : hide();
+    let all: Leaf[] = [];
+    let collect = (n: Node) => n.children.forEach(c => isLeaf(c) ? all.push(c) : collect(c));
+    collect(n);
+    return all;
 };
 
 let cellHandlers = [
@@ -133,6 +137,7 @@ let cellHandlers = [
         input.checked = Boolean(c.getValue());
         input.addEventListener("change", () => {
             setVisible(r.original, input.checked);
+            onVisibilityChanged(leafs(r.original));
             render();
         });
 
