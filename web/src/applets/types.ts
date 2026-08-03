@@ -20,7 +20,7 @@ export type AppletInterface = {
 
 export type Name = string;
 export type GroupEl = string;
-export type Group = string[];
+export type Group = GroupEl[];
 export type Key = [ Group, Name ];
 export type KeyString = string;
 

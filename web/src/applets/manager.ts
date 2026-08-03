@@ -10,11 +10,24 @@ type Coord = number | undefined;
 type Geometry = { x: Coord, y: Coord, w: Coord, h: Coord };
 export type Leaf = Node & { name: Name, group: Group, geometry?: Geometry, children: [] };
 let isLeaf = (n: Node): n is Leaf => "group" in n;
-type VisibilityHandler = (leafs: Leaf[]) => void;
+type Handler = (leafs: Leaf[]) => void;
+type Handlers = {
+    onVisibilityChanged: Handler,
+    onDelete: Handler,
+};
 
 let data: Node[] = [{ name: "root", visible: true, children: [] }];
 let expanded: ExpandedState = { "0": true };
-let onVisibilityChanged: VisibilityHandler;
+let handlers: Handlers;
+
+let parent = (node: Node): Node | undefined => {
+    let find = (curr: Node): Node | undefined => {
+        if (curr.children.includes(node)) return curr;
+        return curr.children.map(child => find(child)).find(n => n !== undefined);
+    };
+
+    return find(data[0]);
+};
 
 let siblings = (path: Group): [ Node[], boolean ] => path.reduce((acc, curr) => {
     let [ sibs, visible ] = acc;
@@ -34,9 +47,9 @@ let addNode = (group: Group, leaf: Leaf) => {
 
 let host: HTMLElement;
 
-export let setup = (args: { host: HTMLElement, handler: VisibilityHandler }) => {
+export let setup = (args: { host: HTMLElement, handlers: Handlers }) => {
     host = args.host;
-    onVisibilityChanged = args.handler;
+    handlers = args.handlers;
     render();
 };
 
@@ -88,6 +101,7 @@ let table = () => createTable<Node>({
     columns: [
         { accessorKey: "name", header: "Name" },
         { accessorKey: "visible", header: "👁️" },
+        { accessorKey: "delete", header: "🗑️" },
     ],
     state,
     onStateChange: updater => {
@@ -137,11 +151,29 @@ let cellHandlers = [
         input.checked = Boolean(c.getValue());
         input.addEventListener("change", () => {
             setVisible(r.original, input.checked);
-            onVisibilityChanged(leafs(r.original));
+            handlers.onVisibilityChanged(leafs(r.original));
             render();
         });
 
         td.append(input);
+    },
+
+    (td: HTMLTableCellElement, r: Row<Node>) => {
+        let p = parent(r.original);
+        if (!p) return;
+
+        let button = document.createElement("button");
+        button.innerText = "❌";
+        button.addEventListener("click", () => {
+            let i = p.children.indexOf(r.original);
+            if (i === -1) return;
+
+            p.children.splice(i, 1);
+            handlers.onDelete(leafs(r.original));
+            render();
+        });
+
+        td.append(button);
     },
 ];
 

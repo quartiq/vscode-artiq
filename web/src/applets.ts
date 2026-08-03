@@ -145,18 +145,37 @@ let findWidgetElement = (key: Key, grid: GridStack): GridItemHTMLElement | undef
 let createManager = (grid: GridStack) => {
     let host = newWidget("manager", "🛠️ Manage Applets", { w: 9, h: 3})
         .querySelector(".widget-body") as HTMLElement;
-    manager.setup({ host, handler: (leafs: manager.Leaf[]) => {
-        let tuples = leafs
-            // insert new widgets bottom-right first, top-left last
-            // don't push residing widgets all the way down
-            .sort((a, b) => (b.geometry?.y ?? 0) - (a.geometry?.y ?? 0)
-                || (b.geometry?.x ?? 0) - (a.geometry?.x ?? 0))
-            .map((l): [ GridItemHTMLElement | undefined, manager.Leaf ] => [ findWidgetElement([ l.group, l.name ], grid), l ])
-            .filter((t): t is [ GridItemHTMLElement, manager.Leaf ] => t[0] !== undefined);
 
-        tuples.forEach(([ wel, l ]) => cacheGeometry(wel, l));
-        tuples.forEach(([ wel, l ]) => syncVis(wel, l));
-    }});
+    let handlers = {
+
+        onVisibilityChanged: (leafs: manager.Leaf[]) => {
+            let tuples = leafs
+                // insert new widgets bottom-right first, top-left last
+                // don't push residing widgets all the way down
+                .sort((a, b) => (b.geometry?.y ?? 0) - (a.geometry?.y ?? 0)
+                    || (b.geometry?.x ?? 0) - (a.geometry?.x ?? 0))
+                .map((l): [ GridItemHTMLElement | undefined, manager.Leaf ] => [ findWidgetElement([ l.group, l.name ], grid), l ])
+                .filter((t): t is [ GridItemHTMLElement, manager.Leaf ] => t[0] !== undefined);
+
+            tuples.forEach(([ wel, l ]) => cacheGeometry(wel, l));
+            tuples.forEach(([ wel, l ]) => syncVis(wel, l));
+        },
+
+        onDelete: (leafs: manager.Leaf[]) => {
+            leafs
+                .map(l => findWidgetElement([ l.group, l.name ], grid))
+                .filter(wel => wel !== undefined)
+                .forEach(wel => grid.removeWidget(wel));
+
+            leafs.forEach(l => {
+                let k = keystr([ l.group, l.name ]);
+                delete applets[k];
+                dirtyApplets.delete(k);
+            });
+        },
+    };
+
+    manager.setup({ host, handlers });
 };
 
 let create = async (args: CCBKwargTypes["create_applet"], leaf: manager.Leaf) => {
