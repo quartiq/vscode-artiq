@@ -1,11 +1,26 @@
-// TODO: implement CCB policies, group and global
 import {
     createTable, getCoreRowModel, ExpandedState, getExpandedRowModel, TableState, Row, Cell,
 } from "@tanstack/table-core";
 
 import { Name, GroupEl, Group } from "./types";
 
-type Node = { name: Name | GroupEl, visible: boolean, children: Node[] };
+type PolicyName = "create" | "visible";
+let policies = [ undefined, true, false ]; // undefined represents policy inheritance from parent
+type Policy = typeof policies[number];
+
+type Node = {
+    name: Name | GroupEl,
+    visible: boolean,
+    policy: Record<PolicyName, Policy>,
+    children: Node[],
+};
+
+type Root = Node & {
+    name: "root",
+    visible: true,
+    policy: { create: true, visible: false },
+};
+
 type Coord = number | undefined;
 type Geometry = { x: Coord, y: Coord, w: Coord, h: Coord };
 export type Leaf = Node & { name: Name, group: Group, geometry?: Geometry, children: [] };
@@ -16,34 +31,10 @@ type Handlers = {
     onDelete: Handler,
 };
 
-let data: Node[] = [{ name: "root", visible: true, children: [] }];
+let root: Root = { name: "root", visible: true, policy: { create: true, visible: false }, children: [] };
+let data: Node[] = [ root ];
 let expanded: ExpandedState = { "0": true };
 let handlers: Handlers;
-
-let parent = (node: Node): Node | undefined => {
-    let find = (curr: Node): Node | undefined => {
-        if (curr.children.includes(node)) return curr;
-        return curr.children.map(child => find(child)).find(n => n !== undefined);
-    };
-
-    return find(data[0]);
-};
-
-let siblings = (path: Group): [ Node[], boolean ] => path.reduce((acc, curr) => {
-    let [ sibs, visible ] = acc;
-    let n = sibs.find(n => n.name === curr && !isLeaf(n));
-    if (!n) {
-        n = { name: curr, visible, children: [] } as Node;
-        sibs.push(n);
-    }
-    return [ n.children, n.visible ];
-}, [ data[0].children, data[0].visible ]);
-
-let addNode = (group: Group, leaf: Leaf) => {
-    let [ sibs, visible ] = siblings(group);
-    if (sibs.some(n => n.name === leaf.name && isLeaf(n))) return;
-    sibs.push({ ...leaf, visible });
-};
 
 let host: HTMLElement;
 
@@ -53,16 +44,42 @@ export let setup = (args: { host: HTMLElement, handlers: Handlers }) => {
     render();
 };
 
+let siblings = (path: Group): [ Node[], boolean ] => path.reduce(([ sibs, visible ], curr) => {
+    let n = sibs.find(n => n.name === curr && !isLeaf(n));
+    if (!n) {
+        n = { name: curr, visible, policy: { create: undefined, visible: undefined }, children: [] } as Node;
+        sibs.push(n);
+    }
+    return [ n.children, n.visible ];
+}, [ data[0].children, data[0].visible ]);
+
+let derivePolicy = (name: PolicyName, path: Group): [ Node[], boolean ] => path.reduce(([ sibs, acc ], curr) => {
+    let n = sibs.find(n => n.name === curr && !isLeaf(n));
+    if (!n) return [ [], acc ];
+
+    let p = n.policy[name];
+    return [ n.children, n.policy[name] ?? acc ];
+}, [ data[0].children, (data[0] as Root).policy[name] ]);
+
 let find = (group: Group, name: Name): Leaf | undefined => {
     let [ sibs ] = siblings(group);
     return sibs.find(n => n.name === name && isLeaf(n)) as Leaf | undefined;
 };
 
+let addNode = (group: Group, leaf: Leaf) => {
+    let [ sibs, visible ] = siblings(group);
+    if (sibs.some(n => n.name === leaf.name && isLeaf(n))) return;
+    sibs.push({ ...leaf, visible });
+};
+
 // FIXME: msg is of type CCBMessage<"create_applet">
-export let create = (msg: any): Leaf => {
+export let create = (msg: any): Leaf | undefined => {
     let leaf = find(msg.group, msg.name);
+    let granted = leaf?.policy.create ?? derivePolicy("create", msg.group)[1];
+    if (!granted) return undefined;
+
     if (!leaf) {
-        leaf = { name: msg.name, group: msg.group, visible: true, children: [] };
+        leaf = { name: msg.name, group: msg.group, visible: true, policy: { create: undefined, visible: undefined }, children: [] };
         addNode(msg.group, leaf);
     }
 
@@ -101,7 +118,8 @@ let table = () => createTable<Node>({
     columns: [
         { accessorKey: "name", header: "Name" },
         { accessorKey: "visible", header: "👁️" },
-        { accessorKey: "delete", header: "🗑️" },
+        { header: "🗑️" },
+        { accessorFn: row => row.policy?.create, header: "🌱" },
     ],
     state,
     onStateChange: updater => {
@@ -127,6 +145,15 @@ let leafs = (n: Node): Leaf[] => {
     let collect = (n: Node) => n.children.forEach(c => isLeaf(c) ? all.push(c) : collect(c));
     collect(n);
     return all;
+};
+
+let parent = (node: Node): Node | undefined => {
+    let find = (curr: Node): Node | undefined => {
+        if (curr.children.includes(node)) return curr;
+        return curr.children.map(child => find(child)).find(n => n !== undefined);
+    };
+
+    return find(data[0]);
 };
 
 let cellHandlers = [
@@ -162,9 +189,9 @@ let cellHandlers = [
         let p = parent(r.original);
         if (!p) return;
 
-        let button = document.createElement("button");
-        button.innerText = "❌";
-        button.addEventListener("click", () => {
+        let btn = document.createElement("button");
+        btn.innerText = "❌";
+        btn.addEventListener("click", () => {
             let i = p.children.indexOf(r.original);
             if (i === -1) return;
 
@@ -173,7 +200,30 @@ let cellHandlers = [
             render();
         });
 
-        td.append(button);
+        td.append(btn);
+    },
+
+    (td: HTMLTableCellElement, r: Row<Node>, c: Cell<Node, unknown>) => {
+        let updateCheckbox = (p: Policy) => {
+            input.indeterminate = p === undefined;
+            input.checked = p === true;
+        };
+        let after = (p: Policy): Policy => policies[ (policies.indexOf(p) + 1) % policies.length];
+
+        let input = document.createElement("input");
+        input.type = "checkbox";
+        updateCheckbox(c.getValue() as Policy);
+
+        input.addEventListener("change", () => {
+            let next = after(c.getValue() as Policy);
+            if (r.original === root) next = !c.getValue();
+            r.original.policy.create = next;
+            updateCheckbox(next);
+
+            render();
+        });
+
+        td.append(input);
     },
 ];
 
