@@ -29,7 +29,8 @@ export let from: AppletInterface["from"] = args => {
     let bar: HTMLElement;
     let label: HTMLElement;
 
-    let rel = (v: number, min: number, max: number) => (v - min) / (max - min);
+    let rel = (v: number, min: number, max: number): number => (v - min) / (max - min);
+    let fmt = (v: number): string => `${ (v * 100).toFixed() }%`;
 
     let setup = (el: HTMLElement, subs: Record<string, any>) => {
         el.classList.add("progress_bar");
@@ -47,14 +48,14 @@ export let from: AppletInterface["from"] = args => {
         el.append(container);
 
         let v = rel((subs as Subs).counter, (locals as Locals).min, (locals as Locals).max);
-        bar.style.width = `${v * 100}%`;
-        label.innerText = `${v * 100}%`;
+        bar.style.width = fmt(v);
+        label.innerText = fmt(v);
     };
 
     let update = (subs: Record<string, any>) => {
         let v = rel((subs as Subs).counter, (locals as Locals).min, (locals as Locals).max);
-        bar.style.width = `${v * 100}%`;
-        label.innerText = `${v * 100}%`;
+        bar.style.width = fmt(v);
+        label.innerText = fmt(v);
     };
 
     return { subs, setup, update, gridDefaults: { w: 7, h: 1 } };
