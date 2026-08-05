@@ -44,44 +44,41 @@ export let setup = (args: { host: HTMLElement, handlers: Handlers }) => {
     render();
 };
 
-let siblings = (path: Group): [ Node[], boolean ] => path.reduce(([ sibs, visible ], curr) => {
-    let n = sibs.find(n => n.name === curr && !isLeaf(n));
-    if (!n) {
-        n = { name: curr, visible, policy: { create: undefined, visible: undefined }, children: [] } as Node;
-        sibs.push(n);
-    }
-    return [ n.children, n.visible ];
-}, [ data[0].children, data[0].visible ]);
+type Step<T> = (n: Node | undefined, acc: T) => T;
 
-let derivePolicy = (name: PolicyName, path: Group): [ Node[], boolean ] => path.reduce(([ sibs, acc ], curr) => {
-    let n = sibs.find(n => n.name === curr && !isLeaf(n));
-    if (!n) return [ [], acc ];
+let walk = <T>(path: Group, seed: T, step: Step<T>, create?: boolean): T => path
+    .reduce(([ sibs, visible, acc ], name): [ Node[], boolean, T ] => {
+        let group = sibs.find(n => n.name === name && !isLeaf(n));
+        if (create && !group)
+            sibs.push(group = { name, visible, policy: { create: undefined, visible: undefined }, children: [] });
 
-    let p = n.policy[name];
-    return [ n.children, n.policy[name] ?? acc ];
-}, [ data[0].children, (data[0] as Root).policy[name] ]);
+        return [ group?.children ?? [], group?.visible ?? visible, step(group, acc) ];
+    }, [root.children, root.visible, seed])[2];
 
-let find = (group: Group, name: Name): Leaf | undefined => {
-    let [ sibs ] = siblings(group);
-    return sibs.find(n => n.name === name && isLeaf(n)) as Leaf | undefined;
-};
+let pave = <T>(path: Group, seed: T, step: (n: Node, acc: T) => T): T => walk(path, seed, step as Step<T>, true);
 
-let addNode = (group: Group, leaf: Leaf) => {
-    let [ sibs, visible ] = siblings(group);
-    if (sibs.some(n => n.name === leaf.name && isLeaf(n))) return;
-    sibs.push({ ...leaf, visible });
+let findLeaf = (path: Group, name: Name): Leaf | undefined =>
+    walk(path, root.children, n => n ? n.children : [])
+        .find(n => n.name === name && isLeaf(n)) as Leaf | undefined;
+
+let inherited = (name: PolicyName, path: Group): boolean =>
+    walk(path, root.policy[name], (n, acc) => n?.policy[name] ?? acc);
+
+let newLeaf = (path: Group, name: Name): Leaf => {
+    let [ sibs, visible ] = pave(path, [ root.children, root.visible ], n => [ n.children, n.visible ]);
+    let leaf: Leaf = { name, group: path, visible, policy: { create: undefined, visible: undefined }, children: [] };
+    sibs.push(leaf);
+    return leaf;
 };
 
 // FIXME: msg is of type CCBMessage<"create_applet">
 export let create = (msg: any): Leaf | undefined => {
-    let leaf = find(msg.group, msg.name);
-    let granted = leaf?.policy.create ?? derivePolicy("create", msg.group)[1];
+    let leaf = findLeaf(msg.group, msg.name);
+
+    let granted = leaf?.policy.create ?? inherited("create", msg.group);
     if (!granted) return undefined;
 
-    if (!leaf) {
-        leaf = { name: msg.name, group: msg.group, visible: true, policy: { create: undefined, visible: undefined }, children: [] };
-        addNode(msg.group, leaf);
-    }
+    if (!leaf) leaf = newLeaf(msg.group, msg.name);
 
     render();
     return leaf;
@@ -153,7 +150,7 @@ let parent = (node: Node): Node | undefined => {
         return curr.children.map(child => find(child)).find(n => n !== undefined);
     };
 
-    return find(data[0]);
+    return find(root);
 };
 
 let cellHandlers = [
