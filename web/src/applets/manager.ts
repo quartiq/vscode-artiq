@@ -2,7 +2,7 @@ import {
     createTable, getCoreRowModel, ExpandedState, getExpandedRowModel, TableState, Row, Cell,
 } from "@tanstack/table-core";
 
-import { Name, GroupEl, Group } from "./types";
+import { Name, GroupEl, Group } from "./ccb";
 
 type PolicyName = "create" | "visible";
 let policies = [ undefined, true, false ]; // undefined represents policy inheritance from parent
@@ -71,7 +71,7 @@ let newLeaf = (path: Group, name: Name): Leaf => {
     return leaf;
 };
 
-// FIXME: msg is of type CCBMessage<"create_applet">
+// FIXME: msg is of type ccb.Message<"create_applet">
 export let create = (msg: any): Leaf | undefined => {
     let leaf = findLeaf(msg.group, msg.name);
 

@@ -1,5 +1,4 @@
-import { AppletInterface } from "./types";
-import { parseArgs } from "./utils";
+import { Interface } from "../template";
 
 type Subs = { counter: number };
 type Locals = { min: number, max: number };
@@ -20,12 +19,12 @@ style.innerHTML = `
 `;
 document.head.appendChild(style);
 
-export let from: AppletInterface["from"] = args => {
-    let { subs, locals } = parseArgs(args, {
-        positionals: [ "counter" ],
-        localnames: [ "min", "max" ],
-    });
+export let argsShape = {
+    positionals: [ "counter" ],
+    localnames: [ "min", "max" ],
+};
 
+export let from: Interface["from"] = ([ subs, locals ]) => {
     let bar: HTMLElement;
     let label: HTMLElement;
 

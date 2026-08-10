@@ -1,5 +1,4 @@
-import { AppletInterface } from "./types";
-import { parseArgs } from "./utils";
+import { Interface } from "../template";
 
 type Subs = { scalar: number };
 type Locals = { "digit-count": number };
@@ -13,12 +12,12 @@ style.innerHTML = `
 `;
 document.head.appendChild(style);
 
-export let from: AppletInterface["from"] = args => {
-    let { subs, locals } = parseArgs(args, {
-        positionals: [ "scalar" ],
-        localnames: [ "digit-count" ],
-    });
+export let argsShape = {
+    positionals: [ "scalar" ],
+    localnames: [ "digit-count" ],
+};
 
+export let from: Interface["from"] = ([ subs, locals ]) => {
     let parent: HTMLElement;
 
     // TODO: Add unit symbol

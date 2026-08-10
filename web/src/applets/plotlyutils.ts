@@ -2,10 +2,14 @@ import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 import { TypedArray } from "sipyco/pyonutils";
 
-import { plotel } from "./utils";
-
 export type Trace<Args> = (args: Args) => Plotly.Data[];
 export type Plot<Trace> = { trace: Trace, layout: Partial<Plotly.Layout>, el: HTMLElement };
+
+export let plotel = (parent: HTMLElement) => {
+    let el = document.createElement("div");
+    parent.append(el);
+    return el;
+};
 
 export let layout: () => Partial<Plotly.Layout> = () => window.structuredClone({
     margin: { l: 0, r: 0, t: 0, b: 0 },

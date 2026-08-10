@@ -1,9 +1,8 @@
 import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 
-import { AppletInterface } from "./types";
-import { parseArgs } from "./utils";
-import { single, normalize } from "./plotlyutils";
+import { Interface } from "../template";
+import { single, normalize } from "../plotlyutils";
 
 type Args = {
     y: pyon.NpArray,
@@ -27,7 +26,5 @@ let trace = (args: Args): Plotly.Data[] => {
     ];
 };
 
-export let from: AppletInterface["from"] = args => {
-    let { subs } = parseArgs(args, { positionals: [ "y" ] });
-    return { subs, ...single(trace) };
-};
+export let argsShape = { positionals: [ "y" ] };
+export let from: Interface["from"] = ([ subs ]) => ({ subs, ...single(trace) });

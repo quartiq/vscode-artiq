@@ -1,11 +1,10 @@
 import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 
-import { AppletInterface } from "./types";
-import { parseArgs } from "./utils";
-import { single, reshape2d } from "./plotlyutils";
+import { Interface } from "../template";
+import { single, reshape2d } from "../plotlyutils";
 
-type Args = {
+export type Args = {
     image2d: pyon.NpArray,
 };
 
@@ -17,7 +16,5 @@ let trace = (args: Args): Plotly.Data[] => [{
     colorscale: "Greys",
 }];
 
-export let from: AppletInterface["from"] = args => {
-    let { subs } = parseArgs(args, { positionals: [ "image2d" ] });
-    return { subs, ...single(trace) };
-};
+export let argsShape = { positionals: [ "image2d" ] };
+export let from: Interface["from"] = ([ subs ]) => ({ subs, ...single(trace) });

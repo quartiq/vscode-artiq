@@ -1,9 +1,8 @@
 import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 
-import { AppletInterface } from "./types";
-import { parseArgs, plotel } from "./utils";
-import { Plot, layout, config, resize, normalize, reshape2d } from "./plotlyutils";
+import { Interface } from "../template";
+import { Plot, layout, config, resize, normalize, reshape2d, plotel } from "../plotlyutils";
 
 type Args = {
     xs: pyon.NpArray,
@@ -52,9 +51,9 @@ let traces = [
     },
 ];
 
-export let from: AppletInterface["from"] = args => {
-    let { subs } = parseArgs(args, { positionals: [ "xs", "histogram_bins", "histogram_counts" ] });
+export let argsShape = { positionals: [ "xs", "histogram_bins", "histogram_counts" ] };
 
+export let from: Interface["from"] = ([ subs ]) => {
     let cached: Args;
     let selected: number = -1;
 

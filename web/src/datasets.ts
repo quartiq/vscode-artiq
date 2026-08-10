@@ -70,7 +70,7 @@ let body = setup();
 sync_struct.from({
     masterHostname: "localhost",
     notifierName: "datasets",
-    onReceive: (_: sync_struct.Store, mod: sync_struct.Mod) => {
+    onReceive: (_, mod: sync_struct.Mod) => {
         if (mod.action === "init") Object.entries(mod.struct)
             .forEach(([keypath, dataset]) => create(keypath, dataset));
 
