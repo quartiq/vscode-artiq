@@ -83,5 +83,8 @@ export let from: Interface["from"] = ([ subs ]) => {
         plots.forEach(p => Plotly.react(p.el, p.trace(args as Args, selected), p.layout));
     };
 
-    return { subs, setup, update, gridDefaults: { w: 10, h: 4 } };
+    return [
+        { subs, setup, update },
+        { w: 10, h: 4 },
+    ];
 };

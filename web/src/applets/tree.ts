@@ -1,6 +1,6 @@
 import { Name, GroupEl, Group } from "./ccb";
 
-type PolicyName = "create" | "visible";
+export type PolicyName = "create" | "visible";
 let policies = [ undefined, true, false ]; // undefined represents policy inheritance from parent
 export type Policy = typeof policies[number];
 type DefinitePolicy = boolean;
@@ -10,6 +10,7 @@ export let nextPolicy = (p: Policy): Policy => policies[ (policies.indexOf(p) + 
 type Coord = number | undefined;
 // FIXME: this is derived from GridStack
 type Geometry = { x: Coord, y: Coord, w: Coord, h: Coord };
+export type Visible = boolean;
 
 export type Node = {
     name: Name | GroupEl,
@@ -17,7 +18,7 @@ export type Node = {
     children: Node[],
 };
 
-export type RootNode = Node & {
+type RootNode = Node & {
     name: "root",
     policy: { create: true, visible: false },
 };
@@ -29,7 +30,7 @@ type GroupNode = Node & {
 export type LeafNode = Node & {
     name: Name,
     group: Group,
-    visible: boolean,
+    visible: Visible,
     geometry?: Geometry,
     children: [];
 };

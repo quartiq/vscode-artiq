@@ -1,9 +1,10 @@
 import { GridStack, GridStackWidget, GridItemHTMLElement } from "gridstack";
 import { LeafNode } from "./tree";
-import * as manager from "./manager";
-import * as template from "./template";
-import { Applet, KeyString, keystr } from "./types";
-import { KwargTypes } from "./ccb";
+import { KeyString, keystr } from "./types";
+import { Group, Name } from "./ccb";
+
+let grid: GridStack;
+export let init = () => grid = GridStack.init({ handle: ".widget-header" });
 
 let newItem = (title: string, className?: string): GridItemHTMLElement => {
     let item = document.createElement("div");
@@ -67,57 +68,43 @@ let syncVis = (item: GridItemHTMLElement, leaf: LeafNode, grid: GridStack) => {
     }
 };
 
-export let newManagerItem = (grid: GridStack, onDelete: (leafs: LeafNode[]) => void) => {
+export let updateVisibility = (leafs: LeafNode[]) => {
+    let tuples = leafs
+        // insert new widgets bottom-right first, top-left last
+        // don't push residing widgets all the way down
+        .sort((a, b) => (b.geometry?.y ?? 0) - (a.geometry?.y ?? 0)
+            || (b.geometry?.x ?? 0) - (a.geometry?.x ?? 0))
+        .map((l): [ GridItemHTMLElement | undefined, LeafNode ] => [ findItem(keystr([ l.group, l.name ]), grid), l ])
+        .filter((t): t is [ GridItemHTMLElement, LeafNode ] => t[0] !== undefined);
+
+    tuples.forEach(([ item, l ]) => cacheGeometry(item, l));
+    tuples.forEach(([ item, l ]) => syncVis(item, l, grid));
+};
+
+export let remove = (group: Group, name: Name) => {
+    let item = findItem(keystr([ group, name ]), grid);
+    if (!item) return;
+    grid.removeWidget(item);
+};
+
+export let newManagerItem = () => {
     let item = newItem("🛠️ Manage Applets");
     activateItem("manager", item, grid, { w: 9, h: 3});
 
-    let handlers = {
-
-        onVisibilityChanged: (leafs: LeafNode[]) => {
-            let tuples = leafs
-                // insert new widgets bottom-right first, top-left last
-                // don't push residing widgets all the way down
-                .sort((a, b) => (b.geometry?.y ?? 0) - (a.geometry?.y ?? 0)
-                    || (b.geometry?.x ?? 0) - (a.geometry?.x ?? 0))
-                .map((l): [ GridItemHTMLElement | undefined, LeafNode ] => [ findItem(keystr([ l.group, l.name ]), grid), l ])
-                .filter((t): t is [ GridItemHTMLElement, LeafNode ] => t[0] !== undefined);
-
-            tuples.forEach(([ item, l ]) => cacheGeometry(item, l));
-            tuples.forEach(([ item, l ]) => syncVis(item, l, grid));
-        },
-
-        onDelete: (leafs: LeafNode[]) => {
-            leafs
-                .map(l => findItem(keystr([ l.group, l.name ]), grid))
-                .filter(item => item !== undefined)
-                .forEach(item => grid.removeWidget(item));
-
-            onDelete(leafs);
-        },
-    };
-
-    let host = item.querySelector(".widget-body") as HTMLElement;
-    manager.setup({ host, handlers });
+    return item.querySelector(".widget-body") as HTMLElement;
 };
 
-type TemplateItem = { keystring: KeyString, applet: Applet, host: HTMLElement };
-
-export let newTemplateItem = async (args: KwargTypes["create_applet"], leaf: LeafNode, grid: GridStack): Promise<TemplateItem | undefined> => {
+export let newTemplateItem = async (leaf: LeafNode, defaults: GridStackWidget | undefined): Promise<HTMLElement | undefined> => {
     // what "args" may consist of:
     // { name: "code_applet_example", command: "code_applet_dataset", code: 'from PyQt6 import QtWidgets\n\nfrom artiq.applets.simple import SimpleApplet\n\n\nclass DemoWidget(QtWidgets.QLabel):\n    def __init__(self, args, ctl):\n        QtWidgets.QLabel.__init__(self)\n        self.dataset_name = args.dataset\n\n    def data_changed(self, value, metadata, persist, mods):\n        try:\n            n = str(value[self.dataset_name])\n        except (KeyError, ValueError, TypeError):\n            n = "---"\n        n = "<font size=15>" + n + "</font>"\n        self.setText(n)\n\n\ndef main():\n    applet = SimpleApplet(DemoWidget)\n    applet.add_dataset("dataset", "dataset to show")\n    applet.run()\n\nif __name__ == "__main__":\n    main()\n', group: "autoapplet" }
     // { name: "flopping_f", command: "${artiq_applet}plot_xy flopping_f_brightness --x flopping_f_frequency --fit flopping_f_fit" }
 
-    let applet = await template.fetch(args.command);
-    if (!applet) return undefined;
-
-    // TODO: check leaf.policy.visible, if applet can be set to visible on creation or not
-
-    let keystring = keystr([ args.group, args.name ]);
+    let keystring = keystr([ leaf.group, leaf.name ]);
     let item = findItem(keystring, grid);
     if (!item) {
-        let breadcrumb = [ ...args.group, args.name ].reverse().join(" — ");
+        let breadcrumb = [ ...leaf.group, leaf.name ].reverse().join(" — ");
         item = newItem(breadcrumb, "applet");
-        activateItem(keystring, item, grid, applet.gridDefaults ?? { w: 5, h: 4 });
+        activateItem(keystring, item, grid, defaults ?? { w: 5, h: 4 });
     }
 
     let host = item.querySelector(".widget-body") as HTMLElement;
@@ -125,5 +112,5 @@ export let newTemplateItem = async (args: KwargTypes["create_applet"], leaf: Lea
 
     cacheGeometry(item, leaf);
     syncVis(item, leaf, grid);
-    return { keystring, applet, host };
+    return host;
 };

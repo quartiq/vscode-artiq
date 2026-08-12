@@ -59,6 +59,8 @@ export let single = <Args>(trace: Trace<Args>) => {
     return { setup, update };
 };
 
+export let gridDefaults = { w: 5, h: 4 };
+
 // plotly.js only eats number[]
 export let normalize = (arr: TypedArray): number[] => {
     if (arr instanceof BigInt64Array || arr instanceof BigUint64Array)

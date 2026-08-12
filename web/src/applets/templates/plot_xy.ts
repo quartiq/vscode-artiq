@@ -2,7 +2,7 @@ import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 
 import { Interface } from "../template";
-import { single, normalize } from "../plotlyutils";
+import { single, gridDefaults, normalize } from "../plotlyutils";
 
 type Args = {
     y: pyon.NpArray,
@@ -27,4 +27,7 @@ let trace = (args: Args): Plotly.Data[] => {
 };
 
 export let argsShape = { positionals: [ "y" ] };
-export let from: Interface["from"] = ([ subs ]) => ({ subs, ...single(trace) });
+export let from: Interface["from"] = ([ subs ]) => [
+    { subs, ...single(trace) },
+    gridDefaults,
+];

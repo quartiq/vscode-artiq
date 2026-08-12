@@ -1,19 +1,8 @@
-import { GridStackWidget } from "gridstack";
-import { Keypath } from "../datasets/types";
 import { Group, Name } from "./ccb";
 
-type ArgName = string;
-export type UnitaryArgs = Record<ArgName, any>;
-export type SubArgs = Record<ArgName, Keypath>;
+// TODO: maybe move towards dbio?
 
-export type Applet = {
-    subs: SubArgs,
-    setup: (item: HTMLElement, args: UnitaryArgs) => void,
-    update: (args: UnitaryArgs) => void,
-    gridDefaults?: GridStackWidget,
-};
-
-export type Key = [ Group, Name ];
+type Key = [ Group, Name ];
 export type KeyString = string;
 
 export let keystr = ([ group, name ]: Key): KeyString => JSON.stringify([ group, name ]);

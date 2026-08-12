@@ -32,5 +32,8 @@ export let from: Interface["from"] = ([ subs, locals ]) => {
     let update = (subs: Record<string, any>) =>
         parent.innerText = fmt((subs as Subs).scalar, (locals as Locals)["digit-count"]);
 
-    return { subs, setup, update, gridDefaults: { w: 5, h: 2 } };
+    return [
+        { subs, setup, update },
+        { w: 5, h: 2 },
+    ];
 };

@@ -2,7 +2,7 @@ import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 
 import { Interface } from "../template";
-import { single, reshape2d } from "../plotlyutils";
+import { single, gridDefaults, reshape2d } from "../plotlyutils";
 
 export type Args = {
     image2d: pyon.NpArray,
@@ -17,4 +17,7 @@ let trace = (args: Args): Plotly.Data[] => [{
 }];
 
 export let argsShape = { positionals: [ "image2d" ] };
-export let from: Interface["from"] = ([ subs ]) => ({ subs, ...single(trace) });
+export let from: Interface["from"] = ([ subs ]) => [
+    { subs, ...single(trace) },
+    gridDefaults,
+];

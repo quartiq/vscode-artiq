@@ -57,5 +57,8 @@ export let from: Interface["from"] = ([ subs, locals ]) => {
         label.innerText = fmt(v);
     };
 
-    return { subs, setup, update, gridDefaults: { w: 7, h: 1 } };
+    return [
+        { subs, setup, update },
+        { w: 7, h: 1 },
+    ];
 };

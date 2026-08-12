@@ -1,6 +1,8 @@
 import shellQuote from "shell-quote";
 import minimist from "minimist";
-import { UnitaryArgs, Applet } from "./types";
+import { GridStackWidget } from "gridstack";
+
+import { UnitaryArgs, Applet } from "./schedule";
 import { Command } from "./ccb";
 
 import * as big_number from "./templates/big_number";
@@ -30,7 +32,7 @@ type ParsedArgs = [
 
 export type Interface = {
     argsShape: ArgsShape,
-    from: (args: ParsedArgs) => Applet,
+    from: (args: ParsedArgs) => [ Applet, GridStackWidget? ],
 };
 
 let templates: Record<Name, Interface> = {
@@ -62,7 +64,7 @@ let parseArgs = (args: minimist.ParsedArgs, shape: ArgsShape): ParsedArgs => {
     ];
 };
 
-export let fetch = async (cmd: Command): Promise<Applet | undefined> => {
+export let fetch = async (cmd: Command): Promise<[ Applet, GridStackWidget? ] | undefined> => {
     let [name, ...argv] = shellQuote.parse(cmd) as string[];
     if (!isName(name)) {
         console.error("Applet template not yet implemented:", name);
