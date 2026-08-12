@@ -94,7 +94,7 @@ export let newManagerItem = () => {
     return item.querySelector(".widget-body") as HTMLElement;
 };
 
-export let newTemplateItem = async (leaf: LeafNode, defaults: GridStackWidget | undefined): Promise<HTMLElement | undefined> => {
+export let newTemplateItem = async (leaf: LeafNode, defaults: GridStackWidget | undefined): Promise<HTMLElement> => {
     // what "args" may consist of:
     // { name: "code_applet_example", command: "code_applet_dataset", code: 'from PyQt6 import QtWidgets\n\nfrom artiq.applets.simple import SimpleApplet\n\n\nclass DemoWidget(QtWidgets.QLabel):\n    def __init__(self, args, ctl):\n        QtWidgets.QLabel.__init__(self)\n        self.dataset_name = args.dataset\n\n    def data_changed(self, value, metadata, persist, mods):\n        try:\n            n = str(value[self.dataset_name])\n        except (KeyError, ValueError, TypeError):\n            n = "---"\n        n = "<font size=15>" + n + "</font>"\n        self.setText(n)\n\n\ndef main():\n    applet = SimpleApplet(DemoWidget)\n    applet.add_dataset("dataset", "dataset to show")\n    applet.run()\n\nif __name__ == "__main__":\n    main()\n', group: "autoapplet" }
     // { name: "flopping_f", command: "${artiq_applet}plot_xy flopping_f_brightness --x flopping_f_frequency --fit flopping_f_fit" }

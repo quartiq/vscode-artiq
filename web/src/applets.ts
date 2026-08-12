@@ -1,3 +1,4 @@
+import * as permission from "./applets/permission";
 import * as schedule from "./applets/schedule";
 import * as ccb from "./applets/ccb";
 import * as layout from "./applets/layout";
@@ -25,15 +26,17 @@ manager.setup(layout.newManagerItem());
 ccb.handleFuncs({
 
     create_applet: async args => {
-        let leaf = manager.create(args.group, args.name);
-        if (!leaf) return;
+        if (!permission.granted("create", args.group, args.name)) return;
 
         let fetched = await template.fetch(args.command);
         if (!fetched) return;
 
+        let leaf = manager.create(args.group, args.name);
+        if (permission.granted("visible", args.group, args.name))
+            manager.setVisible(leaf, true);
+
         let [ applet, gridDefaults ] = fetched;
         let host = await layout.newTemplateItem(leaf, gridDefaults);
-        if (!host) return;
 
         schedule.setup(args.group, args.name, applet, host);
     },

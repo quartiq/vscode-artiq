@@ -2,7 +2,7 @@ import {
     createTable, getCoreRowModel, ExpandedState, getExpandedRowModel, TableState, Row, Cell,
 } from "@tanstack/table-core";
 
-import { PolicyName, Policy, nextPolicy, Visible, Node, LeafNode, isLeaf, groupFrom, leafFrom, inherited, newLeaf, leafs, setVisible, setVisibleByPolicy, parent, root } from "./tree";
+import { PolicyName, Policy, nextPolicy, Visible, Node, LeafNode, isLeaf, leafFrom, newLeaf, leafs, parent, root } from "./tree";
 import { Name, Group, GroupEl } from "./ccb";
 
 type Handler = (leafs: LeafNode[]) => void;
@@ -24,13 +24,14 @@ export let setup = (el: HTMLElement) => {
     render();
 };
 
-export let create = (group: Group, name: Name): LeafNode | undefined => {
-    let leaf = leafFrom(group, name);
+export let setVisible = (node: Node, visible: boolean): void => {
+    leafs(node).forEach(l => l.visible = visible);
+    render();
+};
 
-    let granted = leaf?.policy.create ?? inherited("create", group);
-    if (!granted) return undefined;
 
-    if (!leaf) leaf = newLeaf(group, name, inherited("visible", group));
+export let create = (group: Group, name: Name): LeafNode => {
+    let leaf = leafFrom(group, name) ?? newLeaf(group, name);
     render();
 
     return leaf;
@@ -63,8 +64,8 @@ let state: TableState = {
 };
 
 let agents = {
-    human: { icon: "🧑", bg: "mistyrose" },
-    machine: { icon: "🤖", bg: "aliceblue" },
+    human: { icon: "🧑", bg: "mistyrose" }, // invoke UI actions now
+    machine: { icon: "🤖", bg: "aliceblue" }, // allow or deny future external CCB actions
 };
 
 let table = () => createTable<Node>({
