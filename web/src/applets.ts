@@ -23,6 +23,12 @@ manager.handleFuncs({
 
 manager.setup(layout.newManagerItem());
 
+let setVisible = (args: any, visible: boolean) => {
+    let leafs = permission.leafsByPolicy("visible", args.group, args.name);
+    manager.setVisibleAll(leafs, visible);
+    layout.updateVisibility(leafs);
+};
+
 ccb.handleFuncs({
 
     create_applet: async args => {
@@ -41,18 +47,11 @@ ccb.handleFuncs({
         schedule.setup(args.group, args.name, applet, host);
     },
 
-    restart_applet: args => {
-        // TODO
-    },
+    restart_applet: args => setVisible(args, true),
+    disable_applet: args => setVisible(args, false),
 
-    disable_applet: args => {
-        // TODO
-    },
-
-    disable_applet_group: args => {
-        // legacy alias for calling disable_applet with "name" neglected
-        // TODO
-    },
+    // legacy alias for calling disable_applet with name === null
+    disable_applet_group: args => setVisible({ ...args, name: null }, false),
 });
 
 ccb.listen();

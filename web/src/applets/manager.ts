@@ -29,6 +29,10 @@ export let setVisible = (node: Node, visible: boolean): void => {
     render();
 };
 
+export let setVisibleAll = (leafs: LeafNode[], visible: boolean): void => {
+    leafs.forEach(l => l.visible = visible);
+    render();
+};
 
 export let create = (group: Group, name: Name): LeafNode => {
     let leaf = leafFrom(group, name) ?? newLeaf(group, name);

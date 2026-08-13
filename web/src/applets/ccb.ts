@@ -50,6 +50,8 @@ type HandleFuncs = {
 let handlers: HandleFuncs;
 export let handleFuncs = (funcs: HandleFuncs) => handlers = funcs;
 
+let queue = Promise.resolve();
+
 export let listen = () => broadcast.subscribe({
     masterHostname: "localhost",
     targetName: "ccb",
@@ -60,7 +62,9 @@ export let listen = () => broadcast.subscribe({
             return;
         }
 
-        handler(normalize(msg));
+        queue = queue
+            .then(() => handler(normalize(msg)))
+            .catch(err => console.error(`applets: failed to handle "${msg.service}"`, err));
     },
     onError: err => console.error("applets: Connection error. Is ARTIQ server running?", err),
 });
