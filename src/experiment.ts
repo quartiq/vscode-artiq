@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as sync_struct from "sipyco/sync_struct";
 import * as pc_rpc from "sipyco/pc_rpc";
-import { Dict } from "sipyco/pyon";
+import { TaggedDict } from "sipyco/pyon";
 
 import { arrayFrom } from "./utils.js";
 import * as dbio from "./dbio.js";
@@ -49,7 +49,7 @@ export type SyncInfo = {
     scheduler_defaults: SchedulerInfo,
 }
 
-type Repo = Dict<Name, SyncInfo>
+type Repo = TaggedDict<Name, SyncInfo>
 
 export type Store = sync_struct.Store & { struct: Repo };
 export let store: Promise<Store> = new Promise(resolve => {

@@ -37,6 +37,7 @@ export let copy = (src: any): NpArray => {
 // TODO: support tuple indices like [1, [2, 3]] and such
 export let get = (tagged: any, key: any): any => (tagged as NpArray)[key];
 
+// TODO: get rid of __jsonclass__, as pyon.ts owns tagging
 export let set = (tagged: any, key: any, value: any): void => {
     let [ , ...tail ] = tagged.__shape__;
     let stride = tail.reduce((a: number, b: number) => a * b, 1);

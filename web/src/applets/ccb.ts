@@ -2,6 +2,7 @@ import * as broadcast from "sipyco/broadcast";
 
 export type Name = string;
 export type Command = string;
+export type Code = string;
 export type GroupEl = string;
 export type Group = GroupEl[];
 
@@ -12,8 +13,8 @@ type ArgTypes = {
     disable_applet_group: [ Group ],
 };
 
-export type KwargTypes = {
-    create_applet: { name: Name, command: Command, group: Group, code: string },
+type KwargTypes = {
+    create_applet: { name: Name, command: Command, group: Group, code: Code },
     restart_applet: { name: Name, group: Group },
     disable_applet: { name: Name, group: Group },
     disable_applet_group: { group: Group },
@@ -50,8 +51,6 @@ type HandleFuncs = {
 let handlers: HandleFuncs;
 export let handleFuncs = (funcs: HandleFuncs) => handlers = funcs;
 
-let queue = Promise.resolve();
-
 export let listen = () => broadcast.subscribe({
     masterHostname: "localhost",
     targetName: "ccb",
@@ -62,9 +61,7 @@ export let listen = () => broadcast.subscribe({
             return;
         }
 
-        queue = queue
-            .then(() => handler(normalize(msg)))
-            .catch(err => console.error(`applets: failed to handle "${msg.service}"`, err));
+        handler(normalize(msg));
     },
     onError: err => console.error("applets: Connection error. Is ARTIQ server running?", err),
 });

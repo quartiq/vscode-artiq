@@ -1,8 +1,8 @@
 import * as sync_struct from "sipyco/sync_struct";
+import * as pyon from "sipyco/pyon";
 
 import { Datasets, Keypath } from "../datasets/types";
-import { KeyString, keystr } from "./types";
-import { Group, Name } from "./ccb";
+import type * as ccb from "./ccb";
 
 type ArgName = string;
 export type UnitaryArgs = Record<ArgName, any>;
@@ -14,8 +14,10 @@ export type Applet = {
     update: (args: UnitaryArgs) => void,
 };
 
-let applets: Record<KeyString, Applet> = {};
-let dirtyApplets = new Set<KeyString>();
+type Key = [group: ccb.Group, name: ccb.Name];
+
+let applets = new pyon.Dict<Key, Applet>();
+let dirtyApplets = new pyon.Set<Key>();
 let flushScheduled = false;
 
 let keypath = (mod: sync_struct.SetitemMod | sync_struct.DelitemMod) => {
@@ -26,7 +28,7 @@ let keypath = (mod: sync_struct.SetitemMod | sync_struct.DelitemMod) => {
 let deriveArgs = (argsMap: SubArgs, sets: Datasets) => Object.fromEntries(Object.entries(argsMap)
     .map(([ argName, keypath ]) => [ argName, sets.get(keypath)?.[1] ]));
 
-let scheduleUpdate = (key: KeyString, datasets: Datasets) => {
+let scheduleUpdate = (key: Key, datasets: Datasets) => {
     // TODO test this, review this
     dirtyApplets.add(key);
     if (flushScheduled) return;
@@ -36,10 +38,12 @@ let scheduleUpdate = (key: KeyString, datasets: Datasets) => {
         flushScheduled = false;
 
         let pending = dirtyApplets;
-        dirtyApplets = new Set();
+        dirtyApplets = new pyon.Set();
 
-        pending.forEach(k => {
-            let applet = applets[k];
+        pending.forEach((k: Key) => {
+            let applet = applets.get(k);
+            if (!applet) return;
+
             try {
                 applet.update(deriveArgs(applet.subs, datasets));
             } catch (err) {
@@ -49,26 +53,25 @@ let scheduleUpdate = (key: KeyString, datasets: Datasets) => {
     });
 };
 
-let store = await sync_struct.from({
+let store = await sync_struct.from<Datasets>({
     masterHostname: "localhost",
     notifierName: "datasets",
     onReceive: (_, mod: sync_struct.Mod) => {
         if (mod.action === "init") return;
 
-        Object.entries(applets)
-            .filter(([ _, applet ]) => Object.values(applet.subs).includes(keypath(mod)))
-            .forEach(([ k ]) => scheduleUpdate(k, store.struct));
+        applets.forEach((a: Applet, k: Key) => {
+            if (!Object.values(a.subs).includes(keypath(mod))) return;
+            scheduleUpdate(k, store.struct);
+        });
     },
 });
 
-export let setup = (group: Group, name: Name, applet: Applet, host: HTMLElement) => {
+export let setup = (group: ccb.Group, name: ccb.Name, applet: Applet, host: HTMLElement) => {
     applet.setup(host, deriveArgs(applet.subs, store.struct));
-    let k = keystr([ group, name ]);
-    applets[k] = applet; // after applet.setup() to omit race with applet.update()
+    applets.set([ group, name ], applet); // after applet.setup() to omit race with applet.update()
 };
 
-export let remove = (group: Group, name: Name) => {
-    let k = keystr([ group, name ]);
-    delete applets[k];
-    dirtyApplets.delete(k);
+export let remove = (group: ccb.Group, name: ccb.Name) => {
+    applets.delete([ group, name ]);
+    dirtyApplets.delete([ group, name ]);
 };

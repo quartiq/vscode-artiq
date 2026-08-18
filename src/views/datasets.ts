@@ -16,7 +16,7 @@ export let view: vscode.TreeView<string>;
 type Keypath = string;
 type Metadata = { unit: string, scale: number, precision: number };
 type Dataset = [ persist: boolean, value: any, metadata: Metadata ];
-type Datasets = pyon.Dict<Keypath, Dataset>;
+type Datasets = pyon.TaggedDict<Keypath, Dataset>;
 
 type Store = sync_struct.Store & { struct: Datasets };
 export let store: Store = { struct: pyonutils.create("dict", [[]]) as any as Datasets }; // FIXME: bad typing

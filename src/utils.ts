@@ -1,4 +1,4 @@
-import { Dict } from "sipyco/pyon";
+import { TaggedDict } from "sipyco/pyon";
 
 export let splitOnLast = (str: string, delimiter: string): [string, string | undefined] => {
     let i = str.lastIndexOf(delimiter);
@@ -53,4 +53,4 @@ export let base64From = (bytes: Uint8Array): string =>
     btoa(String.fromCharCode(...bytes));
 
 // FIXME: wait for Iterator.prototype.map() to ship for MapIterator, e.g. entries(), keys(), ...
-export let arrayFrom = (dict: Dict, method: "entries" | "keys"): any[] => [ ...dict[method]() ];
+export let arrayFrom = (dict: TaggedDict, method: "entries" | "keys"): any[] => [ ...dict[method]() ];

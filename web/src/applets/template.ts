@@ -3,7 +3,7 @@ import minimist from "minimist";
 import { GridStackWidget } from "gridstack";
 
 import { UnitaryArgs, Applet } from "./schedule";
-import { Command } from "./ccb";
+import type * as ccb from "./ccb";
 
 import * as big_number from "./templates/big_number";
 import * as progress_bar from "./templates/progress_bar";
@@ -30,10 +30,13 @@ type ParsedArgs = [
     locals: UnitaryArgs,
 ];
 
+type Result = [ Applet, GridStackWidget? ];
+
 export type Interface = {
     argsShape: ArgsShape,
-    from: (args: ParsedArgs) => [ Applet, GridStackWidget? ],
+    from: (args: ParsedArgs) => Result,
 };
+export type Fetched = Result | undefined;
 
 let templates: Record<Name, Interface> = {
     big_number,
@@ -64,7 +67,7 @@ let parseArgs = (args: minimist.ParsedArgs, shape: ArgsShape): ParsedArgs => {
     ];
 };
 
-export let fetch = async (cmd: Command): Promise<[ Applet, GridStackWidget? ] | undefined> => {
+export let fetch = (cmd: ccb.Command): Fetched => {
     let [name, ...argv] = shellQuote.parse(cmd) as string[];
     if (!isName(name)) {
         console.error("Applet template not yet implemented:", name);
@@ -73,5 +76,5 @@ export let fetch = async (cmd: Command): Promise<[ Applet, GridStackWidget? ] | 
 
     let t = templates[name];
     let parsed = parseArgs(minimist(argv), t.argsShape);
-    return templates[name].from(parsed);
+    return t.from(parsed);
 };

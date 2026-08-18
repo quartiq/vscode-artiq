@@ -1,4 +1,5 @@
-import { Name, GroupEl, Group } from "./ccb";
+import type * as ccb from "./ccb";
+import * as dbio from "./dbio";
 
 export type PolicyName = "create" | "visible";
 let policies = [ undefined, true, false ]; // undefined represents policy inheritance from parent
@@ -12,52 +13,59 @@ type Coord = number | undefined;
 type Geometry = { x: Coord, y: Coord, w: Coord, h: Coord };
 export type Visible = boolean;
 
-export type Node = {
-    name: Name | GroupEl,
+type BaseNode = {
+    name: ccb.GroupEl | ccb.Name,
     policy: Record<PolicyName, Policy>,
     children: Node[],
+}
+
+type GroupNode = BaseNode & {
+    name: ccb.GroupEl,
+    expanded: boolean,
 };
 
-type RootNode = Node & {
+type RootNode = GroupNode & {
     name: "root",
     policy: Record<PolicyName, DefinitePolicy>,
 };
 
-type GroupNode = Node & {
-    name: GroupEl,
-};
+export type LeafNode = BaseNode & {
+    group: ccb.Group,
+    name: ccb.Name,
+    command: ccb.Command,
+    code: ccb.Code,
 
-export type LeafNode = Node & {
-    name: Name,
-    group: Group,
     visible: Visible,
     geometry?: Geometry,
     children: [];
 };
 
+export type Node = GroupNode | LeafNode;
+
 export let isLeaf = (n: Node): n is LeafNode => "group" in n;
+export let isGroup = (n: Node): n is GroupNode => !isLeaf(n);
 
 type WalkStep<T> = (n: Node | undefined, acc: T) => T;
 
-export let walk = <T>(path: Group, step: WalkStep<T>, seed: T, create?: boolean): T => path
+export let walk = <T>(path: ccb.Group, step: WalkStep<T>, seed: T, create?: boolean): T => path
     .reduce(([ sibs, acc ], name): [ Node[], T ] => {
-        let group: GroupNode | undefined = sibs.find((n: Node) => n.name === name && !isLeaf(n));
+        let group = sibs.find((n: Node) => isGroup(n) && n.name === name);
         if (create && !group)
-            sibs.push(group = { name, policy: { create: undefined, visible: undefined }, children: [] });
+            sibs.push(group = { name, policy: { create: undefined, visible: undefined }, expanded: false, children: [] });
 
         return [ group?.children ?? [], step(group, acc) ];
     }, [ root.children, seed ] as [ Node[], T ])[1];
 
-let pave = <T>(path: Group, step: (n: Node, acc: T) => T, seed: T): T => walk(path, step as WalkStep<T>, seed, true);
+let pave = <T>(path: ccb.Group, step: (n: Node, acc: T) => T, seed: T): T => walk(path, step as WalkStep<T>, seed, true);
 
-export let groupFrom = (path: Group): GroupNode | undefined => walk(path, n => n, root);
+export let groupFrom = (path: ccb.Group): GroupNode | undefined => walk<GroupNode | undefined>(path, n => n && isGroup(n) ? n : undefined, root);
 
-export let leafFrom = (path: Group, name: Name): LeafNode | undefined => groupFrom(path)?.children
+export let leafFrom = (path: ccb.Group, name: ccb.Name): LeafNode | undefined => groupFrom(path)?.children
     .find((n): n is LeafNode => n.name === name && isLeaf(n));
 
-export let newLeaf = (path: Group, name: Name): LeafNode => {
-    let sibs = pave(path, n => n.children, root.children);
-    let leaf: LeafNode = { name, group: path, visible: false, policy: { create: undefined, visible: undefined }, children: [] };
+export let newLeaf = (group: ccb.Group, name: ccb.Name, command: ccb.Command, code: ccb.Code): LeafNode => {
+    let sibs = pave(group, n => n.children, root.children);
+    let leaf: LeafNode = { group, name, command, code, visible: false, policy: { create: undefined, visible: undefined }, children: [] };
     sibs.push(leaf);
     return leaf;
 };
@@ -87,4 +95,5 @@ export let parent = (node: Node): Node | undefined => {
     return found;
 };
 
-export let root: RootNode = { name: "root", policy: { create: true, visible: false }, children: [] };
+export let root: RootNode = dbio.read<RootNode>() ?? { name: "root", policy: { create: true, visible: false }, expanded: true, children: [] };
+export let write: () => void = () => dbio.write<RootNode>(root);
