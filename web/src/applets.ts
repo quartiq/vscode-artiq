@@ -6,10 +6,6 @@ import * as manager from "./applets/manager";
 import * as template from "./applets/template";
 import type { LeafNode } from "./applets/tree";
 
-let el = document.createElement("div");
-el.classList.add("grid-stack");
-document.body.append(el);
-
 layout.init();
 
 manager.handleFuncs({
@@ -61,5 +57,5 @@ ccb.handleFuncs({
     disable_applet_group: args => setVisible({ ...args, name: null }, false),
 });
 
-manager.init(layout.newManagerItem()).forEach(leaf => activate(leaf));
+manager.init().forEach(leaf => activate(leaf));
 ccb.listen();

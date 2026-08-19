@@ -16,8 +16,22 @@ let host: HTMLElement;
 
 export let handleFuncs = (funcs: HandleFuncs) => handlers = funcs;
 
-export let init = (el: HTMLElement): LeafNode[] => {
-    host = el;
+export let init = (): LeafNode[] => {
+    let el = document.createElement("div");
+    el.classList.add("sidebar", "collapsed");
+
+    host = document.createElement("div");
+    host.classList.add("manager");
+
+    let handle = document.createElement("div");
+    handle.classList.add("handle");
+    handle.innerText = "⚙️";
+    handle.addEventListener("click", () => el.classList.toggle("collapsed"));
+
+    el.append(host);
+    el.append(handle);
+    document.body.append(el);
+
     refresh();
     return leafs(root);
 };
@@ -133,6 +147,7 @@ let cellHandlers = [
 
         if (r.getCanExpand() && isGroup(node)) {
             let btn = document.createElement("span");
+            btn.classList.add("button", "expand");
             btn.textContent = r.getIsExpanded() ? "👇" : "👉";
             btn.addEventListener("click", () => {
                 node.expanded = !r.getIsExpanded();
