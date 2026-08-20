@@ -32,7 +32,7 @@ export let init = (): LeafNode[] => {
     el.append(handle);
     document.body.append(el);
 
-    refresh();
+    render();
     return leafs(root);
 };
 
@@ -110,7 +110,7 @@ let table = () => createTable<Node>({
             ],
         },
     ],
-    state,
+    state: { ...state, expanded: expandedFrom([ root ]) },
     onStateChange: updater => {
         state = typeof updater === "function" ? updater(state) : updater;
         refresh();
@@ -222,8 +222,6 @@ let cellHandlers = [
 let render = () => {
     let t = table();
 
-    host.innerHTML = "";
-
     let troot = document.createElement("table");
     let thead = document.createElement("thead");
     let tbody = document.createElement("tbody");
@@ -256,11 +254,10 @@ let render = () => {
     });
 
     troot.append(thead, tbody);
-    host.append(troot);
+    host.replaceChildren(troot);
 };
 
 export let refresh = () => {
-    state.expanded = expandedFrom([ root ]);
     write();
     render();
 };

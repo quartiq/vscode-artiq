@@ -58,4 +58,12 @@ ccb.handleFuncs({
 });
 
 manager.init().forEach(leaf => activate(leaf));
+layout.listen();
+
+// changing workspace requires a clean restart
+window.addEventListener("hashchange", () => window.location.reload());
+
+// TODO: add loop-free sync between tabs displaying the same workspace
+// one write must cause one refresh per peer without publishing another write
+
 ccb.listen();

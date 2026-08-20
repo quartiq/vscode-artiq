@@ -15,7 +15,9 @@ export let init = () => {
     document.body.append(host);
 
     grid = GridStack.init({ handle: ".widget-header" });
+};
 
+export let listen = () => {
     grid.on("change", (_, items) => {
         items.forEach(item => {
             let [ group, name ] = key(item.id!);
@@ -53,7 +55,7 @@ let activateItem = (id: string, item: GridItemHTMLElement, grid: GridStack, defa
 
     // need to do it this way opposed to .addWidget()
     // to register drag area via "handle" option during init, further down
-    grid.makeWidget(item, { id, ...defaults });
+    grid.makeWidget(item, { ...defaults, id });
 };
 
 let findItem = (keystring: KeyString, grid: GridStack): GridItemHTMLElement | undefined => {
@@ -70,7 +72,7 @@ let cacheGeometry = (item: GridItemHTMLElement, l: LeafNode) => {
 
 let revealItem = (item: GridItemHTMLElement, l: LeafNode, grid: GridStack) => {
     let id = keystr([ l.group, l.name ]);
-    grid.makeWidget(item, { id, ...l.geometry});
+    grid.makeWidget(item, { ...l.geometry, id });
     item.classList.remove("hidden");
 };
 
@@ -126,7 +128,6 @@ export let newTemplateItem = (leaf: LeafNode, defaults: GridStackWidget | undefi
 
     cacheGeometry(item, leaf);
     syncVis(item, leaf, grid);
-    write();
 
     return host;
 };
