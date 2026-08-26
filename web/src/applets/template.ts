@@ -30,13 +30,12 @@ type ParsedArgs = [
     locals: UnitaryArgs,
 ];
 
-type Result = [ Applet, GridStackWidget? ];
+export type Fetched = [ Applet, GridStackWidget? ];
 
 export type Interface = {
     argsShape: ArgsShape,
-    from: (args: ParsedArgs) => Result,
+    from: (args: ParsedArgs) => Fetched,
 };
-export type Fetched = Result | undefined;
 
 let templates: Record<Name, Interface> = {
     big_number,
@@ -70,8 +69,10 @@ let parseArgs = (args: minimist.ParsedArgs, shape: ArgsShape): ParsedArgs => {
 export let fetch = (cmd: ccb.Command): Fetched => {
     let [name, ...argv] = shellQuote.parse(cmd) as string[];
     if (!isName(name)) {
-        console.error("Applet template not yet implemented:", name);
-        return undefined;
+        return [
+            { subs: {}, setup: el => el.innerText = `Applet template not found: ${name}`, update: () => {} },
+            { w: 2, h: 1 },
+        ];
     }
 
     let t = templates[name];

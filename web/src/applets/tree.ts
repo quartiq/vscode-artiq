@@ -29,12 +29,7 @@ type RootNode = GroupNode & {
     policy: Record<PolicyName, DefinitePolicy>,
 };
 
-export type LeafNode = BaseNode & {
-    group: ccb.Group,
-    name: ccb.Name,
-    command: ccb.Command,
-    code: ccb.Code,
-
+export type LeafNode = BaseNode & ccb.CreateArgs & {
     visible: Visible,
     geometry?: Geometry,
     children: [];
@@ -42,7 +37,7 @@ export type LeafNode = BaseNode & {
 
 export type Node = GroupNode | LeafNode;
 
-export let isLeaf = (n: Node): n is LeafNode => "group" in n;
+export let isLeaf = (n: Node): n is LeafNode => "visible" in n;
 export let isGroup = (n: Node): n is GroupNode => !isLeaf(n);
 
 type WalkStep<T> = (n: Node | undefined, acc: T) => T;
@@ -60,12 +55,12 @@ let pave = <T>(path: ccb.Group, step: (n: Node, acc: T) => T, seed: T): T => wal
 
 export let groupFrom = (path: ccb.Group): GroupNode | undefined => walk<GroupNode | undefined>(path, n => n && isGroup(n) ? n : undefined, root);
 
-export let leafFrom = (path: ccb.Group, name: ccb.Name): LeafNode | undefined => groupFrom(path)?.children
-    .find((n): n is LeafNode => n.name === name && isLeaf(n));
+export let leafFrom = (k: ccb.AppletKey): LeafNode | undefined => groupFrom(k.group)?.children
+    .find((n): n is LeafNode => n.name === k.name && isLeaf(n));
 
-export let newLeaf = (group: ccb.Group, name: ccb.Name, command: ccb.Command, code: ccb.Code): LeafNode => {
-    let sibs = pave(group, n => n.children, root.children);
-    let leaf: LeafNode = { group, name, command, code, visible: false, policy: { create: undefined, visible: undefined }, children: [] };
+export let newLeaf = (args: ccb.CreateArgs): LeafNode => {
+    let sibs = pave(args.group, n => n.children, root.children);
+    let leaf: LeafNode = { ...args, visible: false, policy: { create: undefined, visible: undefined }, children: [] };
     sibs.push(leaf);
     return leaf;
 };

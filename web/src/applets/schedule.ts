@@ -14,10 +14,8 @@ export type Applet = {
     update: (args: UnitaryArgs) => void,
 };
 
-type Key = [group: ccb.Group, name: ccb.Name];
-
-let applets = new pyon.Dict<Key, Applet>();
-let dirtyApplets = new pyon.Set<Key>();
+let applets = new pyon.Dict<ccb.AppletKey, Applet>();
+let dirtyApplets = new pyon.Set<ccb.AppletKey>();
 let flushScheduled = false;
 
 let keypath = (mod: sync_struct.SetitemMod | sync_struct.DelitemMod) => {
@@ -28,7 +26,7 @@ let keypath = (mod: sync_struct.SetitemMod | sync_struct.DelitemMod) => {
 let deriveArgs = (argsMap: SubArgs, sets: Datasets) => Object.fromEntries(Object.entries(argsMap)
     .map(([ argName, keypath ]) => [ argName, sets.get(keypath)?.[1] ]));
 
-let scheduleUpdate = (key: Key, datasets: Datasets) => {
+let scheduleUpdate = (key: ccb.AppletKey, datasets: Datasets) => {
     // TODO test this, review this
     dirtyApplets.add(key);
     if (flushScheduled) return;
@@ -40,7 +38,7 @@ let scheduleUpdate = (key: Key, datasets: Datasets) => {
         let pending = dirtyApplets;
         dirtyApplets = new pyon.Set();
 
-        pending.forEach((k: Key) => {
+        pending.forEach((k: ccb.AppletKey) => {
             let applet = applets.get(k);
             if (!applet) return;
 
@@ -59,19 +57,20 @@ let store = await sync_struct.from<Datasets>({
     onReceive: (_, mod: sync_struct.Mod) => {
         if (mod.action === "init") return;
 
-        applets.forEach((a: Applet, k: Key) => {
+        applets.forEach((a: Applet, k: ccb.AppletKey) => {
             if (!Object.values(a.subs).includes(keypath(mod))) return;
             scheduleUpdate(k, store.struct);
         });
     },
 });
 
-export let setup = (group: ccb.Group, name: ccb.Name, applet: Applet, host: HTMLElement) => {
+export let setup = (k: ccb.AppletKey, applet: Applet, host: HTMLElement) => {
+    remove(k);
     applet.setup(host, deriveArgs(applet.subs, store.struct));
-    applets.set([ group, name ], applet); // after applet.setup() to omit race with applet.update()
+    applets.set(k, applet); // after applet.setup() to omit race with applet.update()
 };
 
-export let remove = (group: ccb.Group, name: ccb.Name) => {
-    applets.delete([ group, name ]);
-    dirtyApplets.delete([ group, name ]);
+export let remove = (k: ccb.AppletKey) => {
+    applets.delete(k);
+    dirtyApplets.delete(k);
 };

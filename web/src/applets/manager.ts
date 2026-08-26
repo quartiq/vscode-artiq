@@ -4,24 +4,31 @@ import {
 
 import { PolicyName, Policy, nextPolicy, Visible, Node, LeafNode, isLeaf, isGroup, leafFrom, newLeaf, leafs, parent, root, write } from "./tree";
 import * as ccb from "./ccb";
+import * as editor from "./editor";
 
 type Handler = (leafs: LeafNode[]) => void;
 type HandleFuncs = {
-    updateVisibility: Handler;
-    remove: Handler;
+    updateVisibility: Handler,
+    upsert: editor.Upsert,
+    remove: Handler,
 };
 
 let handlers: HandleFuncs;
 let host: HTMLElement;
+let table: HTMLTableElement;
 
 export let handleFuncs = (funcs: HandleFuncs) => handlers = funcs;
 
-export let init = (): LeafNode[] => {
+let dom = () => {
     let el = document.createElement("div");
     el.classList.add("sidebar", "collapsed");
 
     host = document.createElement("div");
     host.classList.add("manager");
+
+    table = document.createElement("table");
+    host.append(table);
+    host.append(editor.init(handlers.upsert));
 
     let handle = document.createElement("div");
     handle.classList.add("handle");
@@ -31,7 +38,10 @@ export let init = (): LeafNode[] => {
     el.append(host);
     el.append(handle);
     document.body.append(el);
+};
 
+export let init = (): LeafNode[] => {
+    dom();
     render();
     return leafs(root);
 };
@@ -51,10 +61,10 @@ let expandedFrom = (nodes: Node[], parentId?: string, result: Record<string, boo
 export let setVisible = (node: Node, visible: boolean): void => leafs(node).forEach(l => l.visible = visible);
 export let setVisibleAll = (leafs: LeafNode[], visible: boolean): void => leafs.forEach(l => l.visible = visible);
 
-export let create = (group: ccb.Group, name: ccb.Name, command: ccb.Command, code: ccb.Code): LeafNode => {
-    let leaf = leafFrom(group, name) ?? newLeaf(group, name, command, code);
-    leaf.command = command;
-    leaf.code = code;
+export let upsert = (args: ccb.CreateArgs): LeafNode => {
+    let leaf = leafFrom(args) ?? newLeaf(args);
+    leaf.command = args.command;
+    leaf.code = args.code;
     return leaf;
 };
 
@@ -89,7 +99,7 @@ let agents = {
     machine: { icon: "🤖", bg: "aliceblue" }, // allow or deny future external CCB actions
 };
 
-let table = () => createTable<Node>({
+let createModel = () => createTable<Node>({
     data: [ root ],
     columns: [
         { accessorKey: "name", header: "Name" },
@@ -97,6 +107,7 @@ let table = () => createTable<Node>({
             header: agents.human.icon,
             meta: { bg: agents.human.bg },
             columns: [
+                { header: "🌱", meta: { bg: agents.human.bg } },
                 { accessorKey: "visible", header: "👁️", meta: { bg: agents.human.bg } },
                 { header: "🗑️", meta: { bg: agents.human.bg } },
             ],
@@ -142,31 +153,48 @@ let policyCellHandler = (name: PolicyName, node: Node, p: Policy) => {
 };
 
 let cellHandlers = [
-    (td: HTMLTableCellElement, r: Row<Node>, c: Cell<Node, unknown>) => {
-        let node = r.original;
+    (td: HTMLTableCellElement, row: Row<Node>, cell: Cell<Node, unknown>) => {
+        let node = row.original;
 
-        if (r.getCanExpand() && isGroup(node)) {
+        if (row.getCanExpand() && isGroup(node)) {
             let btn = document.createElement("span");
             btn.classList.add("button", "expand");
-            btn.textContent = r.getIsExpanded() ? "👇" : "👉";
+            btn.textContent = row.getIsExpanded() ? "👇" : "👉";
             btn.addEventListener("click", () => {
-                node.expanded = !r.getIsExpanded();
-                r.toggleExpanded(); // invokes onStateChange()
+                node.expanded = !row.getIsExpanded();
+                row.toggleExpanded(); // invokes onStateChange()
             });
             td.append(btn);
         }
 
-        td.style.paddingLeft = `${r.depth * 16}px`;
-        td.append(c.getValue() as ccb.Name | ccb.GroupEl);
+        td.style.paddingLeft = `${row.depth * 16}px`;
+        td.append(cell.getValue() as ccb.Name | ccb.GroupEl);
     },
 
-    (td: HTMLTableCellElement, r: Row<Node>, c: Cell<Node, unknown>) => {
-        if (isLeaf(r.original)) {
+    (td: HTMLTableCellElement, row: Row<Node>) => {
+        if (!isGroup(row.original)) return;
+
+        let btn = document.createElement("button");
+        btn.textContent = "➕";
+        btn.addEventListener("click", () => {
+            let group = (r: Row<Node>): ccb.Group => {
+                let p = r.getParentRow();
+                return p ? [ ...group(p), r.original.name ] : [];
+            };
+
+            editor.up({ group: group(row) });
+        });
+
+        td.append(btn);
+    },
+
+    (td: HTMLTableCellElement, row: Row<Node>, cell: Cell<Node, unknown>) => {
+        if (isLeaf(row.original)) {
             let input = document.createElement("input");
             input.type = "checkbox";
-            input.checked = c.getValue() as Visible;
+            input.checked = cell.getValue() as Visible;
 
-            let leaf = r.original;
+            let leaf = row.original;
             input.addEventListener("change", () => {
                 setVisible(leaf, input.checked);
                 handlers.updateVisibility([ leaf ]);
@@ -181,8 +209,8 @@ let cellHandlers = [
             let btn = document.createElement("button");
             btn.innerText = visible ? "🟢" : "🔴";
             btn.addEventListener("click", () => {
-                setVisible(r.original, visible);
-                handlers.updateVisibility(leafs(r.original));
+                setVisible(row.original, visible);
+                handlers.updateVisibility(leafs(row.original));
                 refresh();
             });
 
@@ -190,43 +218,42 @@ let cellHandlers = [
         });
     },
 
-    (td: HTMLTableCellElement, r: Row<Node>) => {
-        let p = parent(r.original);
+    (td: HTMLTableCellElement, row: Row<Node>) => {
+        let p = parent(row.original);
         if (!p) return;
 
         let btn = document.createElement("button");
-        btn.innerText = "❌";
+        btn.innerText = "➖";
         btn.addEventListener("click", () => {
-            let i = p.children.indexOf(r.original);
+            let i = p.children.indexOf(row.original);
             if (i === -1) return;
 
             p.children.splice(i, 1);
-            handlers.remove(leafs(r.original));
+            handlers.remove(leafs(row.original));
             refresh();
         });
 
         td.append(btn);
     },
 
-    (td: HTMLTableCellElement, r: Row<Node>, c: Cell<Node, unknown>) => {
-        let input = policyCellHandler("create", r.original, c.getValue() as Policy);
+    (td: HTMLTableCellElement, row: Row<Node>, cell: Cell<Node, unknown>) => {
+        let input = policyCellHandler("create", row.original, cell.getValue() as Policy);
         td.append(input);
     },
 
-    (td: HTMLTableCellElement, r: Row<Node>, c: Cell<Node, unknown>) => {
-        let input = policyCellHandler("visible", r.original, c.getValue() as Policy);
+    (td: HTMLTableCellElement, row: Row<Node>, cell: Cell<Node, unknown>) => {
+        let input = policyCellHandler("visible", row.original, cell.getValue() as Policy);
         td.append(input);
     },
 ];
 
 let render = () => {
-    let t = table();
+    let model = createModel();
 
-    let troot = document.createElement("table");
     let thead = document.createElement("thead");
     let tbody = document.createElement("tbody");
 
-    t.getHeaderGroups().forEach(hg => {
+    model.getHeaderGroups().forEach(hg => {
         let hr = document.createElement("tr");
         hg.headers.forEach(h => {
             let th = document.createElement("th");
@@ -239,7 +266,7 @@ let render = () => {
         thead.append(hr);
     });
 
-    t.getRowModel().rows.forEach(r => {
+    model.getRowModel().rows.forEach(r => {
         let tr = document.createElement("tr");
 
         r.getVisibleCells().forEach((c, i) => {
@@ -253,8 +280,7 @@ let render = () => {
         tbody.append(tr);
     });
 
-    troot.append(thead, tbody);
-    host.replaceChildren(troot);
+    table.replaceChildren(thead, tbody);
 };
 
 export let refresh = () => {

@@ -2,11 +2,10 @@ import { GridStack, GridStackWidget, GridItemHTMLElement } from "gridstack";
 import { LeafNode, leafFrom, write } from "./tree";
 import * as ccb from "./ccb";
 
-type Key = [ ccb.Group, ccb.Name ];
 type KeyString = string;
 
-let keystr = ([ group, name ]: Key): KeyString => JSON.stringify([ group, name ]);
-let key = (str: KeyString): Key => JSON.parse(str);
+let keystr = ({ group, name }: ccb.AppletKey): KeyString => JSON.stringify({ group, name });
+let key = (str: KeyString): ccb.AppletKey => JSON.parse(str);
 
 let grid: GridStack;
 export let init = () => {
@@ -20,8 +19,7 @@ export let init = () => {
 export let listen = () => {
     grid.on("change", (_, items) => {
         items.forEach(item => {
-            let [ group, name ] = key(item.id!);
-            let leaf = leafFrom(group, name)!;
+            let leaf = leafFrom(key(item.id!))!;
             let { x, y, w, h } = item;
             leaf.geometry = { x, y, w, h };
         });
@@ -64,15 +62,14 @@ let findItem = (keystring: KeyString, grid: GridStack): GridItemHTMLElement | un
     return (el ?? undefined) as GridItemHTMLElement | undefined;
 };
 
-let cacheGeometry = (item: GridItemHTMLElement, l: LeafNode) => {
+let cacheGeometry = (item: GridItemHTMLElement, leaf: LeafNode) => {
     if (item.gridstackNode === undefined) return;
     let { x, y, w, h } = item.gridstackNode;
-    l.geometry = { x, y, w, h };
+    leaf.geometry = { x, y, w, h };
 };
 
-let revealItem = (item: GridItemHTMLElement, l: LeafNode, grid: GridStack) => {
-    let id = keystr([ l.group, l.name ]);
-    grid.makeWidget(item, { ...l.geometry, id });
+let revealItem = (item: GridItemHTMLElement, leaf: LeafNode, grid: GridStack) => {
+    grid.makeWidget(item, { ...leaf.geometry, id: keystr(leaf) });
     item.classList.remove("hidden");
 };
 
@@ -98,21 +95,21 @@ export let updateVisibility = (leafs: LeafNode[]) => {
         // don't push residing widgets all the way down
         .sort((a, b) => (b.geometry?.y ?? 0) - (a.geometry?.y ?? 0)
             || (b.geometry?.x ?? 0) - (a.geometry?.x ?? 0))
-        .map((l): [ GridItemHTMLElement | undefined, LeafNode ] => [ findItem(keystr([ l.group, l.name ]), grid), l ])
-        .filter((t): t is [ GridItemHTMLElement, LeafNode ] => t[0] !== undefined);
+        .map((leaf): [ GridItemHTMLElement | undefined, LeafNode ] => [ findItem(keystr(leaf), grid), leaf ])
+        .filter((tuple): tuple is [ GridItemHTMLElement, LeafNode ] => tuple[0] !== undefined);
 
-    tuples.forEach(([ item, l ]) => cacheGeometry(item, l));
-    tuples.forEach(([ item, l ]) => syncVis(item, l, grid));
+    tuples.forEach(([ item, leaf ]) => cacheGeometry(item, leaf));
+    tuples.forEach(([ item, leaf ]) => syncVis(item, leaf, grid));
 };
 
-export let remove = (group: ccb.Group, name: ccb.Name) => {
-    let item = findItem(keystr([ group, name ]), grid);
+export let remove = (k: ccb.AppletKey) => {
+    let item = findItem(keystr(k), grid);
     if (!item) return;
     grid.removeWidget(item);
 };
 
 export let newTemplateItem = (leaf: LeafNode, defaults: GridStackWidget | undefined): HTMLElement => {
-    let keystring = keystr([ leaf.group, leaf.name ]);
+    let keystring = keystr(leaf);
     let item = findItem(keystring, grid);
     if (!item) {
         let breadcrumb = [ ...leaf.group, leaf.name ].reverse().join(" — ");

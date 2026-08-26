@@ -6,50 +6,43 @@ import * as manager from "./applets/manager";
 import * as template from "./applets/template";
 import type { LeafNode } from "./applets/tree";
 
-layout.init();
-
-manager.handleFuncs({
-
-    updateVisibility: layout.updateVisibility,
-
-    remove: leafs => leafs.forEach(l => {
-        layout.remove(l.group, l.name);
-        schedule.remove(l.group, l.name);
-    }),
-});
-
-let activate = (leaf: LeafNode, fetched?: template.Fetched): void => {
-    fetched ??= template.fetch(leaf.command);
-    if (!fetched) return;
-
-    let [ applet, gridDefaults ] = fetched;
+let activate = (leaf: LeafNode): void => {
+    let [ applet, gridDefaults ] = template.fetch(leaf.command);
     let host = layout.newTemplateItem(leaf, gridDefaults);
-    schedule.setup(leaf.group, leaf.name, applet, host);
+    schedule.setup(leaf, applet, host);
 };
 
-let setVisible = (args: any, visible: boolean) => {
-    let leafs = permission.leafsByPolicy("visible", args.group, args.name);
+let upsert = (args: ccb.CreateArgs, manually: boolean): void => {
+    if (!manually && !permission.granted("create", args)) return;
+
+    let leaf = manager.upsert(args);
+    if (manually || permission.granted("visible", args))
+        manager.setVisible(leaf, true);
+
+    activate(leaf);
+    manager.refresh();
+};
+
+let setVisible = (k: ccb.TargetKey, visible: boolean) => {
+    let leafs = permission.leafsByPolicy("visible", k);
     manager.setVisibleAll(leafs, visible);
     layout.updateVisibility(leafs);
     manager.refresh();
 };
 
+layout.init();
+
+manager.handleFuncs({
+    updateVisibility: layout.updateVisibility,
+    upsert: args => upsert(args, true),
+    remove: leafs => leafs.forEach(l => {
+        layout.remove(l);
+        schedule.remove(l);
+    }),
+});
+
 ccb.handleFuncs({
-
-    create_applet: args => {
-        if (!permission.granted("create", args.group, args.name)) return;
-
-        let fetched = template.fetch(args.command);
-        if (!fetched) return;
-
-        let leaf = manager.create(args.group, args.name, args.command, args.code);
-        if (permission.granted("visible", args.group, args.name))
-            manager.setVisible(leaf, true);
-
-        activate(leaf, fetched);
-        manager.refresh();
-    },
-
+    create_applet: args => upsert(args, false),
     restart_applet: args => setVisible(args, true),
     disable_applet: args => setVisible(args, false),
 
