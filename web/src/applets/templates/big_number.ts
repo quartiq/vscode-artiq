@@ -1,4 +1,4 @@
-import { Interface } from "../template";
+import type { Interface } from "../template";
 
 type Subs = { scalar: number };
 type Locals = { "digit-count": number };

@@ -1,7 +1,7 @@
 import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 
-import { Interface } from "../template";
+import type { Interface } from "../template";
 import { single, gridDefaults, normalize } from "../plotlyutils";
 
 type Args = {

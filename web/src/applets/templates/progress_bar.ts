@@ -1,4 +1,4 @@
-import { Interface } from "../template";
+import type { Interface } from "../template";
 
 type Subs = { counter: number };
 type Locals = { min: number, max: number };

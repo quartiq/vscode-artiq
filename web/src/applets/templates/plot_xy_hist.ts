@@ -1,7 +1,7 @@
 import Plotly from "plotly.js-dist-min";
 import * as pyon from "sipyco/pyon";
 
-import { Interface } from "../template";
+import type { Interface } from "../template";
 import { Plot, layout, config, resize, normalize, reshape2d, plotel } from "../plotlyutils";
 
 type Args = {
