@@ -3,6 +3,7 @@ import * as schedule from "./applets/schedule";
 import * as ccb from "./applets/ccb";
 import * as layout from "./applets/layout";
 import * as manager from "./applets/manager";
+import * as editor from "./applets/editor";
 import * as template from "./applets/template";
 import type { LeafNode } from "./applets/tree";
 
@@ -23,6 +24,22 @@ let upsert = (args: ccb.CreateArgs, manually: boolean): void => {
     manager.refresh();
 };
 
+let update = (args: ccb.CreateArgs): void => {
+    let leaf = manager.upsert(args);
+    activate(leaf);
+    manager.refresh();
+};
+
+let move = (args: ccb.CreateArgs, old: LeafNode): void => {
+    let leaf = manager.move(args, old);
+
+    layout.remove(old);
+    schedule.remove(old);
+
+    activate(leaf);
+    manager.refresh();
+};
+
 let setVisible = (k: ccb.TargetKey, visible: boolean) => {
     let leafs = permission.leafsByPolicy("visible", k);
     manager.setVisibleAll(leafs, visible);
@@ -32,9 +49,14 @@ let setVisible = (k: ccb.TargetKey, visible: boolean) => {
 
 layout.init();
 
+editor.handleFuncs({
+    upsert: args => upsert(args, true),
+    update,
+    move,
+});
+
 manager.handleFuncs({
     updateVisibility: layout.updateVisibility,
-    upsert: args => upsert(args, true),
     remove: leafs => leafs.forEach(l => {
         layout.remove(l);
         schedule.remove(l);

@@ -37,6 +37,7 @@ export type LeafNode = BaseNode & ccb.CreateArgs & {
 
 export type Node = GroupNode | LeafNode;
 
+export let isRoot = (n: Node): n is RootNode => n === root;
 export let isLeaf = (n: Node): n is LeafNode => "visible" in n;
 export let isGroup = (n: Node): n is GroupNode => !isLeaf(n);
 
@@ -88,6 +89,15 @@ export let parent = (node: Node): Node | undefined => {
     }, undefined);
 
     return found;
+};
+
+export let detach = (node: Node): Node => {
+    let p = parent(node);
+    if (!p) return node;
+
+    let i = p.children.indexOf(node);
+    p.children.splice(i, 1);
+    return node;
 };
 
 export let root: RootNode = dbio.read<RootNode>() ?? { name: "root", policy: { create: true, visible: false }, expanded: true, children: [] };

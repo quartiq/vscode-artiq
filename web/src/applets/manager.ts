@@ -2,14 +2,13 @@ import {
     createTable, getCoreRowModel, ExpandedState, getExpandedRowModel, TableState, Row, Cell,
 } from "@tanstack/table-core";
 
-import { PolicyName, Policy, nextPolicy, Visible, Node, LeafNode, isLeaf, isGroup, leafFrom, newLeaf, leafs, parent, root, write } from "./tree";
+import { PolicyName, Policy, nextPolicy, Visible, Node, LeafNode, isRoot, isLeaf, isGroup, leafFrom, newLeaf, leafs, parent, detach, root, write } from "./tree";
 import * as ccb from "./ccb";
 import * as editor from "./editor";
 
 type Handler = (leafs: LeafNode[]) => void;
 type HandleFuncs = {
     updateVisibility: Handler,
-    upsert: editor.Upsert,
     remove: Handler,
 };
 
@@ -28,7 +27,6 @@ let dom = () => {
 
     table = document.createElement("table");
     host.append(table);
-    host.append(editor.init(handlers.upsert));
 
     let handle = document.createElement("div");
     handle.classList.add("handle");
@@ -42,6 +40,7 @@ let dom = () => {
 
 export let init = (): LeafNode[] => {
     dom();
+    host.append(editor.init());
     render();
     return leafs(root);
 };
@@ -61,12 +60,11 @@ let expandedFrom = (nodes: Node[], parentId?: string, result: Record<string, boo
 export let setVisible = (node: Node, visible: boolean): void => leafs(node).forEach(l => l.visible = visible);
 export let setVisibleAll = (leafs: LeafNode[], visible: boolean): void => leafs.forEach(l => l.visible = visible);
 
-export let upsert = (args: ccb.CreateArgs): LeafNode => {
-    let leaf = leafFrom(args) ?? newLeaf(args);
-    leaf.command = args.command;
-    leaf.code = args.code;
-    return leaf;
-};
+export let upsert = (args: ccb.CreateArgs): LeafNode =>
+    Object.assign(leafFrom(args) ?? newLeaf(args), args);
+
+export let move = (args: ccb.CreateArgs, old: LeafNode): LeafNode =>
+    Object.assign(leafFrom(args) ?? newLeaf(args), detach(old), args);
 
 let state: TableState = {
     columnVisibility: {},
@@ -158,13 +156,18 @@ let cellHandlers = [
 
         if (row.getCanExpand() && isGroup(node)) {
             let btn = document.createElement("span");
-            btn.classList.add("button", "expand");
+            btn.classList.add("button");
             btn.textContent = row.getIsExpanded() ? "👇" : "👉";
             btn.addEventListener("click", () => {
                 node.expanded = !row.getIsExpanded();
                 row.toggleExpanded(); // invokes onStateChange()
             });
             td.append(btn);
+        }
+
+        if (isLeaf(node)) {
+            td.classList.add("button");
+            td.addEventListener("click", () => editor.open(node));
         }
 
         td.style.paddingLeft = `${row.depth * 16}px`;
@@ -182,7 +185,7 @@ let cellHandlers = [
                 return p ? [ ...group(p), r.original.name ] : [];
             };
 
-            editor.up({ group: group(row) });
+            editor.open({ group: group(row) });
         });
 
         td.append(btn);
@@ -219,16 +222,12 @@ let cellHandlers = [
     },
 
     (td: HTMLTableCellElement, row: Row<Node>) => {
-        let p = parent(row.original);
-        if (!p) return;
+        if (isRoot(row.original)) return;
 
         let btn = document.createElement("button");
         btn.innerText = "➖";
         btn.addEventListener("click", () => {
-            let i = p.children.indexOf(row.original);
-            if (i === -1) return;
-
-            p.children.splice(i, 1);
+            detach(row.original);
             handlers.remove(leafs(row.original));
             refresh();
         });

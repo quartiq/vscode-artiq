@@ -1,3 +1,4 @@
+import { LeafNode, leafFrom } from "./tree";
 import * as ccb from "./ccb";
 
 type Input = {
@@ -9,10 +10,18 @@ type Input = {
     parse?: (s: string) => unknown,
 };
 
-export type Upsert = (args: ccb.CreateArgs) => void;
+type HandleFuncs = {
+    upsert: (args: ccb.CreateArgs) => void,
+    update: (args: ccb.CreateArgs) => void,
+    move: (args: ccb.CreateArgs, old: LeafNode) => void,
+};
 
+let handlers: HandleFuncs;
 let dialog: HTMLDialogElement;
 let form: HTMLFormElement;
+let original: LeafNode | undefined;
+
+export let handleFuncs = (funcs: HandleFuncs) => handlers = funcs;
 
 let parse = (s: string): unknown => {
     // parse liberally: don't throw, return null instead
@@ -41,7 +50,7 @@ let inputs: Input[] = [
     },
 ];
 
-let dom = () => {
+let dom = (): void => {
     dialog = document.createElement("dialog");
     form = document.createElement("form");
     dialog.append(form);
@@ -69,7 +78,13 @@ let dom = () => {
     });
 };
 
-export let init = (upsert: Upsert): HTMLDialogElement => {
+let submit = (args: ccb.CreateArgs): void => {
+    if (!original) return handlers.upsert(args);
+    if (ccb.sameKey(args, original)) return handlers.update(args);
+    handlers.move(args, original);
+};
+
+export let init = (): HTMLDialogElement => {
     dom();
 
     form.addEventListener("submit", ev => {
@@ -87,14 +102,15 @@ export let init = (upsert: Upsert): HTMLDialogElement => {
             input.parse?.(input.el.value) ?? input.el.value
         ])) as ccb.CreateArgs;
 
-        upsert(args);
+        submit(args);
         dialog.close();
     });
 
     return dialog;
 };
 
-export let up = (args: Partial<ccb.CreateArgs>) => {
+export let open = (args: ccb.GroupKey & Partial<ccb.CreateArgs>): void => {
+    original = leafFrom(args as ccb.AppletKey);
     inputs.forEach(i => i.el.value = i.stringify?.(args[i.name]) ?? String(args[i.name] ?? ""));
     dialog.showModal();
 };
