@@ -121,7 +121,8 @@ export let newTemplateItem = (leaf: LeafNode, defaults: GridStackWidget | undefi
     }
 
     let host = item.querySelector(".widget-body") as HTMLElement;
-    host.innerHTML = "";
+    host.className = "widget-body";
+    host.replaceChildren();
 
     cacheGeometry(item, leaf);
     syncVis(item, leaf, grid);
