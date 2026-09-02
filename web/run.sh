@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 cd "$(dirname "$0")" || exit 1
 
 for cmd in npm go; do
@@ -11,6 +13,7 @@ done
 
 npm install
 npm run build
+go test ./...
 
 # whitelist standard sipyco ports for broadcast, sync_struct and pc_rpc
 # see: https://git.m-labs.hk/M-Labs/artiq/src/branch/master/doc/manual/default_network_ports.rst

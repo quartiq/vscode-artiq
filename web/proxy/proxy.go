@@ -3,8 +3,6 @@ package proxy
 import (
 	"bufio"
 	"context"
-	"errors"
-	"io"
 	"log"
 	"net"
 	"net/http"
@@ -13,51 +11,69 @@ import (
 	"github.com/coder/websocket"
 )
 
-func listenWsServeTcp(wsConn *websocket.Conn, tcpConn net.Conn) {
-	ctx := context.Background()
-
+func listenWsServeTcp(wsConn *websocket.Conn, tcpConn net.Conn) error {
 	for {
-		_, msg, err := wsConn.Read(ctx)
+		_, msg, err := wsConn.Read(context.Background())
 		if err != nil {
-			code := websocket.CloseStatus(err)
-			if code == websocket.StatusNormalClosure || code == websocket.StatusGoingAway {
-				log.Println("ws closed")
-			} else {
-				log.Printf("ws read error: %v", err)
+			status := websocket.CloseStatus(err)
+			if status == websocket.StatusNormalClosure || status == websocket.StatusGoingAway {
+				return nil
 			}
-			return
+			return err
 		}
 
-		_, err = tcpConn.Write(msg)
-		if err != nil {
-			log.Printf("tcp write err: %v", err)
-			return
+		if _, err = tcpConn.Write(msg); err != nil {
+			return err
 		}
 	}
 }
 
-func listenTcpServeWs(tcpConn net.Conn, wsConn *websocket.Conn) {
-	r := bufio.NewReader(tcpConn)
+func listenTcpServeWs(tcpConn net.Conn, wsConn *websocket.Conn) error {
+	reader := bufio.NewReader(tcpConn)
 
 	for {
-		msg, err := r.ReadBytes('\n')
+		msg, err := reader.ReadBytes('\n')
 		if err != nil {
-			if errors.Is(err, io.EOF) {
-				log.Println("tcp closed")
-			} else {
-				log.Printf("tcp read error: %v", err)
-			}
-			return
+			return err
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		err = wsConn.Write(ctx, websocket.MessageText, msg)
 		cancel()
+
 		if err != nil {
-			log.Printf("ws write err: %v", err)
-			return
+			return err
 		}
 	}
+}
+
+func bridge(wsConn *websocket.Conn, tcpConn net.Conn) error {
+	done := make(chan error, 2)
+
+	go func() {
+		done <- listenWsServeTcp(wsConn, tcpConn)
+	}()
+
+	go func() {
+		done <- listenTcpServeWs(tcpConn, wsConn)
+	}()
+
+	err := <-done
+
+	// Unblock the remaining forwarding loop
+	tcpConn.Close()
+
+	if err == nil {
+		wsConn.Close(websocket.StatusNormalClosure, "")
+	} else {
+		log.Printf("proxy forwarding err: %v", err)
+		wsConn.Close(websocket.StatusInternalError, "proxy connection failed")
+	}
+
+	// Ensure both forwarding loops have terminated
+	<-done
+
+	return err
 }
 
 func HandlerFunc(w http.ResponseWriter, r *http.Request) {
@@ -66,16 +82,17 @@ func HandlerFunc(w http.ResponseWriter, r *http.Request) {
 		log.Printf("ws accept err: %v", err)
 		return
 	}
-	defer wsConn.Close(websocket.StatusNormalClosure, "")
+	defer wsConn.CloseNow()
 
 	tcpConn, err := net.Dial("tcp", r.URL.Path[len("/proxy/"):])
 	if err != nil {
-		log.Printf("tcp accept err: %v", err)
-		wsConn.Close(websocket.StatusInternalError, err.Error())
+		log.Printf("tcp dial err: %v", err)
+		wsConn.Close(websocket.StatusInternalError, "backend connection failed")
 		return
 	}
 	defer tcpConn.Close()
 
-	go listenWsServeTcp(wsConn, tcpConn)
-	listenTcpServeWs(tcpConn, wsConn)
+	if err := bridge(wsConn, tcpConn); err != nil {
+		log.Printf("proxy fwd err: %v", err)
+	}
 }
