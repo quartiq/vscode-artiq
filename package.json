@@ -230,7 +230,7 @@
     "@types/tabulator-tables": "^6.3.1",
     "@types/vscode": "^1.98.0",
     "@types/ws": "^8.18.1",
-    "esbuild": "^0.27.3",
+    "esbuild": ">=0.28.1",
     "eslint": "^9.21.0",
     "glob": "^13.0.6",
     "npm-run-all": "^4.1.5",

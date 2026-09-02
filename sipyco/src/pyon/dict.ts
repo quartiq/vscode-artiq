@@ -4,16 +4,11 @@ export class Dict<K = any, V = any> extends Map<K, V> {
     // like Map, but Object keys are compared by value, not by reference
     // inspired by Python dictionary
 
-    private equalPYON(v1: any, v2: any): boolean {
-        return equal(v1, v2) &&
-            v1.__jsonclass__ === v2.__jsonclass__;
-    }
-
     private find(key: K): K {
         if (typeof key !== "object") { return key; }
 
         for (let k of this.keys()) {
-            if (this.equalPYON(k, key)) { return k; }
+            if (equal(k, key)) { return k; }
         }
 
         return key;

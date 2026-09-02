@@ -8,7 +8,7 @@ import * as webview from "../webview.js";
 
 export let view: webview.Provider;
 
-export type Runs = pyon.Dict<run.Id, run.SyncInfo>;
+export type Runs = pyon.TaggedDict<run.Id, run.SyncInfo>;
 
 export let init = async (context: vscode.ExtensionContext) => {
     view = new webview.Provider("schedule", context, {

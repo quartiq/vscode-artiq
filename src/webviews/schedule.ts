@@ -1,6 +1,7 @@
 import * as tabulator from "tabulator-tables";
 import * as pyon from "sipyco/pyon";
 
+import { arrayFrom } from "../utils.js";
 import * as run from "../run.js";
 import { Runs } from "../views/schedule.js";
 
@@ -54,8 +55,7 @@ let table = new tabulator.TabulatorFull(".table", {
 });
 
 window.addEventListener("message", ev => {
-    // FIXME: wait for Iterator.prototype.map() to ship for Map.entries()
-    rows = [ ...(pyon.decode(ev.data) as Runs).entries() ]
+    rows = arrayFrom(pyon.decode(ev.data) as Runs, "entries")
         .map(([rid, syncinfo]: [run.Id, run.SyncInfo]) => ({ rid, ...syncinfo }));
     table.replaceData(rows);
 });

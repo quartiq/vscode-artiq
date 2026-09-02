@@ -5,11 +5,12 @@ import * as pyonutils from "../pyon/utils.js";
 import * as mutex from "./mutex.js";
 import * as proxy from "../proxy.js";
 
-type Struct = Record<string, any> | pyon.Dict;
+type Struct = pyon.Dict;
 export type Store = { struct: Struct | undefined }; // we need to operate on object property singleton to utilize the mutable object pattern
+// FIXME: get rid of local store reference here!
 type UpdateHandler = (store: Store, mod: Mod) => void; // work on store directly, since onReceive's first run does not wait for init lock and local reference may be empty
 
-export type InitMod = { action: "init", struct: Struct };
+export type InitMod = { action: "init", struct: Record<string, never> | Struct };
 export type SetitemMod = { action: "setitem", path: any[], key: any, value: any };
 export type DelitemMod = { action: "delitem", path: any[], key: any };
 export type Mod = InitMod | SetitemMod | DelitemMod;
@@ -20,16 +21,18 @@ let traverse = (tree: any, path: any[]): any => path.reduce((node, key) => {
     return node[key];
 }, tree);
 
+// empty dicts are sent as {}, so we auto-upgrade every Object (that is: string-keyed stores)
+// to Dict for now; may occur with setitem's value property as well, but was never observed yet
+let struct = (s: InitMod["struct"]): Struct => {
+    if (s.constructor.name === "Object")
+        return pyonutils.create("dict", [ Object.entries(s) ]) as any as Struct; // FIXME: bad typing
+
+    return s as Struct;
+};
+
 let init = (store: Store, mod: Mod, lock: mutex.Lock) => {
     mod = mod as InitMod;
-
-    store.struct = mod.struct;
-    if (mod.struct.constructor.name === "Object" && Object.keys(mod.struct).length === 0) {
-        // FIXME: empty dicts are sent as {}, so we auto-upgrade all of these to dicts for now
-        // my occur with setitem's value property as well, but was never observed yet
-        store.struct = pyonutils.create("dict", [[]]);
-    }
-
+    store.struct = struct(mod.struct);
     lock.unlock();
 };
 

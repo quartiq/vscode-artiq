@@ -20,13 +20,17 @@ export const types: Record<string, TypeInterface> = {
     bytes,
     slice,
     npscalar,
-    complex
+    complex,
 };
 
 export type TypeName = keyof typeof types;
 
 // TODO: export all types?
-export { Dict } from "./dict.js"; // FIXME: this lacks something like `& { __jsonclass__: "dict" }`
+export { Dict } from "./dict.js";
+export { Set } from "./set.js";
+export { NpArray } from "./nparray.js";
+
+export type TaggedDict<K = any, V = any> = TypeTaggedObject<dict.Dict<K, V>, "dict">;
 
 let isMarked = (v: any): boolean => v &&
     typeof v === "object" &&
@@ -46,9 +50,14 @@ let isHintedJsonClass = (v: any): boolean => isMarked(v) &&
 // instanceof or constructor.name may be lost
 // by operations like structuredClone() in the meantime
 // except for TypedArray
-export type TypeTaggedObject = { [marker: string]: TypeName };
+export type TypeTaggedObject<T extends object = object, Name extends TypeName = TypeName> = T & { [marker]: Name };
 export let isTypeTaggedObject = (v: any): boolean => isMarked(v) &&
     typeof v[marker] === "string";
+
+export let tag = <T extends object, Name extends TypeName>(value: T, name: Name): TypeTaggedObject<T, Name> => {
+    (value as TypeTaggedObject)[marker] = name;
+    return value as TypeTaggedObject<T, Name>;
+};
 
 type ConvName = keyof ConvInterface;
 type Reviver = (params: Params) => any; // any := TypeTaggedObject

@@ -1,4 +1,7 @@
 import * as pyon from "./pyon.js";
+import * as dtype from "./dtype.js";
+
+export type TypedArray = dtype.TypedArray;
 
 export let validate = (hinted: string, decode: pyon.Decoder): boolean => {
     try {

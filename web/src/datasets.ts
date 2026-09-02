@@ -1,8 +1,5 @@
 import * as sync_struct from "sipyco/sync_struct";
-
-type Keypath = string;
-type Metadata = { unit: string, scale: number, precision: number };
-type Dataset = [ persist: boolean, value: any, metadata: Metadata ];
+import { Keypath, Dataset } from "./datasets/types";
 
 let setup = (): HTMLElement => {
     let table = document.createElement("table");
@@ -73,7 +70,7 @@ let body = setup();
 sync_struct.from({
     masterHostname: "localhost",
     notifierName: "datasets",
-    onReceive: (_: sync_struct.Store, mod: sync_struct.Mod) => {
+    onReceive: (_, mod: sync_struct.Mod) => {
         if (mod.action === "init") Object.entries(mod.struct)
             .forEach(([keypath, dataset]) => create(keypath, dataset));
 

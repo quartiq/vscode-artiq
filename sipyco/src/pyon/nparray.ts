@@ -1,6 +1,6 @@
 import * as npscalar from "./npscalar.js";
 
-type NpArray = npscalar.NpScalar & { __shape__: number[] };
+export type NpArray = npscalar.NpScalar & { __shape__: number[] };
 type Params = [ shape: number[], ...npscalar.Params ];
 type ParamsHuman = [ shape: number[], ...npscalar.ParamsHuman ];
 
@@ -37,8 +37,16 @@ export let copy = (src: any): NpArray => {
 // TODO: support tuple indices like [1, [2, 3]] and such
 export let get = (tagged: any, key: any): any => (tagged as NpArray)[key];
 
-export let set = (tagged: any, key: any, value: any) => {
+// TODO: get rid of __jsonclass__, as pyon.ts owns tagging
+export let set = (tagged: any, key: any, value: any): void => {
     let [ , ...tail ] = tagged.__shape__;
     let stride = tail.reduce((a: number, b: number) => a * b, 1);
-    tagged.set(value, key * stride);
+    let offset = key * stride;
+
+    if (value.__jsonclass__ === "nparray") {
+        tagged.set(value, offset);
+        return;
+    }
+
+    tagged[offset] = value;
 };
