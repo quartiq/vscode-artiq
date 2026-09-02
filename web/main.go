@@ -7,9 +7,9 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"slices"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"web-artiq/proxy"
