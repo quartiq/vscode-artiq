@@ -4,6 +4,10 @@
     --sidebar-handle-width: 20px;
 }
 
+* {
+    box-sizing: border-box;
+}
+
 body {
     margin: 0;
 }
@@ -116,4 +120,14 @@ body {
 
 .sidebar .manager .button {
     cursor: pointer;
+}
+
+/* Modal */
+
+dialog label {
+    display: block;
+}
+
+dialog input {
+    width: 100%;
 }

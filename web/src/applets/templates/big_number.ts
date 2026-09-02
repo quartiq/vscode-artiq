@@ -12,6 +12,8 @@ style.innerHTML = `
 `;
 document.head.appendChild(style);
 
+export let preset = "${artiq_applet}big_number NUMBER_DATASET";
+
 export let argsShape = {
     positionals: [ "scalar" ],
     localDefaults: { "digit-count": 10 },

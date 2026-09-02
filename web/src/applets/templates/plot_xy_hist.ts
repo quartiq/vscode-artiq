@@ -10,6 +10,8 @@ type Args = {
     histogram_counts: pyon.NpArray,
 };
 
+export let preset = "${artiq_applet}plot_xy_hist X_DATASET HIST_BIN_BOUNDARIES_DATASET HISTS_COUNTS_DATASET";
+
 type Trace = (args: Args, selected: number) => Plotly.Data[];
 
 let weightedMeans = (bins: number[], counts: number[][]): number[] => {

@@ -11,6 +11,8 @@ type Args = {
     error: pyon.NpArray,
 };
 
+export let preset = "${artiq_applet}plot_xy Y_DATASET --x X_DATASET --error ERROR_DATASET --fit FIT_DATASET";
+
 let trace = (args: Args): Plotly.Data[] => {
     let y = normalize(args.y) as number[];
     let indices = (y: number[]) => y.map((y, i) => Number.isNaN(y) ? y : i);

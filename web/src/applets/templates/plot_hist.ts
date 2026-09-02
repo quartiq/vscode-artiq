@@ -9,6 +9,8 @@ type Args = {
     x: pyon.NpArray,
 };
 
+export let preset = "${artiq_applet}plot_hist COUNTS_DATASET --x BIN_BOUNDARIES_DATASET";
+
 let trace = (args: Args): Plotly.Data[] => {
     let y = normalize(args.y) as number[];
     let indices = (y: number[]) => y.map((y, i) => Number.isNaN(y) ? y : i);

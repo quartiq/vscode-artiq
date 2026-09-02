@@ -1,9 +1,10 @@
 import { LeafNode, leafFrom } from "./tree";
+import * as template from "./template";
 import * as ccb from "./ccb";
 
 type Input = {
-    name: keyof ccb.CreateArgs,
-    el: HTMLInputElement | HTMLTextAreaElement,
+    name: keyof Omit<ccb.CreateArgs, "code">,
+    el: HTMLInputElement,
     test?: (s: string) => boolean,
     hint?: string,
     stringify?: (v: unknown) => string,
@@ -44,11 +45,26 @@ let inputs: Input[] = [
     }, {
         name: "command",
         el: document.createElement("input"),
-    }, {
-        name: "code",
-        el: document.createElement("textarea"),
     },
 ];
+
+let presets = (input: HTMLInputElement): HTMLElement => {
+    let fieldset = document.createElement("fieldset");
+    let legend = document.createElement("legend");
+
+    legend.textContent = "command presets";
+    fieldset.append(legend);
+
+    template.names.forEach(name => {
+        let btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = name;
+        btn.addEventListener("click", () => input.value = template.preset(name));
+        fieldset.append(btn);
+    });
+
+    return fieldset;
+};
 
 let dom = (): void => {
     dialog = document.createElement("dialog");
@@ -56,11 +72,15 @@ let dom = (): void => {
     dialog.append(form);
 
     inputs.forEach(input => {
+        if (input.name === "command") form.append(presets(input.el));
+
         let label = document.createElement("label");
         label.append(input.name, input.el);
         input.el.addEventListener("input", () => input.el.setCustomValidity(""));
         form.append(label, document.createElement("br"));
     });
+
+    // TODO: nicer interface for group input? think email address list editing in email client
 
     let cancel = document.createElement("button");
     cancel.type = "button"; // prevent submit
@@ -97,12 +117,17 @@ export let init = (): HTMLDialogElement => {
             return;
         }
 
-        let args = Object.fromEntries(inputs.map(input => [
+        let draft = Object.fromEntries(inputs.map(input => [
             input.name,
-            input.parse?.(input.el.value) ?? input.el.value
-        ])) as ccb.CreateArgs;
+            input.parse?.(input.el.value) ?? input.el.value,
+        ])) as Omit<ccb.CreateArgs, "code">;
 
-        submit(args);
+        let previous = original ?? leafFrom(draft);
+
+        submit({
+            ...draft,
+            code: previous?.code ?? "", // enable roundtrip without touching "code"; preserve line breaks
+        });
         dialog.close();
     });
 

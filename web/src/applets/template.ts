@@ -33,6 +33,7 @@ type ParsedArgs = [
 export type Fetched = [ Applet, GridStackWidget? ];
 
 export type Interface = {
+    preset: string,
     argsShape: ArgsShape,
     from: (args: ParsedArgs) => Fetched,
 };
@@ -47,6 +48,9 @@ let templates: Record<Name, Interface> = {
 };
 
 let isName = (s: string): s is Name => s in templates;
+
+export let names = Object.keys(templates) as Name[];
+export let preset = (name: Name): string => templates[name].preset;
 
 let parsePositionals = (args: minimist.ParsedArgs, names: string[]): UnitaryArgs => {
     let { _, ...rest } = args;

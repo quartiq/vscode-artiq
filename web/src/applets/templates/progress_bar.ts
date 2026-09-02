@@ -19,6 +19,8 @@ style.innerHTML = `
 `;
 document.head.appendChild(style);
 
+export let preset = "${artiq_applet}progress_bar VALUE";
+
 export let argsShape = {
     positionals: [ "counter" ],
     localDefaults: { min: 0, max: 100 },

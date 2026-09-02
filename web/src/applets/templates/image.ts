@@ -8,6 +8,8 @@ export type Args = {
     image2d: pyon.NpArray,
 };
 
+export let preset = "${artiq_applet}image IMG_DATASET";
+
 let trace = (args: Args): Plotly.Data[] => [{
     type: "heatmap",
     // reshape data in col-major fashion to create parity with PyQtGraph.ImageView
