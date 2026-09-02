@@ -14,7 +14,7 @@ document.head.appendChild(style);
 
 export let argsShape = {
     positionals: [ "scalar" ],
-    localnames: [ "digit-count" ],
+    localDefaults: { "digit-count": 10 },
 };
 
 export let from: Interface["from"] = ([ subs, locals ]) => {

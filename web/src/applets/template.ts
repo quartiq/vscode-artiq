@@ -22,7 +22,7 @@ type Name =
 
 type ArgsShape = {
     positionals: string[],
-    localnames?: string[],
+    localDefaults?: UnitaryArgs,
 };
 
 type ParsedArgs = [
@@ -58,12 +58,14 @@ let parsePositionals = (args: minimist.ParsedArgs, names: string[]): UnitaryArgs
 let parseArgs = (args: minimist.ParsedArgs, shape: ArgsShape): ParsedArgs => {
     let unit = Object.entries(parsePositionals(args, shape.positionals));
     let filter = (fn: (v: [ string, any ]) => boolean) => Object.fromEntries(unit.filter(fn));
-    let localnames = shape.localnames ?? [];
 
-    return [
-        filter(([k]) => !localnames.includes(k)),
-        filter(([k]) => localnames.includes(k)),
-    ];
+    let defaults = shape.localDefaults ?? {};
+    let localnames = Object.keys(defaults);
+
+    let subs = filter(([k]) => !localnames.includes(k));
+    let locals = filter(([k]) => localnames.includes(k));
+
+    return [ subs, { ...defaults, ...locals } ];
 };
 
 export let fetch = (cmd: ccb.Command): Fetched => {

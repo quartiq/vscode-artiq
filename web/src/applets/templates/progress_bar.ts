@@ -21,7 +21,7 @@ document.head.appendChild(style);
 
 export let argsShape = {
     positionals: [ "counter" ],
-    localnames: [ "min", "max" ],
+    localDefaults: { min: 0, max: 100 },
 };
 
 export let from: Interface["from"] = ([ subs, locals ]) => {
